@@ -1,0 +1,41 @@
+name: Flutter Build and Upload
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'build/*'
+    paths-ignore:
+      - '**.md'
+
+env:
+  FLUTTER_VERSION: 3.10.0
+
+jobs:
+  build:
+    name: Build and Upload Android Binary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '${{ env.FLUTTER_VERSION }}'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Build Android Binary
+        run: flutter build apk
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: android-app
+          path: build/app/outputs/flutter-apk/app-release.apk

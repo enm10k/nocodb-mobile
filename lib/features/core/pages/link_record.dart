@@ -1,0 +1,214 @@
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:loader_overlay/loader_overlay.dart';
+
+import '../../../common/components/scroll_detector.dart';
+import '../../../common/flash_wrapper.dart';
+import '../../../common/logger.dart';
+import '../../../nocodb_sdk/models.dart';
+import '../components/dialog/search_dialog.dart';
+import '../providers/providers.dart';
+
+class _Card extends HookConsumerWidget {
+  final String refRowId;
+  final dynamic pv;
+  final String rowId;
+  final NcTableColumn column;
+  final NcTable relation;
+  const _Card({
+    required this.refRowId,
+    required this.pv,
+    required this.rowId,
+    required this.column,
+    required this.relation,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Card(
+      child: ListTile(
+        title: Text(pv.toString()),
+        subtitle: Text('PrimaryKey: $refRowId'),
+        onTap: () {
+          ref
+              .watch(
+                rowNestedProvider(rowId, column, relation, excluded: true)
+                    .notifier,
+              )
+              .link(refRowId: refRowId)
+              .then((msg) => notifySuccess(context, message: msg))
+              .onError(
+                (error, stackTrace) => notifyError(context, error, stackTrace),
+              );
+        },
+      ),
+    );
+  }
+}
+
+class LinkRecordPage extends HookConsumerWidget {
+  final String columnId;
+  final String rowId;
+  const LinkRecordPage({
+    super.key,
+    required this.columnId,
+    required this.rowId,
+  });
+
+  static const debug = true;
+
+  _build({
+    required PrimaryRecordList list,
+    required NcTable relation,
+    required NcTableColumn column,
+    required WidgetRef ref,
+  }) {
+    final (records, pageInfo) = list;
+    final context = useContext();
+
+    final children = records
+        .map(
+          (record) {
+            final (key, value) = record;
+
+            return _Card(
+              refRowId: key,
+              pv: value,
+              rowId: rowId,
+              column: column,
+              relation: relation,
+            );
+          },
+        )
+        .whereNotNull()
+        .toList();
+
+    return ScrollDetector(
+      onEnd: () async {
+        if (pageInfo?.isLastPage == true) {
+          return;
+        }
+        context.loaderOverlay.show();
+        ref
+            .watch(
+              rowNestedProvider(rowId, column, relation, excluded: true)
+                  .notifier,
+            )
+            .load()
+            .then((_) {
+          Future.delayed(
+            const Duration(milliseconds: 500),
+            () {
+              context.loaderOverlay.hide();
+              logger.info('done');
+            },
+          );
+        });
+      },
+      child: ListView(
+        shrinkWrap: true,
+        children: children,
+      ),
+    );
+  }
+
+  Scaffold _buildScaffold({
+    required Widget body,
+    required WidgetRef ref,
+    required NcTable relation,
+    required NcTableColumn column,
+  }) {
+    final context = useContext();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Link record'),
+        actions: [
+          IconButton(
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => LinkRecordSearchDialog(
+                column: column,
+                pvName: relation.pvName!,
+              ),
+            ),
+            icon: const Icon(Icons.search),
+          ),
+        ],
+      ),
+      body: body,
+    );
+  }
+
+  Scaffold _buildEmptyScaffold({
+    required Widget body,
+  }) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Link record'),
+      ),
+      body: body,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tables = ref.watch(tablesProvider);
+    if (tables == null) {
+      return _buildEmptyScaffold(
+        body: const Center(child: Text('Failed to load data.')),
+      );
+    }
+
+    final column = tables.table.columnsById[columnId];
+    if (column == null) {
+      return _buildEmptyScaffold(
+        body: Center(child: Text('Column for $columnId not found.')),
+      );
+    }
+    final relation = tables.relationMap[column.fkRelatedModelId];
+
+    if (relation == null) {
+      return Center(
+        child: Text(
+          'relation not found. column: ${column.title}, relation_id: ${column.fkRelatedModelId}',
+        ),
+      );
+    }
+
+    final body = ref
+        .watch(
+          rowNestedProvider(
+            rowId,
+            column,
+            relation,
+            excluded: true,
+          ),
+        )
+        .when(
+          data: (list) {
+            if (list.$1.isEmpty) {
+              return const Center(child: Text('No record to link.'));
+            }
+            return _build(
+              list: list,
+              relation: relation,
+              column: column,
+              ref: ref,
+            );
+          },
+          error: (error, stackTrace) => Center(
+            child: Text('$error\n$stackTrace'),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+        );
+
+    return _buildScaffold(
+      body: body,
+      relation: relation,
+      ref: ref,
+      column: column,
+    );
+  }
+}

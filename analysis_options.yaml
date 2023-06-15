@@ -1,0 +1,35 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - avoid_print
+    # - always_declare_return_types
+    # - avoid_types_on_closure_parameters
+    # - omit_local_variable_types
+    - prefer_adjacent_string_concatenation
+    - prefer_conditional_assignment
+    - prefer_contains
+    - prefer_relative_imports
+    - prefer_single_quotes
+    - require_trailing_commas
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
+analyzer:
+  enable-experiment:
+    - records
+    - patterns
+  exclude:
+    - "**/*.freezed.dart"
+    - "**/*.g.dart"
+  errors:
+    invalid_annotation_target: ignore
