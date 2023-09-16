@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'logger.dart';
 
 const _successDuration = Duration(seconds: 1);
-const _errorDuration = Duration(seconds: 1);
+const _errorDuration = Duration(seconds: 3);
 
 notifySuccess(
   BuildContext context, {

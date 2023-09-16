@@ -206,7 +206,7 @@ class _Api {
       httpClient: http.Client(), // This function should use plain HTTP client.
       headers: {'Content-type': 'application/json'},
     );
-    final data = _decode(res);
+    final data = _decodeWithAssert(res, expectedStatusCode: [200]);
     final token = data['token'];
     _client.addHeaders({'xc-auth': token});
     return token;
