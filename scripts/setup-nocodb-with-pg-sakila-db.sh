@@ -1,11 +1,11 @@
 #!/bin/bash -eu
-export NOCODB_TAG=0.107.5
+export NOCODB_TAG=0.111.4
 
-if [ ! -d "nocodb" ]; then
-  git clone https://github.com/nocodb/nocodb.git
+if [ ! -d "_nocodb" ]; then
+  git clone https://github.com/nocodb/nocodb.git _nocodb
 fi
 
-cd nocodb
+cd _nocodb
 git fetch -p
 git checkout .
 git checkout $NOCODB_TAG
@@ -18,7 +18,7 @@ if [ $(uname -m) == 'arm64' ]; then
   DOCKER_DEFAULT_PLATFORM=linux/amd64
 fi
 
-docker-compose down -v
+docker-compose down -v --rmi all
 docker-compose up -d
 docker-compose cp ../../packages/nocodb/tests/pg-sakila-db root_db:/
 docker-compose exec root_db bash -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -f /pg-sakila-db/01-postgres-sakila-schema.sql'

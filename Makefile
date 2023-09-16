@@ -13,7 +13,7 @@ setup-nocodb:
 	./scripts/setup-nocodb-with-pg-sakila-db.sh
 
 show-NC_DB:
-	grep NC_DB nocodb/docker-compose/pg/docker-compose.yml | awk '{print $$2}'
+	grep NC_DB _nocodb/docker-compose/pg/docker-compose.yml | awk '{print $$2}'
 
 
 remove-generated-files:

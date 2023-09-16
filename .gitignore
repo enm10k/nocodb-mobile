@@ -46,5 +46,6 @@ app.*.map.json
 *.freezed.dart
 *.g.dart
 
-# nocodb
 .fvm/flutter_sdk
+
+_nocodb
