@@ -64,7 +64,6 @@ FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {
     final authToken = await settings.authToken;
 
     logger.config('apiBaseUrl: $apiBaseUrl');
-    logger.config(state);
 
     if (authToken == null || apiBaseUrl == null) {
       return const HomeRoute().location;
