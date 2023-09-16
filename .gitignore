@@ -46,4 +46,4 @@ app.*.map.json
 *.freezed.dart
 *.g.dart
 
-nocodb
+# nocodb
