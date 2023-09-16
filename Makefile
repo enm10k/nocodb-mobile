@@ -1,9 +1,9 @@
 fix:
-	dart fix --apply lib
+	fvm dart fix --apply lib
 
 build-runner-watch watch:
 	# flutter pub run build_runner build -d -v
-	flutter pub run build_runner watch -d -v
+	fvm flutter pub run build_runner watch -d -v
 
 apk:
 	flutter build apk
@@ -26,4 +26,4 @@ cloc:
 	cloc . --vcs=git --include-ext=dart,yaml lib
 
 run-web:
-	CHROME_EXECUTABLE="./scripts/google-chrome-unsafe.sh" flutter run -d chrome
+	CHROME_EXECUTABLE="./scripts/google-chrome-unsafe.sh" fvm flutter run -d chrome

@@ -158,7 +158,7 @@ class SignInPage extends HookConsumerWidget {
               (error, stackTrace) => notifyError(context, error, stackTrace),
             );
           },
-        )
+        ),
       ],
     );
   }

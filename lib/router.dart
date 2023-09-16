@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -48,7 +49,8 @@ bool isAuthTokenAlive(String authToken) {
   return now.isBefore(exp);
 }
 
-FutureOr<String?> redirect(context, state) async {
+// FutureOr<String?> redirect(context, state) async {
+FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {
   try {
     if (!settings.initialized) {
       final prefs = Preferences();
@@ -62,10 +64,11 @@ FutureOr<String?> redirect(context, state) async {
     final authToken = await settings.authToken;
 
     logger.config('apiBaseUrl: $apiBaseUrl');
+    logger.config(state);
 
     if (authToken == null || apiBaseUrl == null) {
       return const HomeRoute().location;
-    } else if (state.subloc == const HomeRoute().location) {
+    } else if (state.path == const HomeRoute().location) {
       if (!rememberMe) {
         await settings.clear();
         return const HomeRoute().location;

@@ -47,3 +47,4 @@ app.*.map.json
 *.g.dart
 
 # nocodb
+.fvm/flutter_sdk

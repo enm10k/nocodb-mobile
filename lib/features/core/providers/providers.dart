@@ -197,7 +197,7 @@ class DataRows extends _$DataRows {
                         row: row,
                         table: table,
                         relations: relations,
-                      )
+                      ),
             },
           )
           .toList(),
