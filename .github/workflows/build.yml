@@ -5,6 +5,7 @@ on:
     branches:
       - 'main'
       - 'build/*'
+      - 'feature/*'
     paths-ignore:
       - '**.md'
 
