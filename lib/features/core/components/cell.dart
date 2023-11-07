@@ -175,12 +175,13 @@ class Cell {
             return () {};
         }
 
+      case UITypes.links:
       case UITypes.linkToAnotherRecord:
         if (value != null) {
           assert(
             column.isBelongsTo
                 ? value is Map<String, dynamic>
-                : value is List<dynamic>,
+                : value is int,
           );
         }
 
@@ -253,17 +254,14 @@ class Cell {
         assert(value is String? || value is int?);
         return Number(value);
       case UITypes.linkToAnotherRecord:
-        assert(
-          column.isBelongsTo
-              ? value is Map<String, dynamic>?
-              : value is List<dynamic>?,
-          'value: $value',
-        );
-
         return LinkToAnotherRecord(
           value,
           column: c,
         );
+      case UITypes.links:
+        assert(value is int?);
+        final meta = value <= 1 ? c.singular : c.plural;
+        return SimpleText('$value $meta');
       default:
         return SimpleText(value);
     }
