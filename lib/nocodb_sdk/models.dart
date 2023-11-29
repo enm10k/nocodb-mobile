@@ -73,7 +73,6 @@ class NcSlimTable with _$NcSlimTable {
   const factory NcSlimTable({
     required String id,
     required String baseId,
-    required String projectId,
     required String tableName,
     required String title,
     required String type,
@@ -95,7 +94,6 @@ class NcView with _$NcView {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcView({
     required String id,
-    required String projectId,
     required String fkModelId,
     @JsonKey(fromJson: _toViewTypes) required ViewTypes type,
     @JsonKey(fromJson: _toBool) @Default(false) bool showSystemFields,
@@ -132,7 +130,6 @@ class NcTableColumn with _$NcTableColumn {
   const factory NcTableColumn({
     required String id,
     required String baseId,
-    required String projectId,
     required String fkModelId,
     required String title,
     String? columnName,
@@ -208,7 +205,6 @@ class NcTable with _$NcTable {
   const factory NcTable({
     required String id,
     required String baseId,
-    required String projectId,
     required String title,
     required List<NcTableColumn> columns,
     @JsonKey(name: 'columnsById')
@@ -268,7 +264,6 @@ class NcSort with _$NcSort {
     required String fkColumnId,
     @JsonKey(fromJson: _toSortTypes) required SortDirectionTypes direction,
     required int order,
-    required String projectId,
   }) = _NcSort;
   factory NcSort.fromJson(Map<String, dynamic> json) => _$NcSortFromJson(json);
 }

@@ -89,7 +89,7 @@ class Grid extends HookConsumerWidget {
     }
 
     final dataColumns = columns.map((c) {
-      final type = c.uidt == UITypes.linkToAnotherRecord
+      final type = [UITypes.links, UITypes.linkToAnotherRecord].contains(c.uidt)
           ? c.relationType.value
           : c.uidt.value.capitalize();
       return DataColumn2(

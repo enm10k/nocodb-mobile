@@ -11,6 +11,7 @@ enum ViewTypes {
 
 enum UITypes {
   id(value: 'ID'),
+  links(value: 'Links'),
   linkToAnotherRecord(value: 'LinkToAnotherRecord'),
   foreignKey(value: 'ForeignKey'),
   lookup(value: 'Lookup'),

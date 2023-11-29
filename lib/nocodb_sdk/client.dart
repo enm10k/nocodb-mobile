@@ -379,7 +379,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        view.projectId,
+        view.baseId,
         view.fkModelId,
         'views',
         view.id,
@@ -400,7 +400,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        view.projectId,
+        view.baseId,
         view.fkModelId,
         'views',
         view.id,
@@ -428,7 +428,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        column.projectId,
+        column.baseId,
         column.fkModelId,
         rowId,
         column.relationType.toString(),
@@ -473,7 +473,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        column.projectId,
+        column.baseId,
         column.fkModelId,
         rowId,
         column.relationType.toString(),
@@ -496,7 +496,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        view.projectId,
+        view.baseId,
         view.fkModelId,
         'views',
         view.id,
@@ -517,7 +517,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        view.projectId,
+        view.baseId,
         view.fkModelId,
         'views',
         view.id,
@@ -639,7 +639,7 @@ class _Api {
       pathSegments: [
         'api/v1/db/data',
         _defaultOrg,
-        column.projectId,
+        column.baseId,
         column.fkModelId,
         rowId,
         column.relationType.toString(),
@@ -662,7 +662,7 @@ class _Api {
       pathSegments: [
         '/api/v1/db/data',
         org,
-        column.projectId,
+        column.baseId,
         column.fkModelId,
         rowId,
         column.relationType.toString(),

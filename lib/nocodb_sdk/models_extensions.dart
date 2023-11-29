@@ -73,6 +73,9 @@ extension NcTableColumnEx on NcTableColumn {
       (pk && (ai || cdf != null)) ||
       (pk && meta?.containsKey('ag') == true) ||
       system;
+
+  String? get singular => meta?['singular'];
+  String? get plural => meta?['plural'];
 }
 
 extension NcTableEx on NcTable {
