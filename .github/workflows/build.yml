@@ -40,3 +40,12 @@ jobs:
         with:
           name: android-app
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: GitHub release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{secrets.GITHUB_TOKEN}}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "NocoDB Mobile (Unofficial prototype)"
+          files: "build/app/outputs/flutter-apk/app-release.apk"
