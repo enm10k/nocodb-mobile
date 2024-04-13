@@ -117,6 +117,7 @@ class App extends HookConsumerWidget {
                 colorSchemeSeed: Colors.black,
               )
             : ThemeData(
+                useMaterial3: false,
                 primarySwatch: Colors.blue,
               ),
         themeMode: ThemeMode.light,
