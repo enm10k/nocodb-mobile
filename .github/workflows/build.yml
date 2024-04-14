@@ -36,9 +36,10 @@ jobs:
         run: flutter build apk
 
       - name: Sign APK
+        # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#android
         run: |
           python3 -c 'import os, base64; open("output.jks", "wb").write(base64.b64decode(os.environ.get("SIGNING_KEY_BASE64")))'
-          apksigner sign --ks output.jks -v --v2-signing-enabled true --ks-key-alias "$SIGNING_KEY_ALIAS" --ks-pass "pass:$KEY_STORE_PASSWORD" "$APK_PATH"
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" sign --ks output.jks -v --v2-signing-enabled true --ks-key-alias "$SIGNING_KEY_ALIAS" --ks-pass "pass:$KEY_STORE_PASSWORD" "$APK_PATH"
         env:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
