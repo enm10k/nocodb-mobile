@@ -42,6 +42,9 @@ jobs:
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.SIGNING_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#android
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
