@@ -54,11 +54,19 @@ android {
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
-        }
+        // release {
+        //     // TODO: Add your own signing config for the release build.
+        //     // Signing with the debug keys for now, so `flutter run --release` works.
+        //     signingConfig signingConfigs.debug
+        // }
+    }
+
+    // https://github.com/enm10k/nocodb-mobile/issues/6
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
     }
 }
 
