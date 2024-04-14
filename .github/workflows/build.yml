@@ -35,16 +35,15 @@ jobs:
       - name: Build Android Binary
         run: flutter build apk
 
-      - uses: r0adkll/sign-android-release@v1
-        name: Sign APK
-        with:
-          releaseDirectory: build/app/outputs/flutter-apk/
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-        # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#android
+      - name: Sign APK
+        run: |
+          python3 -c 'import os, base64; open("output.jks", "wb").write(base64.b64decode(os.environ.get("SIGNING_KEY_BASE64")))'
+          apksigner sign --ks output.jks -v --v2-signing-enabled true --ks-key-alias "$SIGNING_KEY_ALIAS" --ks-pass "pass:$KEY_STORE_PASSWORD" "$APK_PATH"
         env:
-          BUILD_TOOLS_VERSION: "34.0.0"
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          APK_PATH: build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
