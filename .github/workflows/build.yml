@@ -35,6 +35,14 @@ jobs:
       - name: Build Android Binary
         run: flutter build apk
 
+      - uses: r0adkll/sign-android-release@v1
+        name: Sign APK
+        with:
+          releaseDirectory: build/app/outputs/flutter-apk/
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
