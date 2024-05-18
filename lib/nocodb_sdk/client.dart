@@ -100,11 +100,8 @@ class _Api {
       if (expectedStatusCode != null &&
           !expectedStatusCode.contains(res.statusCode)) {
         if (data is Map) {
-          logger.info('hoge');
           throwExceptionIfKeyExists(key: 'msg', data: data);
-          logger.info('fuga');
           throwExceptionIfKeyExists(key: 'message', data: data);
-          logger.info('piyo');
         } else {
           throw Exception(
             'INVALID_STATUS_CODE. expected: $expectedStatusCode, actual: ${res.statusCode}',
