@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-export NOCODB_TAG=0.202.5
+export NOCODB_TAG=0.207.2
 
 if [ ! -d "_nocodb" ]; then
   git clone https://github.com/nocodb/nocodb.git _nocodb
