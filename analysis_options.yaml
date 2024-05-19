@@ -25,9 +25,9 @@ linter:
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
 analyzer:
-  enable-experiment:
-    - records
-    - patterns
+  # enable-experiment:
+  #   - records
+  #   - patterns
   exclude:
     - "**/*.freezed.dart"
     - "**/*.g.dart"

@@ -179,9 +179,7 @@ class Cell {
       case UITypes.linkToAnotherRecord:
         if (value != null) {
           assert(
-            column.isBelongsTo
-                ? value is Map<String, dynamic>
-                : value is int,
+            column.isBelongsTo ? value is Map<String, dynamic> : value is int,
           );
         }
 

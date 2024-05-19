@@ -10,6 +10,18 @@ import 'symbols.dart';
 
 const _defaultOrg = 'noco';
 
+sealed class Token {}
+
+class AuthToken extends Token {
+  final String authToken;
+  AuthToken(this.authToken);
+}
+
+class ApiToken extends Token {
+  final String apiToken;
+  ApiToken(this.apiToken);
+}
+
 String pp(Map<String, dynamic> json) {
   return const JsonEncoder.withIndent('  ').convert(json);
 }
@@ -54,17 +66,26 @@ class _Api {
   late final _HttpClient _client = _HttpClient(http.Client());
   late Uri _baseUri;
 
-  init(String url, {String? authToken}) {
-    _baseUri = Uri.parse(url);
+  init(String host, {Token? token}) async {
+    _baseUri = Uri.parse(host);
     logger.info(_baseUri);
-    if (authToken != null) {
-      _client.addHeaders({'xc-auth': authToken});
-    } else {
-      _client.removeHeader('xc-auth');
+    if (token == null) {
+      return;
     }
-  }
 
-  bool get isReady => _client._headers.containsKey('xc-auth');
+    switch (token) {
+      case AuthToken(authToken: final authToken):
+        _client.addHeaders({'xc-auth': authToken});
+        break;
+      case ApiToken(apiToken: final apiToken):
+        _client.addHeaders({'xc-token': apiToken});
+        break;
+      default:
+        _client.removeHeader('xc-auth');
+        _client.removeHeader('xc-token');
+    }
+    return;
+  }
 
   void throwExceptionIfKeyExists({
     required String key,
@@ -156,6 +177,7 @@ class _Api {
     logger.finer(
       '=> ${method.name.toUpperCase()} ${uri.path} ${uri.queryParametersAll.isNotEmpty ? uri.queryParametersAll : '-'} ${censored ?? '-'}',
     );
+
     switch (method) {
       case HttpMethod.get:
         return await client.get(uri, headers: headers);
@@ -180,7 +202,8 @@ class _Api {
     }
   }
 
-  Future<bool> version(String endpoint, {String? authToken}) async {
+  Future<bool> version(String endpoint,
+      {String? authToken, String? apiToken}) async {
     final headers = authToken != null ? {'xc-auth': authToken} : null;
     final res = await _send(
       baseUri: Uri.parse(endpoint),
