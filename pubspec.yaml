@@ -30,6 +30,7 @@ dependencies:
   go_router:
   easy_debounce:
   jiffy:
+  file_picker: ^8.0.3
 
 dev_dependencies:
   flutter_test:

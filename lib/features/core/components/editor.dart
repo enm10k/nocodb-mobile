@@ -9,6 +9,7 @@ import '../../../common/logger.dart';
 import '../../../nocodb_sdk/symbols.dart';
 import '../pages/row_editor.dart';
 import '../providers/providers.dart';
+import 'editors/attachment.dart';
 import 'editors/checkbox.dart';
 import 'editors/datetime.dart';
 import 'editors/link_to_another_record.dart';
@@ -148,6 +149,12 @@ class Editor extends HookConsumerWidget {
           onUpdate: onUpdate,
           initialValue: value,
           type: DateTimeType.fromUITypes(column.uidt),
+        );
+      case UITypes.attachment:
+        return AttachmentEditor(
+          column: column,
+          onUpdate: onUpdate,
+          value: value,
         );
       default:
         return TextEditor(

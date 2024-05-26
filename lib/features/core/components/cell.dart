@@ -7,6 +7,7 @@ import '../../../nocodb_sdk/models.dart';
 import '../../../nocodb_sdk/types.dart';
 import '../../../routes.dart';
 import '../providers/providers.dart';
+import 'cells/attachment.dart';
 import 'cells/checkbox.dart';
 import 'cells/datetime.dart';
 import 'cells/link_to_another_record.dart';
@@ -179,9 +180,7 @@ class Cell {
       case UITypes.linkToAnotherRecord:
         if (value != null) {
           assert(
-            column.isBelongsTo
-                ? value is Map<String, dynamic>
-                : value is int,
+            column.isBelongsTo ? value is Map<String, dynamic> : value is int,
           );
         }
 
@@ -262,6 +261,8 @@ class Cell {
         assert(value is int?);
         final meta = value <= 1 ? c.singular : c.plural;
         return SimpleText('$value $meta');
+      case UITypes.attachment:
+        return Attachment(value);
       default:
         return SimpleText(value);
     }

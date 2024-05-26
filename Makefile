@@ -1,6 +1,9 @@
 fix:
 	dart fix --apply lib
 
+fmt:
+	dart format lib
+
 build-runner-watch watch:
 	# flutter pub run build_runner build -d -v
 	flutter pub run build_runner watch -d -v

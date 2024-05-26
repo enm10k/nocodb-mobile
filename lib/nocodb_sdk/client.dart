@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
+import 'package:mime/mime.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '/features/core/providers/providers.dart';
 import '../common/logger.dart';
@@ -669,6 +672,35 @@ class _Api {
     );
     final data = _decodeWithAssert(res, expectedStatusCode: [200]);
     return data['msg'].toString();
+  }
+
+  Future<List<dynamic>> dbStorageUpload(List<PlatformFile> files) async {
+    const path = '/api/v1/db/storage/upload';
+    final uri = _baseUri.replace(path: path);
+
+    final req = http.MultipartRequest('POST', uri);
+    req.headers.addAll({
+      'Content-type': 'multipart/form-data',
+      'xc-auth': _client._headers['xc-auth']!,
+    });
+
+    for (final (index, file) in files.indexed) {
+      if (file.bytes == null || file.path == null) {
+        continue;
+      }
+
+      final mimeType = lookupMimeType(file.path!);
+      final multipartFile = http.MultipartFile.fromBytes(
+        'file_$index',
+        (file.bytes) as List<int>,
+        filename: file.name,
+        contentType: MediaType.parse(mimeType ?? 'application/octet-stream'),
+      );
+      req.files.add(multipartFile);
+    }
+
+    final res = await http.Response.fromStream(await req.send());
+    return json.decode(res.body);
   }
 }
 

@@ -208,7 +208,7 @@ class NcTable with _$NcTable {
     required String title,
     required List<NcTableColumn> columns,
     @JsonKey(name: 'columnsById')
-        required Map<String, NcTableColumn> columnsById,
+    required Map<String, NcTableColumn> columnsById,
     required List<NcView> views,
   }) = _NcTable;
 
