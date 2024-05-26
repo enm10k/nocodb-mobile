@@ -24,7 +24,7 @@ class Attachment extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fileCount = initialValue.length;
+    final fileCount = initialValue == null ? 0 : initialValue.length;
     return Center(child: buildContent(fileCount));
   }
 }

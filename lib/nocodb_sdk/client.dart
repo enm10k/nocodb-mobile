@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 
 import 'package:http/http.dart' as http;
@@ -12,6 +13,18 @@ import 'models.dart';
 import 'symbols.dart';
 
 const _defaultOrg = 'noco';
+
+sealed class NcFile {}
+
+class NcPlatformFile extends NcFile {
+  final PlatformFile platformFile;
+  NcPlatformFile(this.platformFile);
+}
+
+class NcXFile extends NcFile {
+  final XFile xFile;
+  NcXFile(this.xFile);
+}
 
 String pp(Map<String, dynamic> json) {
   return const JsonEncoder.withIndent('  ').convert(json);
@@ -56,6 +69,7 @@ enum HttpMethod {
 class _Api {
   late final _HttpClient _client = _HttpClient(http.Client());
   late Uri _baseUri;
+  Uri get uri => _baseUri;
 
   init(String url, {String? authToken}) {
     _baseUri = Uri.parse(url);
@@ -88,13 +102,17 @@ class _Api {
     return _decodeWithAssert(res);
   }
 
+  _logResponse(http.Response res) {
+    logger.finer(
+      '<= ${res.request?.method} ${res.request?.url.path} ${res.statusCode} ${res.body}',
+    );
+  }
+
   dynamic _decodeWithAssert(
     http.Response res, {
     List<int>? expectedStatusCode,
   }) {
-    logger.finer(
-      '<= ${res.request?.method} ${res.request?.url.path} ${res.statusCode} ${res.body}',
-    );
+    _logResponse(res);
 
     final isJson =
         res.headers['content-type']?.contains('application/json') ?? false;
@@ -674,7 +692,43 @@ class _Api {
     return data['msg'].toString();
   }
 
-  Future<List<model.NcAttachedFile>> dbStorageUpload(List<PlatformFile> files) async {
+  Future<void> _addFilesToMultipartRequest(
+    http.MultipartRequest req,
+    List<NcFile> files,
+  ) async {
+    for (final (index, file) in files.indexed) {
+      switch (file) {
+        case NcPlatformFile(platformFile: final platformFile):
+          if (platformFile.bytes == null || platformFile.path == null) {
+            continue;
+          }
+          final mimeType = lookupMimeType(platformFile.path!);
+          final multipartFile = http.MultipartFile.fromBytes(
+            'file_$index',
+            (platformFile.bytes) as List<int>,
+            filename: platformFile.name,
+            contentType:
+                MediaType.parse(mimeType ?? 'application/octet-stream'),
+          );
+          req.files.add(multipartFile);
+        case NcXFile(xFile: final xFile):
+          final mimeType = lookupMimeType(xFile.path);
+          final bytes = await xFile.readAsBytes();
+          final multipartFile = http.MultipartFile.fromBytes(
+            'file_$index',
+            bytes as List<int>,
+            filename: xFile.name,
+            contentType:
+                MediaType.parse(mimeType ?? 'application/octet-stream'),
+          );
+          req.files.add(multipartFile);
+      }
+    }
+  }
+
+  Future<List<model.NcAttachedFile>> dbStorageUpload(
+    List<NcFile> files,
+  ) async {
     const path = '/api/v1/db/storage/upload';
     final uri = _baseUri.replace(path: path);
 
@@ -684,24 +738,17 @@ class _Api {
       'xc-auth': _client._headers['xc-auth']!,
     });
 
-    for (final (index, file) in files.indexed) {
-      if (file.bytes == null || file.path == null) {
-        continue;
-      }
-
-      final mimeType = lookupMimeType(file.path!);
-      final multipartFile = http.MultipartFile.fromBytes(
-        'file_$index',
-        (file.bytes) as List<int>,
-        filename: file.name,
-        contentType: MediaType.parse(mimeType ?? 'application/octet-stream'),
-      );
-      req.files.add(multipartFile);
-    }
+    _addFilesToMultipartRequest(req, files);
 
     final res = await http.Response.fromStream(await req.send());
+    _logResponse(res);
+
     final data = json.decode(res.body);
-    return data.map<NcAttachedFile>((e) => NcAttachedFile.fromJson(e as Map<String, dynamic>)).toList();
+    return data
+        .map<NcAttachedFile>(
+          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
+        )
+        .toList();
   }
 }
 
