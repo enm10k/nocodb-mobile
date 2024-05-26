@@ -674,7 +674,7 @@ class _Api {
     return data['msg'].toString();
   }
 
-  Future<List<dynamic>> dbStorageUpload(List<PlatformFile> files) async {
+  Future<List<model.NcAttachedFile>> dbStorageUpload(List<PlatformFile> files) async {
     const path = '/api/v1/db/storage/upload';
     final uri = _baseUri.replace(path: path);
 
@@ -700,7 +700,8 @@ class _Api {
     }
 
     final res = await http.Response.fromStream(await req.send());
-    return json.decode(res.body);
+    final data = json.decode(res.body);
+    return data.map<NcAttachedFile>((e) => NcAttachedFile.fromJson(e as Map<String, dynamic>)).toList();
   }
 }
 

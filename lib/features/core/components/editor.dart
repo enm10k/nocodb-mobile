@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../nocodb_sdk/models.dart';
 import '/nocodb_sdk/models.dart' as model;
 import '../../../common/flash_wrapper.dart';
 import '../../../common/logger.dart';
@@ -151,10 +152,12 @@ class Editor extends HookConsumerWidget {
           type: DateTimeType.fromUITypes(column.uidt),
         );
       case UITypes.attachment:
+        final attachedFiles = value.map<NcAttachedFile>((e) => NcAttachedFile.fromJson(e as Map<String, dynamic>)).toList();
+
         return AttachmentEditor(
           column: column,
           onUpdate: onUpdate,
-          value: value,
+          initialValue: attachedFiles,
         );
       default:
         return TextEditor(
