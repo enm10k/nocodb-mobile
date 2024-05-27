@@ -13,7 +13,7 @@ It is currently not available on the Apple App Store or Google Play Store.
 
 ### Android
 
-You can download the binary from the GitHub Actions page.  
+You can download the APK from the [release page](https://github.com/enm10k/nocodb-mobile/releases).  
 Please note that you may need to turn off Google Play Protect to install the app.
 
 ### iOS
