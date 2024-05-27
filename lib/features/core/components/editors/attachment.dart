@@ -4,9 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:popup_menu/popup_menu.dart';
 
+import '../../../../common/extensions.dart';
 import '/nocodb_sdk/client.dart';
 import '/nocodb_sdk/models.dart' as model;
+
+enum PopupMenuAction {
+  download,
+  rename,
+  delete,
+}
 
 class AttachmentEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
@@ -97,45 +105,115 @@ class AttachmentEditor extends HookConsumerWidget {
     );
   }
 
+  static const kDownload = PopupMenuAction.download;
+  static const kRename = PopupMenuAction.rename;
+  static const kDelete = PopupMenuAction.delete;
+
+  List<MenuItemProvider> buildMenuItems() {
+    return [
+      MenuItem(
+        title: kDownload.name.capitalize(),
+        image: const Icon(
+          Icons.download,
+          color: Colors.white,
+        ),
+      ),
+      MenuItem(
+        title: kRename.name.capitalize(),
+        image: const Icon(
+          Icons.edit,
+          color: Colors.white,
+        ),
+      ),
+      MenuItem(
+        title: kDelete.name.capitalize(),
+        image: const Icon(
+          Icons.delete,
+          color: Colors.white,
+        ),
+      ),
+    ];
+  }
+
   List<Widget> buildChildren(ValueNotifier<List<model.NcAttachedFile>> files) {
+    final context = useContext();
+
     final items = files.value.map<Widget>((file) {
       final isImage = file.mimetype.startsWith('image');
 
+      final key = GlobalKey();
       final content = isImage
           ? Card(
               elevation: 2,
-              child: SizedBox(
-                width: 80,
-                height: 80,
-                child: CachedNetworkImage(
-                  imageUrl: api.uri.replace(path: file.signedPath).toString(),
-                  placeholder: (context, url) => const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: CircularProgressIndicator(),
+              child: InkWell(
+                key: key,
+                onTap: () {
+                  PopupMenu(
+                    items: buildMenuItems(),
+                    onClickMenu: (item) {
+                      if (item.menuTitle == kDownload.name.capitalize()) {
+                        // TODO: Implement download.
+                      } else if (item.menuTitle == kRename.name.capitalize()) {
+                        // TODO: Implement rename.
+                      } else if (item.menuTitle == kDelete.name.capitalize()) {
+                        // TODO: Implement delete.
+                      }
+                    },
+                    context: context,
+                  ).show(widgetKey: key);
+                },
+                child: SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: CachedNetworkImage(
+                    imageUrl: api.uri.replace(path: file.signedPath).toString(),
+                    placeholder: (context, url) => const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
                   ),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               ),
             )
           : Card(
+              key: key,
               elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      width: 72,
-                      height: 72,
-                      child: Icon(Icons.description_outlined, size: 48),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        file.title,
-                        overflow: TextOverflow.ellipsis,
+              child: InkWell(
+                onTap: () {
+                  PopupMenu(
+                    items: buildMenuItems(),
+                    onClickMenu: (item) {
+                      if (item.menuTitle == kDownload.name.capitalize()) {
+                        // TODO: Implement download.
+                      } else if (item.menuTitle == kRename.name.capitalize()) {
+                        // TODO: Implement rename.
+                      } else if (item.menuTitle == kDelete.name.capitalize()) {
+                        // TODO: Implement delete.
+                      }
+                    },
+                    context: context,
+                  ).show(widgetKey: key);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      const SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: Icon(Icons.description_outlined, size: 48),
                       ),
-                    ),
-                  ],
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(
+                          file.title,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

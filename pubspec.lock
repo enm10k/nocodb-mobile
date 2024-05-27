@@ -800,6 +800,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.1"
+  popup_menu:
+    dependency: "direct main"
+    description:
+      name: popup_menu
+      sha256: a6d7f39669cd010818063233f287822d4fcfcdc1d872b4bae72d9f3caf848e3a
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   pub_semver:
     dependency: transitive
     description:

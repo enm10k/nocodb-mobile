@@ -157,7 +157,6 @@ class Editor extends HookConsumerWidget {
               (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
             )
             .toList();
-
         return AttachmentEditor(
           column: column,
           onUpdate: onUpdate,

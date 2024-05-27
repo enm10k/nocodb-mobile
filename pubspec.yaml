@@ -32,6 +32,7 @@ dependencies:
   file_picker: ^8.0.3
   image_picker: ^1.1.1
   cached_network_image: ^3.3.1
+  popup_menu: ^2.0.0
 
 dev_dependencies:
   flutter_test:
