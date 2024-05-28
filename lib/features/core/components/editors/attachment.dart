@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:popup_menu/popup_menu.dart';
 
 import '../../../../common/extensions.dart';
+import '../../../../common/logger.dart';
 import '/nocodb_sdk/client.dart';
 import '/nocodb_sdk/models.dart' as model;
 
@@ -14,6 +15,19 @@ enum PopupMenuAction {
   download,
   rename,
   delete,
+}
+
+class PopupMenuUserInfo {
+  final PopupMenuAction action;
+  final int index;
+  PopupMenuUserInfo(this.action, this.index);
+
+  Map <String, dynamic> toJson() {
+    return {
+      'action': action,
+      'index': index,
+    };
+  }
 }
 
 class AttachmentEditor extends HookConsumerWidget {
@@ -109,13 +123,17 @@ class AttachmentEditor extends HookConsumerWidget {
   static const kRename = PopupMenuAction.rename;
   static const kDelete = PopupMenuAction.delete;
 
-  List<MenuItemProvider> buildMenuItems() {
+  List<MenuItemProvider> buildMenuItems(int index) {
     return [
       MenuItem(
         title: kDownload.name.capitalize(),
         image: const Icon(
           Icons.download,
           color: Colors.white,
+        ),
+        userInfo: PopupMenuUserInfo(
+          kDownload,
+          index,
         ),
       ),
       MenuItem(
@@ -124,12 +142,20 @@ class AttachmentEditor extends HookConsumerWidget {
           Icons.edit,
           color: Colors.white,
         ),
+        userInfo: PopupMenuUserInfo(
+          kRename,
+          index,
+        ),
       ),
       MenuItem(
         title: kDelete.name.capitalize(),
         image: const Icon(
           Icons.delete,
           color: Colors.white,
+        ),
+        userInfo: PopupMenuUserInfo(
+          kDelete,
+          index,
         ),
       ),
     ];
@@ -138,8 +164,35 @@ class AttachmentEditor extends HookConsumerWidget {
   List<Widget> buildChildren(ValueNotifier<List<model.NcAttachedFile>> files) {
     final context = useContext();
 
-    final items = files.value.map<Widget>((file) {
+    final items = files.value.asMap().entries.map<Widget>((entry) {
+      final (index, file) = (entry.key, entry.value);
       final isImage = file.mimetype.startsWith('image');
+
+      final popupMenu = PopupMenu(
+        items: buildMenuItems(index),
+        onClickMenu: (item) {
+          final userInfo = item.menuUserInfo as PopupMenuUserInfo;
+          final (action, index) = (userInfo.action, userInfo.index);
+
+          logger.info('userInfo: ${userInfo.toJson()}');
+          switch (action) {
+            case kDownload:
+            // TODO: Implement download. Use https://pub.dev/packages/flutter_file_downloader ?
+            case kRename:
+            // TODO
+            case kDelete:
+              // TODO: Implement a confirmation dialog.
+              final copy = [...files.value];
+              copy.removeAt(index);
+              files.value = copy;
+              onUpdate({
+                column.title: files.value,
+              });
+              break;
+          }
+        },
+        context: context,
+      );
 
       final key = GlobalKey();
       final content = isImage
@@ -148,19 +201,7 @@ class AttachmentEditor extends HookConsumerWidget {
               child: InkWell(
                 key: key,
                 onTap: () {
-                  PopupMenu(
-                    items: buildMenuItems(),
-                    onClickMenu: (item) {
-                      if (item.menuTitle == kDownload.name.capitalize()) {
-                        // TODO: Implement download.
-                      } else if (item.menuTitle == kRename.name.capitalize()) {
-                        // TODO: Implement rename.
-                      } else if (item.menuTitle == kDelete.name.capitalize()) {
-                        // TODO: Implement delete.
-                      }
-                    },
-                    context: context,
-                  ).show(widgetKey: key);
+                  popupMenu.show(widgetKey: key);
                 },
                 child: SizedBox(
                   width: 80,
@@ -182,19 +223,7 @@ class AttachmentEditor extends HookConsumerWidget {
               elevation: 4,
               child: InkWell(
                 onTap: () {
-                  PopupMenu(
-                    items: buildMenuItems(),
-                    onClickMenu: (item) {
-                      if (item.menuTitle == kDownload.name.capitalize()) {
-                        // TODO: Implement download.
-                      } else if (item.menuTitle == kRename.name.capitalize()) {
-                        // TODO: Implement rename.
-                      } else if (item.menuTitle == kDelete.name.capitalize()) {
-                        // TODO: Implement delete.
-                      }
-                    },
-                    context: context,
-                  ).show(widgetKey: key);
+                  popupMenu.show(widgetKey: key);
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(8),
