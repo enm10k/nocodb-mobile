@@ -1,12 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:path/path.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:popup_menu/popup_menu.dart';
 
 import '../../../../common/extensions.dart';
+import '../../../../common/flash_wrapper.dart';
 import '../../../../common/logger.dart';
 import '/nocodb_sdk/client.dart';
 import '/nocodb_sdk/models.dart' as model;
@@ -22,7 +26,7 @@ class PopupMenuUserInfo {
   final int index;
   PopupMenuUserInfo(this.action, this.index);
 
-  Map <String, dynamic> toJson() {
+  Map<String, dynamic> toJson() {
     return {
       'action': action,
       'index': index,
@@ -161,7 +165,14 @@ class AttachmentEditor extends HookConsumerWidget {
     ];
   }
 
-  List<Widget> buildChildren(ValueNotifier<List<model.NcAttachedFile>> files) {
+  String signedPathToUrl(String signedPath) {
+    return api.uri.replace(path: signedPath).toString();
+  }
+
+  List<Widget> buildChildren(
+    ValueNotifier<List<model.NcAttachedFile>> files,
+    bool Function() isMounted,
+  ) {
     final context = useContext();
 
     final items = files.value.asMap().entries.map<Widget>((entry) {
@@ -171,24 +182,49 @@ class AttachmentEditor extends HookConsumerWidget {
       final popupMenu = PopupMenu(
         items: buildMenuItems(index),
         onClickMenu: (item) {
-          final userInfo = item.menuUserInfo as PopupMenuUserInfo;
-          final (action, index) = (userInfo.action, userInfo.index);
+          try {
+            final userInfo = item.menuUserInfo as PopupMenuUserInfo;
+            // logger.info('userInfo: ${userInfo.toJson()}');
+            final (action, index) = (userInfo.action, userInfo.index);
 
-          logger.info('userInfo: ${userInfo.toJson()}');
-          switch (action) {
-            case kDownload:
-            // TODO: Implement download. Use https://pub.dev/packages/flutter_file_downloader ?
-            case kRename:
-            // TODO
-            case kDelete:
-              // TODO: Implement a confirmation dialog.
-              final copy = [...files.value];
-              copy.removeAt(index);
-              files.value = copy;
-              onUpdate({
-                column.title: files.value,
-              });
-              break;
+            switch (action) {
+              case kDownload:
+                final file = files.value[index];
+                FileDownloader.downloadFile(
+                  url: signedPathToUrl(file.signedPath),
+                  name: file.title,
+                  onProgress: (String? fileName, double progress) {
+                    logger.info('Downloading ${file.title}: $progress%');
+                  },
+                  onDownloadCompleted: (String path) {
+                    final name = basename(path);
+                    notifySuccess(context, message: 'Downloaded $name.');
+                    context.loaderOverlay.hide();
+                  },
+                  onDownloadError: (String error) {
+                    logger.severe('Download error: $error');
+                    notifyError(context, error, null);
+                    context.loaderOverlay.hide();
+                    throw Exception(error);
+                  },
+                );
+                context.loaderOverlay.show();
+              case kRename:
+              // TODO
+              case kDelete:
+                // TODO: Implement a confirmation dialog.
+                final copy = [...files.value];
+                copy.removeAt(index);
+                files.value = copy;
+                onUpdate({
+                  column.title: files.value,
+                });
+                notifySuccess(context, message: 'Deleted');
+            }
+          } catch (e, s) {
+            logger.severe(e);
+            logger.severe(s);
+            notifyError(context, e, s);
           }
         },
         context: context,
@@ -207,7 +243,7 @@ class AttachmentEditor extends HookConsumerWidget {
                   width: 80,
                   height: 80,
                   child: CachedNetworkImage(
-                    imageUrl: api.uri.replace(path: file.signedPath).toString(),
+                    imageUrl: signedPathToUrl(file.signedPath),
                     placeholder: (context, url) => const Padding(
                       padding: EdgeInsets.all(24),
                       child: CircularProgressIndicator(),
@@ -258,6 +294,7 @@ class AttachmentEditor extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final files = useState<List<model.NcAttachedFile>>([]);
+    final isMounted = useIsMounted();
 
     useEffect(
       () {
@@ -267,7 +304,7 @@ class AttachmentEditor extends HookConsumerWidget {
       [initialValue],
     );
 
-    final children = buildChildren(files);
+    final children = buildChildren(files, isMounted);
     final size = MediaQuery.of(context).size;
 
     return ConstrainedBox(

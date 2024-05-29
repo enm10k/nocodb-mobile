@@ -33,6 +33,8 @@ dependencies:
   image_picker: ^1.1.1
   cached_network_image: ^3.3.1
   popup_menu: ^2.0.0
+  flutter_file_downloader: ^1.2.1
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:
