@@ -12,6 +12,7 @@ import 'package:popup_menu/popup_menu.dart';
 import '../../../../common/extensions.dart';
 import '../../../../common/flash_wrapper.dart';
 import '../../../../common/logger.dart';
+import '../dialog/file_rename_dialog.dart';
 import '/nocodb_sdk/client.dart';
 import '/nocodb_sdk/models.dart' as model;
 
@@ -165,10 +166,6 @@ class AttachmentEditor extends HookConsumerWidget {
     ];
   }
 
-  String signedPathToUrl(String signedPath) {
-    return api.uri.replace(path: signedPath).toString();
-  }
-
   List<Widget> buildChildren(
     ValueNotifier<List<model.NcAttachedFile>> files,
     bool Function() isMounted,
@@ -209,7 +206,11 @@ class AttachmentEditor extends HookConsumerWidget {
                 );
                 context.loaderOverlay.show();
               case kRename:
-              // TODO
+                final title = files.value[index].title;
+                showDialog(
+                  context: context,
+                  builder: (_) => FileRenameDialog(title),
+                );
               case kDelete:
                 // TODO: Implement a confirmation dialog.
                 final copy = [...files.value];
@@ -242,7 +243,7 @@ class AttachmentEditor extends HookConsumerWidget {
                   width: 80,
                   height: 80,
                   child: CachedNetworkImage(
-                    imageUrl: signedPathToUrl(file.signedPath),
+                    imageUrl: file.signedUrl(api.uri),
                     placeholder: (context, url) => const Padding(
                       padding: EdgeInsets.all(24),
                       child: CircularProgressIndicator(),
