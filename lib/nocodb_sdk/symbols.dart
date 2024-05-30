@@ -105,3 +105,5 @@ extension WhereEx on Where {
     return '(${$1},${$2},${$3})';
   }
 }
+
+typedef FnOnUpdate = Function(Map<String, dynamic>);

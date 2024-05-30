@@ -548,7 +548,7 @@ class AttachedFiles extends _$AttachedFiles {
     return files;
   }
 
-  upload(List<NcFile> files, Function(Map<String, dynamic>) onUpdate) async {
+  upload(List<NcFile> files, FnOnUpdate onUpdate) async {
     final newAttachedFiles = await api.dbStorageUpload(files);
     final copy = [
       ...state,
@@ -562,7 +562,7 @@ class AttachedFiles extends _$AttachedFiles {
     return state[index];
   }
 
-  delete(String id, Function(Map<String, dynamic>) onUpdate) async {
+  delete(String id, FnOnUpdate onUpdate) async {
     final copy = [...state];
     copy.removeWhere((e) => e.id == id);
     state = copy;

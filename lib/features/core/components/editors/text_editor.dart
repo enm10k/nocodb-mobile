@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../nocodb_sdk/symbols.dart';
 import '/nocodb_sdk/models.dart' as model;
 import '../../../../common/logger.dart';
 
@@ -23,7 +24,7 @@ String isnull(dynamic v) {
 
 class TextEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
-  final Function(Map<String, dynamic>) onUpdate;
+  final FnOnUpdate onUpdate;
   final dynamic initialValue;
   final bool isNew;
   final int? maxLines;

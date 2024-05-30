@@ -12,6 +12,7 @@ import 'package:popup_menu/popup_menu.dart';
 import '../../../../common/extensions.dart';
 import '../../../../common/flash_wrapper.dart';
 import '../../../../common/logger.dart';
+import '../../../../nocodb_sdk/symbols.dart';
 import '../../providers/providers.dart';
 import '../dialog/file_rename_dialog.dart';
 import '/nocodb_sdk/client.dart';
@@ -38,7 +39,7 @@ class PopupMenuUserInfo {
 
 class AttachmentEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
-  final Function(Map<String, dynamic>) onUpdate;
+  final FnOnUpdate onUpdate;
   final List<model.NcAttachedFile> initialValue;
   const AttachmentEditor({
     super.key,
