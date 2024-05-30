@@ -540,3 +540,35 @@ class DataRow extends _$DataRow {
     });
   }
 }
+
+@riverpod
+class AttachedFiles extends _$AttachedFiles {
+  @override
+  List<NcAttachedFile> build(List<NcAttachedFile> files, String title) {
+    return files;
+  }
+
+  upload(List<NcFile> files, Function(Map<String, dynamic>) onUpdate) async {
+    final newAttachedFiles = await api.dbStorageUpload(files);
+    final copy = [
+      ...state,
+      ...newAttachedFiles,
+    ];
+    state = copy;
+    await onUpdate({title: state});
+  }
+
+  get(int index) {
+    return state[index];
+  }
+
+  delete(String id, Function(Map<String, dynamic>) onUpdate) async {
+    final copy = [...state];
+    copy.removeWhere((e) => e.id == id);
+    state = copy;
+    await onUpdate({title: state});
+  }
+
+  // TODO
+  rename() {}
+}

@@ -12,6 +12,7 @@ import 'package:popup_menu/popup_menu.dart';
 import '../../../../common/extensions.dart';
 import '../../../../common/flash_wrapper.dart';
 import '../../../../common/logger.dart';
+import '../../providers/providers.dart';
 import '../dialog/file_rename_dialog.dart';
 import '/nocodb_sdk/client.dart';
 import '/nocodb_sdk/models.dart' as model;
@@ -24,13 +25,13 @@ enum PopupMenuAction {
 
 class PopupMenuUserInfo {
   final PopupMenuAction action;
-  final int index;
-  PopupMenuUserInfo(this.action, this.index);
+  final String id;
+  PopupMenuUserInfo(this.action, this.id);
 
   Map<String, dynamic> toJson() {
     return {
       'action': action,
-      'index': index,
+      'id': id,
     };
   }
 }
@@ -62,7 +63,10 @@ class AttachmentEditor extends HookConsumerWidget {
     });
   }
 
-  Widget buildAttachButtons(ValueNotifier<List<model.NcAttachedFile>> files) {
+  Widget buildAttachButtons(
+    WidgetRef ref,
+    Refreshable<AttachedFiles> notifier,
+  ) {
     const iconSize = 38.0;
     const padding = EdgeInsets.all(2);
 
@@ -82,10 +86,11 @@ class AttachmentEditor extends HookConsumerWidget {
                 if (result == null) {
                   return;
                 }
-                onUpload(
-                  files,
-                  result.files.map((e) => NcPlatformFile(e)).toList(),
-                );
+
+                ref.read(notifier).upload(
+                      result.files.map((e) => NcPlatformFile(e)).toList(),
+                      onUpdate,
+                    );
               },
               icon: const Icon(Icons.upload_file_rounded, size: iconSize),
             ),
@@ -99,7 +104,10 @@ class AttachmentEditor extends HookConsumerWidget {
                 if (file == null) {
                   return;
                 }
-                onUpload(files, [NcXFile(file)]);
+                ref.read(notifier).upload(
+                  [NcXFile(file)],
+                  onUpdate,
+                );
               },
               icon: const Icon(Icons.photo_camera_rounded, size: iconSize),
             ),
@@ -113,7 +121,10 @@ class AttachmentEditor extends HookConsumerWidget {
                 if (file == null) {
                   return;
                 }
-                onUpload(files, [NcXFile(file)]);
+                ref.read(notifier).upload(
+                  [NcXFile(file)],
+                  onUpdate,
+                );
               },
               icon: const Icon(Icons.image_rounded, size: iconSize),
             ),
@@ -128,7 +139,7 @@ class AttachmentEditor extends HookConsumerWidget {
   static const kRename = PopupMenuAction.rename;
   static const kDelete = PopupMenuAction.delete;
 
-  List<MenuItemProvider> buildMenuItems(int index) {
+  List<MenuItemProvider> buildMenuItems(String id) {
     return [
       MenuItem(
         title: kDownload.name.capitalize(),
@@ -138,7 +149,7 @@ class AttachmentEditor extends HookConsumerWidget {
         ),
         userInfo: PopupMenuUserInfo(
           kDownload,
-          index,
+          id,
         ),
       ),
       MenuItem(
@@ -149,7 +160,7 @@ class AttachmentEditor extends HookConsumerWidget {
         ),
         userInfo: PopupMenuUserInfo(
           kRename,
-          index,
+          id,
         ),
       ),
       MenuItem(
@@ -160,32 +171,28 @@ class AttachmentEditor extends HookConsumerWidget {
         ),
         userInfo: PopupMenuUserInfo(
           kDelete,
-          index,
+          id,
         ),
       ),
     ];
   }
 
   List<Widget> buildChildren(
-    ValueNotifier<List<model.NcAttachedFile>> files,
-    bool Function() isMounted,
+    List<model.NcAttachedFile> files,
+    WidgetRef ref,
+    Refreshable<AttachedFiles> notifier,
   ) {
     final context = useContext();
 
-    final items = files.value.asMap().entries.map<Widget>((entry) {
-      final (index, file) = (entry.key, entry.value);
-
+    final items = files.map<Widget>((file) {
       final popupMenu = PopupMenu(
-        items: buildMenuItems(index),
+        items: buildMenuItems(file.id),
         onClickMenu: (item) {
           try {
             final userInfo = item.menuUserInfo as PopupMenuUserInfo;
-            // logger.info('userInfo: ${userInfo.toJson()}');
-            final (action, index) = (userInfo.action, userInfo.index);
 
-            switch (action) {
+            switch (userInfo.action) {
               case kDownload:
-                final file = files.value[index];
                 FileDownloader.downloadFile(
                   url: file.signedUrl(api.uri),
                   name: file.title,
@@ -206,19 +213,14 @@ class AttachmentEditor extends HookConsumerWidget {
                 );
                 context.loaderOverlay.show();
               case kRename:
-                final title = files.value[index].title;
+                // TODO: Implement rename logic.
+                final title = file.title;
                 showDialog(
                   context: context,
                   builder: (_) => FileRenameDialog(title),
                 );
               case kDelete:
-                // TODO: Implement a confirmation dialog.
-                final copy = [...files.value];
-                copy.removeAt(index);
-                files.value = copy;
-                onUpdate({
-                  column.title: files.value,
-                });
+                ref.read(notifier).delete(userInfo.id, onUpdate);
                 notifySuccess(context, message: 'Deleted');
             }
           } catch (e, s) {
@@ -286,25 +288,18 @@ class AttachmentEditor extends HookConsumerWidget {
       return content;
     }).toList();
 
-    items.insert(0, buildAttachButtons(files));
+    items.insert(0, buildAttachButtons(ref, notifier));
 
     return items;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final files = useState<List<model.NcAttachedFile>>([]);
-    final isMounted = useIsMounted();
+    final provider = attachedFilesProvider(initialValue, column.title);
+    final files = ref.watch(provider);
+    final notifier = provider.notifier;
 
-    useEffect(
-      () {
-        files.value = initialValue;
-        return null;
-      },
-      [initialValue],
-    );
-
-    final children = buildChildren(files, isMounted);
+    final children = buildChildren(files, ref, notifier);
     final size = MediaQuery.of(context).size;
 
     return ConstrainedBox(
