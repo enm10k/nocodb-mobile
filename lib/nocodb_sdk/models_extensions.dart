@@ -152,3 +152,11 @@ extension NcViewColumnListEx on List<NcViewColumn> {
     ).toList();
   }
 }
+
+extension NcAttachedFileEx on NcAttachedFile {
+  bool get isImage => mimetype.startsWith('image');
+
+  String signedUrl(Uri host) {
+    return host.replace(path: signedPath).toString();
+  }
+}

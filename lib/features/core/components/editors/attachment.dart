@@ -177,7 +177,6 @@ class AttachmentEditor extends HookConsumerWidget {
 
     final items = files.value.asMap().entries.map<Widget>((entry) {
       final (index, file) = (entry.key, entry.value);
-      final isImage = file.mimetype.startsWith('image');
 
       final popupMenu = PopupMenu(
         items: buildMenuItems(index),
@@ -191,7 +190,7 @@ class AttachmentEditor extends HookConsumerWidget {
               case kDownload:
                 final file = files.value[index];
                 FileDownloader.downloadFile(
-                  url: signedPathToUrl(file.signedPath),
+                  url: file.signedUrl(api.uri),
                   name: file.title,
                   onProgress: (String? fileName, double progress) {
                     logger.info('Downloading ${file.title}: $progress%');
@@ -231,7 +230,7 @@ class AttachmentEditor extends HookConsumerWidget {
       );
 
       final key = GlobalKey();
-      final content = isImage
+      final content = file.isImage
           ? Card(
               elevation: 2,
               child: InkWell(
