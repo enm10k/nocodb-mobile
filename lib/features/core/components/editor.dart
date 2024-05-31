@@ -152,15 +152,20 @@ class Editor extends HookConsumerWidget {
           type: DateTimeType.fromUITypes(column.uidt),
         );
       case UITypes.attachment:
-        final attachedFiles = (value ?? [])
-            .map<NcAttachedFile>(
-              (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
-            )
-            .toList();
-        return AttachmentEditor(
-          column: column,
-          onUpdate: onUpdate,
-          initialValue: attachedFiles,
+        return ProviderScope(
+          overrides: [
+            attachmentEditorProvider.overrideWith((ref) {
+              return (value ?? [])
+                  .map<NcAttachedFile>(
+                    (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
+                  )
+                  .toList();
+            }),
+          ],
+          child: AttachmentEditor(
+            column: column,
+            onUpdate: onUpdate,
+          ),
         );
       default:
         return TextEditor(

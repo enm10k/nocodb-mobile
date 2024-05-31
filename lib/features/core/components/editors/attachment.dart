@@ -12,6 +12,7 @@ import 'package:popup_menu/popup_menu.dart';
 import '../../../../common/extensions.dart';
 import '../../../../common/flash_wrapper.dart';
 import '../../../../common/logger.dart';
+import '../../../../nocodb_sdk/models.dart';
 import '../../../../nocodb_sdk/symbols.dart';
 import '../../providers/providers.dart';
 import '../dialog/file_rename_dialog.dart';
@@ -40,12 +41,10 @@ class PopupMenuUserInfo {
 class AttachmentEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
   final FnOnUpdate onUpdate;
-  final List<model.NcAttachedFile> initialValue;
   const AttachmentEditor({
     super.key,
     required this.column,
     required this.onUpdate,
-    required this.initialValue,
   });
 
   Future<dynamic> onUpload(
@@ -188,7 +187,7 @@ class AttachmentEditor extends HookConsumerWidget {
     final items = files.map<Widget>((file) {
       final popupMenu = PopupMenu(
         items: buildMenuItems(file.id),
-        onClickMenu: (item) {
+        onClickMenu: (item) async {
           try {
             final userInfo = item.menuUserInfo as PopupMenuUserInfo;
 
@@ -214,20 +213,28 @@ class AttachmentEditor extends HookConsumerWidget {
                 );
                 context.loaderOverlay.show();
               case kRename:
-                // TODO: Implement rename logic.
-                final title = file.title;
-                showDialog(
+                showDialog<String>(
                   context: context,
-                  builder: (_) => FileRenameDialog(title),
-                );
+                  builder: (_) => FileRenameDialog(file),
+                ).then((value) async {
+                  if (value == null) {
+                    return;
+                  }
+                  await ref.read(notifier).rename(userInfo.id, value, onUpdate);
+                });
+
               case kDelete:
-                ref.read(notifier).delete(userInfo.id, onUpdate);
-                notifySuccess(context, message: 'Deleted');
+                await ref.read(notifier).delete(userInfo.id, onUpdate);
+                if (context.mounted) {
+                  notifySuccess(context, message: 'Deleted');
+                }
             }
           } catch (e, s) {
             logger.severe(e);
             logger.severe(s);
-            notifyError(context, e, s);
+            if (context.mounted) {
+              notifyError(context, e, s);
+            }
           }
         },
         context: context,
@@ -289,18 +296,18 @@ class AttachmentEditor extends HookConsumerWidget {
       return content;
     }).toList();
 
-    items.insert(0, buildAttachButtons(ref, notifier));
-
-    return items;
+    return [buildAttachButtons(ref, notifier), ...items];
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final provider = attachedFilesProvider(initialValue, column.title);
+    final initialFiles = ref.watch(attachmentEditorProvider);
+    final provider = attachedFilesProvider(initialFiles, column.title);
     final files = ref.watch(provider);
     final notifier = provider.notifier;
 
     final children = buildChildren(files, ref, notifier);
+
     final size = MediaQuery.of(context).size;
 
     return ConstrainedBox(

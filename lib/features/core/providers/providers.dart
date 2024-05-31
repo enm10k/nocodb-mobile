@@ -541,34 +541,34 @@ class DataRow extends _$DataRow {
   }
 }
 
+final attachmentEditorProvider =
+    StateProvider<List<NcAttachedFile>>((ref) => throw UnimplementedError());
+
 @riverpod
 class AttachedFiles extends _$AttachedFiles {
   @override
-  List<NcAttachedFile> build(List<NcAttachedFile> files, String title) {
+  List<NcAttachedFile> build(List<NcAttachedFile> files, String columnTitle) {
     return files;
   }
 
   upload(List<NcFile> files, FnOnUpdate onUpdate) async {
     final newAttachedFiles = await api.dbStorageUpload(files);
-    final copy = [
+    state = [
       ...state,
       ...newAttachedFiles,
     ];
-    state = copy;
-    await onUpdate({title: state});
-  }
-
-  get(int index) {
-    return state[index];
+    await onUpdate({columnTitle: state});
   }
 
   delete(String id, FnOnUpdate onUpdate) async {
-    final copy = [...state];
-    copy.removeWhere((e) => e.id == id);
-    state = copy;
-    await onUpdate({title: state});
+    state = [...state].where((e) => e.id != id).toList();
+    await onUpdate({columnTitle: state});
   }
 
-  // TODO
-  rename() {}
+  rename(String id, String title, FnOnUpdate onUpdate) async {
+    state = [...state].map<NcAttachedFile>((e) {
+      return e.id == id ? e.copyWith(title: title) : e;
+    }).toList();
+    await onUpdate({columnTitle: state});
+  }
 }
