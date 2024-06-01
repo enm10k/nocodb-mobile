@@ -542,7 +542,8 @@ class DataRow extends _$DataRow {
 }
 
 @riverpod
-List<NcAttachedFile> attachmentEditor(AttachmentEditorRef ref) => throw UnimplementedError();
+List<NcAttachedFile> attachmentEditor(AttachmentEditorRef ref) =>
+    throw UnimplementedError();
 
 @riverpod
 class AttachedFiles extends _$AttachedFiles {

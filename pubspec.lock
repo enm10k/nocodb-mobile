@@ -342,14 +342,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.3.2"
-  flutter_file_downloader:
+  flutter_downloader:
     dependency: "direct main"
     description:
-      name: flutter_file_downloader
-      sha256: e36f1a23937c83b96003ecc48f3227acbd468a1ff26be87959cecd057222632a
+      name: flutter_downloader
+      sha256: "188d921f78471cb28ec2346bcf4045a27a516e384e2bfc9b4be12ae12d3ff8c8"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.1"
+    version: "1.11.7"
   flutter_hooks:
     dependency: "direct main"
     description:
@@ -737,7 +737,7 @@ packages:
     source: hosted
     version: "1.9.0"
   path_provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: c9e7d3a4cd1410877472158bee69963a4579f78b68c65a2b7d40d1a7a88bb161

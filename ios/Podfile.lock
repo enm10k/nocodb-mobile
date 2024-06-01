@@ -34,6 +34,8 @@ PODS:
     - DKImagePickerController/PhotoGallery
     - Flutter
   - Flutter (1.0.0)
+  - flutter_downloader (0.0.1):
+    - Flutter
   - flutter_secure_storage (6.0.0):
     - Flutter
   - image_picker_ios (0.0.1):
@@ -55,6 +57,7 @@ PODS:
 DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
+  - flutter_downloader (from `.symlinks/plugins/flutter_downloader/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -73,6 +76,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/file_picker/ios"
   Flutter:
     :path: Flutter
+  flutter_downloader:
+    :path: ".symlinks/plugins/flutter_downloader/ios"
   flutter_secure_storage:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
   image_picker_ios:
@@ -89,6 +94,7 @@ SPEC CHECKSUMS:
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: 09aa5ec1ab24135ccd7a1621c46c84134bfd6655
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  flutter_downloader: b7301ae057deadd4b1650dc7c05375f10ff12c39
   flutter_secure_storage: 23fc622d89d073675f2eaa109381aefbcf5a49be
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   path_provider_foundation: 3784922295ac71e43754bd15e0653ccfd36a147c

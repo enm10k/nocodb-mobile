@@ -1,12 +1,14 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:path/path.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:popup_menu/popup_menu.dart';
 
 import '../../../../common/extensions.dart';
@@ -139,6 +141,19 @@ class AttachmentEditor extends HookConsumerWidget {
   static const kRename = PopupMenuAction.rename;
   static const kDelete = PopupMenuAction.delete;
 
+// https://stackoverflow.com/questions/59501445/flutter-how-to-save-a-file-on-ios
+  Future<String?> getFileDownloadDirectory() async {
+    if (Platform.isIOS) {
+      final downloadDir = await getApplicationDocumentsDirectory();
+      return downloadDir.path;
+    } else if (Platform.isAndroid) {
+      final downloadDir = await getExternalStorageDirectory();
+      return downloadDir?.path;
+    } else {
+      throw Exception('Unsupported platform');
+    }
+  }
+
   List<MenuItemProvider> buildMenuItems(String id) {
     return [
       MenuItem(
@@ -193,25 +208,36 @@ class AttachmentEditor extends HookConsumerWidget {
 
             switch (userInfo.action) {
               case kDownload:
-                FileDownloader.downloadFile(
+                final downloadDir = await getFileDownloadDirectory();
+                logger.info('downloadDir: $downloadDir');
+                if (downloadDir == null) {
+                  const msg = 'Failed to get download directory.';
+                  logger.shout(msg);
+                  if (context.mounted) {
+                    notifyError(context, msg, null);
+                  }
+                  return;
+                }
+                FlutterDownloader.enqueue(
                   url: file.signedUrl(api.uri),
-                  name: file.title,
-                  onProgress: (String? fileName, double progress) {
-                    logger.info('Downloading ${file.title}: $progress%');
-                  },
-                  onDownloadCompleted: (String path) {
-                    final name = basename(path);
-                    notifySuccess(context, message: 'Downloaded $name.');
-                    context.loaderOverlay.hide();
-                  },
-                  onDownloadError: (String error) {
-                    logger.severe('Download error: $error');
-                    notifyError(context, error, null);
-                    context.loaderOverlay.hide();
-                    throw Exception(error);
-                  },
-                );
-                context.loaderOverlay.show();
+                  headers: {},
+                  savedDir: downloadDir,
+                  showNotification: true,
+                  openFileFromNotification: true,
+                ).then((value) {
+                  logger.info('Downloaded: $value');
+                  notifySuccess(context, message: 'Downloaded');
+                  context.loaderOverlay.hide();
+                }).catchError((e, s) {
+                  logger.severe(e);
+                  logger.severe(s);
+                  notifyError(context, e, s);
+                  context.loaderOverlay.hide();
+                });
+
+                if (context.mounted) {
+                  context.loaderOverlay.show();
+                }
               case kRename:
                 showDialog<String>(
                   context: context,
