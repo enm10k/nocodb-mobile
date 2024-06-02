@@ -13,7 +13,7 @@ class Attachment extends HookConsumerWidget {
     return files.map((file) {
       return file.isImage
           ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
               child: CachedNetworkImage(
                 imageUrl: file.signedUrl(api.uri),
                 placeholder: (context, url) =>
