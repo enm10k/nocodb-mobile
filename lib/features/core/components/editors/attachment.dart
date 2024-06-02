@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loader_overlay/loader_overlay.dart';
@@ -32,12 +31,18 @@ class PopupMenuUserInfo {
   final String id;
   PopupMenuUserInfo(this.action, this.id);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'action': action,
-      'id': id,
-    };
-  }
+  // Map<String, dynamic> toJson() {
+  //   return {
+  //     'action': action,
+  //     'id': id,
+  //   };
+  // }
+}
+
+enum FileUploadType {
+  fromStorage,
+  fromCamera,
+  fromGallery,
 }
 
 class AttachmentEditor extends HookConsumerWidget {
@@ -49,7 +54,103 @@ class AttachmentEditor extends HookConsumerWidget {
     required this.onUpdate,
   });
 
-  Widget buildAttachButtons(
+  Future<void> uploadFile(
+    BuildContext context,
+    WidgetRef ref,
+    Refreshable<AttachedFiles> notifier,
+    FileUploadType type,
+  ) async {
+    try {
+      context.loaderOverlay.show();
+      switch (type) {
+        case FileUploadType.fromStorage:
+          // TODO: Setting withReadStream: true might be better for memory footprint.
+          // However, a downside is that it may complicate the code, so the priority is not high.
+          final result = await FilePicker.platform.pickFiles(withData: true);
+          if (result == null) {
+            return;
+          }
+          ref.read(notifier).upload(
+                result.files.map((e) => NcPlatformFile(e)).toList(),
+                onUpdate,
+              );
+        case FileUploadType.fromCamera:
+        case FileUploadType.fromGallery:
+          final source = type == FileUploadType.fromCamera
+              ? ImageSource.camera
+              : ImageSource.gallery;
+          final file = await ImagePicker().pickImage(source: source);
+          if (file == null) {
+            return;
+          }
+          ref.read(notifier).upload(
+            [NcXFile(file)],
+            onUpdate,
+          );
+      }
+    } catch (e, s) {
+      logger.shout(e);
+      logger.shout(s);
+      if (context.mounted) {
+        notifyError(context, e, s);
+      }
+    } finally {
+      if (context.mounted) {
+        context.loaderOverlay.hide();
+      }
+    }
+  }
+
+  Future<void> downloadFile(
+    BuildContext context,
+    WidgetRef ref,
+    Refreshable<AttachedFiles> notifier,
+    String url,
+  ) async {
+    final downloadDir = await getFileDownloadDirectory();
+    logger.info('downloadDir: $downloadDir');
+    if (downloadDir == null) {
+      const msg = 'Failed to get download directory.';
+      logger.shout(msg);
+      if (context.mounted) {
+        notifyError(context, msg, null);
+      }
+      return;
+    }
+
+    if (context.mounted) {
+      notifySuccess(context, message: 'Download started.');
+    }
+
+    try {
+      if (context.mounted) {
+        context.loaderOverlay.show();
+      }
+      final downloadedFilename = FlutterDownloader.enqueue(
+        url: url,
+        savedDir: downloadDir,
+        showNotification: true,
+        openFileFromNotification: true,
+      );
+      logger.info('Downloaded: $downloadedFilename');
+      if (context.mounted) {
+        notifySuccess(context, message: 'Download finished.');
+      }
+    } catch (e, s) {
+      logger.severe(e);
+      logger.severe(s);
+      if (context.mounted) {
+        notifyError(context, e, s);
+      }
+    } finally {
+      if (context.mounted) {
+        context.loaderOverlay.hide();
+      }
+    }
+  }
+
+  Widget buildUploadButtons(
+    BuildContext context,
     WidgetRef ref,
     Refreshable<AttachedFiles> notifier,
   ) {
@@ -65,19 +166,8 @@ class AttachmentEditor extends HookConsumerWidget {
           Padding(
             padding: padding,
             child: IconButton(
-              onPressed: () async {
-                // TODO: Setting withReadStream: true might be better for memory footprint.
-                // However, a downside is that it may complicate the code, so the priority is not high.
-                final result =
-                    await FilePicker.platform.pickFiles(withData: true);
-                if (result == null) {
-                  return;
-                }
-
-                ref.read(notifier).upload(
-                      result.files.map((e) => NcPlatformFile(e)).toList(),
-                      onUpdate,
-                    );
+              onPressed: () {
+                uploadFile(context, ref, notifier, FileUploadType.fromStorage);
               },
               icon: const Icon(Icons.upload_file_rounded, size: iconSize),
             ),
@@ -85,16 +175,8 @@ class AttachmentEditor extends HookConsumerWidget {
           Padding(
             padding: padding,
             child: IconButton(
-              onPressed: () async {
-                final file =
-                    await ImagePicker().pickImage(source: ImageSource.camera);
-                if (file == null) {
-                  return;
-                }
-                ref.read(notifier).upload(
-                  [NcXFile(file)],
-                  onUpdate,
-                );
+              onPressed: () {
+                uploadFile(context, ref, notifier, FileUploadType.fromCamera);
               },
               icon: const Icon(Icons.photo_camera_rounded, size: iconSize),
             ),
@@ -102,16 +184,8 @@ class AttachmentEditor extends HookConsumerWidget {
           Padding(
             padding: padding,
             child: IconButton(
-              onPressed: () async {
-                final file =
-                    await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (file == null) {
-                  return;
-                }
-                ref.read(notifier).upload(
-                  [NcXFile(file)],
-                  onUpdate,
-                );
+              onPressed: () {
+                uploadFile(context, ref, notifier, FileUploadType.fromGallery);
               },
               icon: const Icon(Icons.image_rounded, size: iconSize),
             ),
@@ -139,7 +213,7 @@ class AttachmentEditor extends HookConsumerWidget {
     }
   }
 
-  List<MenuItemProvider> buildMenuItems(String id) {
+  List<MenuItemProvider> buildPopupMenuItems(String id) {
     return [
       MenuItem(
         title: kDownload.name.capitalize(),
@@ -177,49 +251,85 @@ class AttachmentEditor extends HookConsumerWidget {
     ];
   }
 
+  Widget buildImageCard(
+    NcAttachedFile file,
+    PopupMenu popupMenu,
+    GlobalKey key,
+  ) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        key: key,
+        onTap: () {
+          popupMenu.show(widgetKey: key);
+        },
+        child: SizedBox(
+          width: 80,
+          height: 80,
+          child: CachedNetworkImage(
+            imageUrl: file.signedUrl(api.uri),
+            placeholder: (context, url) => const Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ),
+            errorWidget: (context, url, error) => const Icon(Icons.error),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildFileCard(
+    NcAttachedFile file,
+    PopupMenu popupMenu,
+    GlobalKey key,
+  ) {
+    return Card(
+      key: key,
+      elevation: 4,
+      child: InkWell(
+        onTap: () {
+          popupMenu.show(widgetKey: key);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              const SizedBox(
+                width: 72,
+                height: 72,
+                child: Icon(Icons.description_outlined, size: 48),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  file.title,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Widget> buildChildren(
     List<model.NcAttachedFile> files,
+    BuildContext context,
     WidgetRef ref,
     Refreshable<AttachedFiles> notifier,
   ) {
-    final context = useContext();
-
     final items = files.map<Widget>((file) {
       final popupMenu = PopupMenu(
-        items: buildMenuItems(file.id),
+        items: buildPopupMenuItems(file.id),
         onClickMenu: (item) async {
           try {
             final userInfo = item.menuUserInfo as PopupMenuUserInfo;
 
             switch (userInfo.action) {
               case kDownload:
-                final downloadDir = await getFileDownloadDirectory();
-                logger.info('downloadDir: $downloadDir');
-                if (downloadDir == null) {
-                  const msg = 'Failed to get download directory.';
-                  logger.shout(msg);
-                  if (context.mounted) {
-                    notifyError(context, msg, null);
-                  }
-                  return;
-                }
-                if (context.mounted) {
-                  notifySuccess(context, message: 'Download started.');
-                }
-                FlutterDownloader.enqueue(
-                  url: file.signedUrl(api.uri),
-                  headers: {},
-                  savedDir: downloadDir,
-                  showNotification: true,
-                  openFileFromNotification: true,
-                ).then((value) {
-                  logger.info('Downloaded: $value');
-                  notifySuccess(context, message: 'Download finished.');
-                }).catchError((e, s) {
-                  logger.severe(e);
-                  logger.severe(s);
-                  notifyError(context, e, s);
-                });
+                downloadFile(context, ref, notifier, file.signedUrl(api.uri));
               case kRename:
                 showDialog<String>(
                   context: context,
@@ -249,62 +359,12 @@ class AttachmentEditor extends HookConsumerWidget {
       );
 
       final key = GlobalKey();
-      final content = file.isImage
-          ? Card(
-              elevation: 2,
-              child: InkWell(
-                key: key,
-                onTap: () {
-                  popupMenu.show(widgetKey: key);
-                },
-                child: SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: CachedNetworkImage(
-                    imageUrl: file.signedUrl(api.uri),
-                    placeholder: (context, url) => const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator(),
-                    ),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
-                  ),
-                ),
-              ),
-            )
-          : Card(
-              key: key,
-              elevation: 4,
-              child: InkWell(
-                onTap: () {
-                  popupMenu.show(widgetKey: key);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      const SizedBox(
-                        width: 72,
-                        height: 72,
-                        child: Icon(Icons.description_outlined, size: 48),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          file.title,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-
-      return content;
+      return file.isImage
+          ? buildImageCard(file, popupMenu, key)
+          : buildFileCard(file, popupMenu, key);
     }).toList();
 
-    return [buildAttachButtons(ref, notifier), ...items];
+    return [buildUploadButtons(context, ref, notifier), ...items];
   }
 
   @override
@@ -314,7 +374,7 @@ class AttachmentEditor extends HookConsumerWidget {
     final files = ref.watch(provider);
     final notifier = provider.notifier;
 
-    final children = buildChildren(files, ref, notifier);
+    final children = buildChildren(files, context, ref, notifier);
 
     final size = MediaQuery.of(context).size;
 

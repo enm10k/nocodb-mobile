@@ -743,7 +743,7 @@ class _Api {
     final res = await http.Response.fromStream(await req.send());
     _logResponse(res);
 
-    final data = json.decode(res.body);
+    final data = _decodeWithAssert(res, expectedStatusCode: [200]);
     return data
         .map<NcAttachedFile>(
           (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
