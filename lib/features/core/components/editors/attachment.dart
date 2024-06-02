@@ -218,6 +218,9 @@ class AttachmentEditor extends HookConsumerWidget {
                   }
                   return;
                 }
+                if (context.mounted) {
+                  notifySuccess(context, message: 'Download started.');
+                }
                 FlutterDownloader.enqueue(
                   url: file.signedUrl(api.uri),
                   headers: {},
@@ -226,18 +229,12 @@ class AttachmentEditor extends HookConsumerWidget {
                   openFileFromNotification: true,
                 ).then((value) {
                   logger.info('Downloaded: $value');
-                  notifySuccess(context, message: 'Downloaded');
-                  context.loaderOverlay.hide();
+                  notifySuccess(context, message: 'Download finished.');
                 }).catchError((e, s) {
                   logger.severe(e);
                   logger.severe(s);
                   notifyError(context, e, s);
-                  context.loaderOverlay.hide();
                 });
-
-                if (context.mounted) {
-                  context.loaderOverlay.show();
-                }
               case kRename:
                 showDialog<String>(
                   context: context,
