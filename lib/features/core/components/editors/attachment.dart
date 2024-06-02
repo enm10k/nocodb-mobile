@@ -49,22 +49,6 @@ class AttachmentEditor extends HookConsumerWidget {
     required this.onUpdate,
   });
 
-  Future<dynamic> onUpload(
-    ValueNotifier<List<model.NcAttachedFile>> files,
-    List<NcFile> newFiles,
-  ) async {
-    // TODO: Show loading indicator.
-    // TODO: Error handling.
-    final newAttachedFiles = await api.dbStorageUpload(newFiles);
-    files.value = [
-      ...files.value,
-      ...newAttachedFiles,
-    ];
-    await onUpdate({
-      column.title: files.value,
-    });
-  }
-
   Widget buildAttachButtons(
     WidgetRef ref,
     Refreshable<AttachedFiles> notifier,
@@ -82,7 +66,8 @@ class AttachmentEditor extends HookConsumerWidget {
             padding: padding,
             child: IconButton(
               onPressed: () async {
-                // TODO: Using withReadStream might be better for memory footprint.
+                // TODO: Setting withReadStream: true might be better for memory footprint.
+                // However, a downside is that it may complicate the code, so the priority is not high.
                 final result =
                     await FilePicker.platform.pickFiles(withData: true);
                 if (result == null) {
