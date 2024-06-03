@@ -66,7 +66,10 @@ class AttachmentEditor extends HookConsumerWidget {
         case FileUploadType.fromStorage:
           // TODO: Setting withReadStream: true might be better for memory footprint.
           // However, a downside is that it may complicate the code, so the priority is not high.
-          final result = await FilePicker.platform.pickFiles(withData: true);
+          final result = await FilePicker.platform.pickFiles(
+            withData: true,
+            allowMultiple: true,
+          );
           if (result == null) {
             return;
           }
