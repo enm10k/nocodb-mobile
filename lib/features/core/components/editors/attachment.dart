@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loader_overlay/loader_overlay.dart';
@@ -48,7 +51,7 @@ enum FileUploadType {
 class AttachmentEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
   final FnOnUpdate onUpdate;
-  const AttachmentEditor({
+  AttachmentEditor({
     super.key,
     required this.column,
     required this.onUpdate,
@@ -358,6 +361,14 @@ class AttachmentEditor extends HookConsumerWidget {
     return [buildUploadButtons(context, ref, notifier), ...items];
   }
 
+  static String portName = 'downloader_send_port';
+  ReceivePort port = ReceivePort();
+  @pragma('vm:entry-point')
+  static void downloadCallback(String id, int status, int progress) {
+    final SendPort? send = IsolateNameServer.lookupPortByName(portName);
+    send?.send([id, status, progress]);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final initialFiles = ref.watch(attachmentEditorProvider);
@@ -368,6 +379,32 @@ class AttachmentEditor extends HookConsumerWidget {
     final children = buildChildren(files, context, ref, notifier);
 
     final size = MediaQuery.of(context).size;
+
+    useEffect(
+      () {
+        IsolateNameServer.registerPortWithName(port.sendPort, portName);
+        logger.info('IsolateNameServer.registerPortWithName: $portName');
+        port.listen((dynamic message) {
+          final list = message as List<Object>;
+          // final id = list[0] as String;
+          final statusId = list[1] as int;
+          final status = DownloadTaskStatus.values[statusId];
+          // final progress = list[2] as int;
+          // logger.info('downloadCallback: $id, $status, $progress');
+          logger.info('downloadCallback: $status');
+          if (DownloadTaskStatus.complete == status) {
+            notifySuccess(context, message: 'Download completed.');
+          }
+        });
+
+        FlutterDownloader.registerCallback(downloadCallback);
+        return () {
+          IsolateNameServer.removePortNameMapping(portName);
+          logger.info('IsolateNameServer.removePortNameMapping: $portName');
+        };
+      },
+      [],
+    );
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: size.width),
