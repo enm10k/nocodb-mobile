@@ -108,7 +108,7 @@ class AttachmentEditor extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     Refreshable<AttachedFiles> notifier,
-    String url,
+    NcAttachedFile file,
   ) async {
     final downloadDir = await getFileDownloadDirectory();
     logger.info('downloadDir: $downloadDir');
@@ -121,35 +121,23 @@ class AttachmentEditor extends HookConsumerWidget {
       return;
     }
 
-    if (context.mounted) {
+    FlutterDownloader.enqueue(
+      url: file.signedUrl(api.uri),
+      fileName: file.title,
+      savedDir: downloadDir,
+      showNotification: true,
+      openFileFromNotification: true,
+      saveInPublicStorage: true,
+    ).then((value) {
+      logger.info('Download started: $value');
       notifySuccess(context, message: 'Download started.');
-    }
-
-    try {
-      if (context.mounted) {
-        context.loaderOverlay.show();
-      }
-      final downloadedFilename = FlutterDownloader.enqueue(
-        url: url,
-        savedDir: downloadDir,
-        showNotification: true,
-        openFileFromNotification: true,
-      );
-      logger.info('Downloaded: $downloadedFilename');
-      if (context.mounted) {
-        notifySuccess(context, message: 'Download finished.');
-      }
-    } catch (e, s) {
+    }).onError((e, s) {
       logger.severe(e);
       logger.severe(s);
       if (context.mounted) {
         notifyError(context, e, s);
       }
-    } finally {
-      if (context.mounted) {
-        context.loaderOverlay.hide();
-      }
-    }
+    });
   }
 
   Widget buildUploadButtons(
@@ -332,7 +320,7 @@ class AttachmentEditor extends HookConsumerWidget {
 
             switch (userInfo.action) {
               case kDownload:
-                downloadFile(context, ref, notifier, file.signedUrl(api.uri));
+                downloadFile(context, ref, notifier, file);
               case kRename:
                 showDialog<String>(
                   context: context,
