@@ -540,3 +540,36 @@ class DataRow extends _$DataRow {
     });
   }
 }
+
+@riverpod
+List<NcAttachedFile> attachmentEditor(AttachmentEditorRef ref) =>
+    throw UnimplementedError();
+
+@riverpod
+class AttachedFiles extends _$AttachedFiles {
+  @override
+  List<NcAttachedFile> build(List<NcAttachedFile> files, String columnTitle) {
+    return files;
+  }
+
+  upload(List<NcFile> files, FnOnUpdate onUpdate) async {
+    final newAttachedFiles = await api.dbStorageUpload(files);
+    state = [
+      ...state,
+      ...newAttachedFiles,
+    ];
+    await onUpdate({columnTitle: state});
+  }
+
+  delete(String id, FnOnUpdate onUpdate) async {
+    state = [...state].where((e) => e.id != id).toList();
+    await onUpdate({columnTitle: state});
+  }
+
+  rename(String id, String title, FnOnUpdate onUpdate) async {
+    state = [...state].map<NcAttachedFile>((e) {
+      return e.id == id ? e.copyWith(title: title) : e;
+    }).toList();
+    await onUpdate({columnTitle: state});
+  }
+}

@@ -208,7 +208,7 @@ class NcTable with _$NcTable {
     required String title,
     required List<NcTableColumn> columns,
     @JsonKey(name: 'columnsById')
-        required Map<String, NcTableColumn> columnsById,
+    required Map<String, NcTableColumn> columnsById,
     required List<NcView> views,
   }) = _NcTable;
 
@@ -277,4 +277,17 @@ class NcSortList with _$NcSortList {
 
   factory NcSortList.fromJson(Map<String, dynamic> json) =>
       _$NcSortListFromJson(json);
+}
+
+@freezed
+class NcAttachedFile with _$NcAttachedFile {
+  const factory NcAttachedFile({
+    required String path,
+    required String title,
+    required String mimetype,
+    required String signedPath,
+  }) = _NcAttachedFile;
+
+  factory NcAttachedFile.fromJson(Map<String, dynamic> json) =>
+      _$NcAttachedFileFromJson(json);
 }

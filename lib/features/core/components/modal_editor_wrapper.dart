@@ -20,6 +20,7 @@ class ModalEditorWrapper extends HookConsumerWidget {
     return [
       TextButton(
         onPressed: () {
+          Navigator.pop(context);
           RowEditorRoute(id: rowId).push(context);
         },
         child: const Text(

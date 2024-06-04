@@ -110,6 +110,7 @@ class ChildList extends HookConsumerWidget {
             children: [
               TextButton(
                 onPressed: () {
+                  Navigator.pop(context);
                   RowEditorRoute(id: rowId).push(context);
                 },
                 child: const Text('Expand record'),

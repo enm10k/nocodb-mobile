@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../nocodb_sdk/models.dart';
 import '/nocodb_sdk/models.dart' as model;
 import '../../../common/flash_wrapper.dart';
 import '../../../common/logger.dart';
 import '../../../nocodb_sdk/symbols.dart';
 import '../pages/row_editor.dart';
 import '../providers/providers.dart';
+import 'editors/attachment.dart';
 import 'editors/checkbox.dart';
 import 'editors/datetime.dart';
 import 'editors/link_to_another_record.dart';
@@ -148,6 +150,22 @@ class Editor extends HookConsumerWidget {
           onUpdate: onUpdate,
           initialValue: value,
           type: DateTimeType.fromUITypes(column.uidt),
+        );
+      case UITypes.attachment:
+        return ProviderScope(
+          overrides: [
+            attachmentEditorProvider.overrideWith((ref) {
+              return (value ?? [])
+                  .map<NcAttachedFile>(
+                    (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
+                  )
+                  .toList();
+            }),
+          ],
+          child: AttachmentEditor(
+            column: column,
+            onUpdate: onUpdate,
+          ),
         );
       default:
         return TextEditor(

@@ -100,7 +100,7 @@ enum DateTimeType {
 
 class DateTimeEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
-  final Function(Map<String, dynamic>) onUpdate;
+  final FnOnUpdate onUpdate;
   final dynamic initialValue;
   final DateTimeType type;
   const DateTimeEditor({
