@@ -126,9 +126,16 @@ extension NcTableEx on NcTable {
   List<NcTableColumn> get requiredColumns =>
       columns.where((column) => column.rqd).toList();
 
-  bool isReadyToSave(List<String> keys) => requiredColumns
-      .where((c) => c.cdf == null)
-      .every((column) => keys.contains(column.title));
+  bool isReadyToSave(List<String> keys) {
+    // TODO: The condition for excluding columns needs improvement.
+    if (requiredColumns.where((c) => c.ai != true).isEmpty) {
+      return true;
+    }
+
+    return requiredColumns
+        .where((c) => c.cdf == null)
+        .every((column) => keys.contains(column.title));
+  }
 }
 
 extension NcViewColumnEx on NcViewColumn {
