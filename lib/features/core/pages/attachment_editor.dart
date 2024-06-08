@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +17,8 @@ import '../../../common/logger.dart';
 import '../../../nocodb_sdk/client.dart';
 import '../../../nocodb_sdk/models.dart';
 import '../../../nocodb_sdk/symbols.dart';
+import '../components/attachment_file_card.dart';
+import '../components/attachment_image_card.dart';
 import '../components/dialog/file_rename_dialog.dart';
 import '../providers/providers.dart';
 
@@ -49,9 +50,9 @@ enum FileUploadType {
 class AttachmentEditorPage extends HookConsumerWidget {
   final String rowId;
   final String columnTitle;
-  const AttachmentEditorPage(this.rowId, this.columnTitle, {super.key});
+  AttachmentEditorPage(this.rowId, this.columnTitle, {super.key});
 
-  // TODO: Fix the lifetime issue.
+  // TODO: Fix lifetime issue.
   // There is a possibility that the file upload will continue even after the screen is closed,
   // and there is a concern that the lifetime of onUpdate might expire when the file upload is complete.
   Future<void> uploadFile(
@@ -197,70 +198,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
     ];
   }
 
-  Widget buildImageCard(
-    NcAttachedFile file,
-    PopupMenu popupMenu,
-    GlobalKey key,
-  ) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        key: key,
-        onTap: () {
-          popupMenu.show(widgetKey: key);
-        },
-        child: SizedBox(
-          width: 80,
-          height: 80,
-          child: CachedNetworkImage(
-            imageUrl: file.signedUrl(api.uri),
-            placeholder: (context, url) => const Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(),
-            ),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildFileCard(
-    NcAttachedFile file,
-    PopupMenu popupMenu,
-    GlobalKey key,
-  ) {
-    return Card(
-      key: key,
-      elevation: 4,
-      child: InkWell(
-        onTap: () {
-          popupMenu.show(widgetKey: key);
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            children: [
-              const SizedBox(
-                width: 64,
-                height: 64,
-                child: Icon(Icons.description_outlined, size: 48),
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  file.title,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static GlobalKey fabState = GlobalKey<ExpandableFabState>();
+  GlobalKey fabState = GlobalKey<ExpandableFabState>();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -296,6 +234,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
           );
     }
 
+    // TODO: Adjust the design when files is empty.
     final files = (row[columnTitle] ?? [])
         .map<NcAttachedFile>(
           (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
@@ -328,6 +267,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
         ),
         children: [
           FloatingActionButton(
+            heroTag: 'upload_from_storage',
             onPressed: () {
               uploadFile(
                 context,
@@ -340,6 +280,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
             child: const Icon(Icons.upload_file_rounded, size: 32),
           ),
           FloatingActionButton(
+            heroTag: 'upload_from_camera',
             onPressed: () {
               uploadFile(
                 context,
@@ -352,6 +293,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
             child: const Icon(Icons.photo_camera_rounded, size: 32),
           ),
           FloatingActionButton(
+            heroTag: 'upload_from_gallery',
             onPressed: () {
               uploadFile(
                 context,
@@ -410,10 +352,15 @@ class AttachmentEditorPage extends HookConsumerWidget {
               context: context,
             );
 
-            final key = GlobalKey();
             return file.isImage
-                ? buildImageCard(file, popupMenu, key)
-                : buildFileCard(file, popupMenu, key);
+                ? AttachmentImageCard(
+                    file,
+                    popupMenu: popupMenu,
+                  )
+                : AttachmentFileCard(
+                    file,
+                    popupMenu: popupMenu,
+                  );
           },
         ).toList(),
       ),
