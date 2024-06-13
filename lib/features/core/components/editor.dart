@@ -163,6 +163,7 @@ class Editor extends HookConsumerWidget {
             }),
           ],
           child: AttachmentEditor(
+            rowId: rowId,
             column: column,
             onUpdate: onUpdate,
           ),

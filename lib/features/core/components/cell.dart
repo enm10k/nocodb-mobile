@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../pages/attachment_editor.dart';
 import '/nocodb_sdk/symbols.dart';
 import '../../../common/flash_wrapper.dart';
 import '../../../nocodb_sdk/models.dart';
@@ -202,6 +203,14 @@ class Cell {
                 },
               );
         }
+      case UITypes.attachment:
+        return () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    AttachmentEditorPage(rowId!, column.title),
+              ),
+            );
       default:
         assert(
           value is String? ||
