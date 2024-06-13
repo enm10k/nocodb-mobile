@@ -149,6 +149,7 @@ class RowEditor extends HookConsumerWidget {
     required NcView view,
     required BuildContext context,
     required WidgetRef ref,
+    required ValueNotifier<String?> rowId,
   }) {
     return IconButton(
       onPressed: () {
@@ -169,20 +170,19 @@ class RowEditor extends HookConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
                     ref
                         .watch(dataRowsProvider.notifier)
-                        .deleteRow(rowId: rowId_!)
-                        .then(
-                          (_) => Navigator.pop(context),
-                        )
-                        .onError(
-                          (error, stackTrace) => notifyError(
-                            context,
-                            error,
-                            stackTrace,
-                          ),
-                        );
+                        .deleteRow(rowId: rowId.value!)
+                        .then((_) {
+                      int count = 0;
+                      Navigator.popUntil(context, (_) => 2 <= count++);
+                    }).onError(
+                      (error, stackTrace) => notifyError(
+                        context,
+                        error,
+                        stackTrace,
+                      ),
+                    );
                   },
                   child: const Text('OK'),
                 ),
@@ -239,7 +239,12 @@ class RowEditor extends HookConsumerWidget {
         ),
         actions: [
           if (rowId.value != null)
-            _buildDeleteButton(view: view, context: context, ref: ref),
+            _buildDeleteButton(
+              view: view,
+              context: context,
+              ref: ref,
+              rowId: rowId,
+            ),
         ],
         title: Text(title),
       ),

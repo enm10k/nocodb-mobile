@@ -153,7 +153,6 @@ class SearchQuery {
 final searchQueryFamily =
     StateProviderFamily<SearchQuery?, NcView>((ref, view) => null);
 
-// TODO: Separate to DataRows and PopulatedDataRows
 @riverpod
 class DataRows extends _$DataRows {
   late String? _pkName;

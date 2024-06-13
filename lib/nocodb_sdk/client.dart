@@ -220,7 +220,7 @@ class _Api {
       headers: {'Content-type': 'application/json'},
     );
     final data = _decode(res, expectedStatusCode: [200]);
-    final token = data['token'];
+    final {'token': token} = data;
     _client.addHeaders({'xc-auth': token});
     return token;
   }
