@@ -371,19 +371,6 @@ class DataRows extends _$DataRows {
   }
 }
 
-// @riverpod
-// class DataRow extends _$DataRow {
-//   @override
-//   Map<String, dynamic>? build(NcView view, String? rowId) {
-//     final table = ref.watch(tableProvider);
-//     final rows = ref.watch(dataRowsProvider(view)).valueOrNull;
-//
-//     return rows?.list.firstWhereOrNull((row) {
-//       return table?.getPkFromRow(row) == rowId;
-//     });
-//   }
-// }
-
 final rowNestedWhereProvider =
     StateProvider.family<Where?, NcTableColumn>((ref, column) => null);
 
