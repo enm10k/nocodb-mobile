@@ -73,7 +73,6 @@ class Cell {
   }
 
   Function() _checkboxOnTap() {
-    final view = ref.watch(viewProvider)!;
     return () {
       ref
           .watch(dataRowsProvider.notifier)

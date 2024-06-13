@@ -35,7 +35,6 @@ class Editor extends HookConsumerWidget {
 
   Widget _build(WidgetRef ref) {
     final context = useContext();
-    final view = ref.watch(viewProvider)!;
     final isMounted = useIsMounted();
 
     logger.info(
