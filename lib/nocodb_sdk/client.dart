@@ -248,7 +248,7 @@ class _Api {
       path: '/api/v1/db/meta/projects',
     );
     final data = _decode(res);
-    return model.NcProjectList.fromJson(data);
+    return model.NcProjectList.fromJson(data, model.fromJsonT<model.NcProject>);
   }
 
   Future<model.NcSimpleTableList> dbTableList({
@@ -405,7 +405,7 @@ class _Api {
       queryParameters: queryParameters,
     );
     final data = _decode(res);
-    return NcRowList.fromJson(data);
+    return NcRowList.fromJson(data, model.fromJsonT<NcRow>);
   }
 
   Future<Map<String, dynamic>> dbViewRowCreate({
@@ -455,7 +455,7 @@ class _Api {
       queryParameters: queryParameters,
     );
     final data = _decode(res);
-    return NcRowList.fromJson(data);
+    return NcRowList.fromJson(data, model.fromJsonT<NcRow>);
   }
 
   Map<String, dynamic> _buildQueryParameters({
@@ -501,7 +501,7 @@ class _Api {
       queryParameters: queryParameters,
     );
     final data = _decode(res);
-    return NcRowList.fromJson(data);
+    return NcRowList.fromJson(data, model.fromJsonT<NcRow>);
   }
 
   dbViewRowDelete({
@@ -564,12 +564,7 @@ class _Api {
       ],
     );
     final data = _decode(res);
-
-    // No longer needed due to NocoDB update
-    // testing patterns feature
-    // final {'sorts': list} = data;
-
-    return NcSortList.fromJson(data);
+    return NcSortList.fromJson(data, model.fromJsonT<model.NcSort>);
   }
 
   Future<void> dbTableSortCreate({
