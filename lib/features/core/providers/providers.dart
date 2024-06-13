@@ -1,5 +1,3 @@
-import 'dart:core';
-
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -228,7 +226,6 @@ class DataRows extends _$DataRows {
     return populate(rowList, table, tables.relationMap);
   }
 
-  // Future<void> fetchMore(NcPageInfo pageInfo) async {
   Future<void> loadNextPage() async {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
@@ -354,7 +351,33 @@ class DataRows extends _$DataRows {
     );
     return newRow;
   }
+
+  Map<String, dynamic> getRow(String? rowId) {
+    if (rowId == null) {
+      return {};
+    }
+
+    final table = ref.watch(tableProvider);
+    final rows = state.valueOrNull?.list ?? [];
+    return rows.firstWhereOrNull((row) {
+          return table?.getPkFromRow(row) == rowId;
+        }) ??
+        {};
+  }
 }
+
+// @riverpod
+// class DataRow extends _$DataRow {
+//   @override
+//   Map<String, dynamic>? build(NcView view, String? rowId) {
+//     final table = ref.watch(tableProvider);
+//     final rows = ref.watch(dataRowsProvider(view)).valueOrNull;
+//
+//     return rows?.list.firstWhereOrNull((row) {
+//       return table?.getPkFromRow(row) == rowId;
+//     });
+//   }
+// }
 
 final rowNestedWhereProvider =
     StateProvider.family<Where?, NcTableColumn>((ref, column) => null);
@@ -526,29 +549,21 @@ class SortList extends _$SortList {
 }
 
 @riverpod
-class DataRow extends _$DataRow {
+class Attachments extends _$Attachments {
   @override
-  Map<String, dynamic>? build(NcView view, String rowId) {
+  List<NcAttachedFile> build(NcView view, String? rowId, String columnTitle) {
+    final rows = ref.watch(dataRowsProvider(view)).valueOrNull?.list ?? [];
     final table = ref.watch(tableProvider);
-    final rows = ref.watch(dataRowsProvider(view)).valueOrNull;
-    if (table == null || rows == null) {
-      return null;
-    }
+    final row = rows.firstWhereOrNull((row) {
+          return table?.getPkFromRow(row) == rowId;
+        }) ??
+        {};
 
-    return rows.list.firstWhereOrNull((row) {
-      return table.getPkFromRow(row) == rowId;
-    });
-  }
-}
-
-@riverpod
-List<NcAttachedFile> attachmentEditor(AttachmentEditorRef ref) =>
-    throw UnimplementedError();
-
-@riverpod
-class AttachedFiles extends _$AttachedFiles {
-  @override
-  List<NcAttachedFile> build(List<NcAttachedFile> files, String columnTitle) {
+    final files = (row[columnTitle] ?? [])
+        .map<NcAttachedFile>(
+          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
+        )
+        .toList() as List<NcAttachedFile>;
     return files;
   }
 

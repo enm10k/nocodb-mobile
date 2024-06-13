@@ -18,7 +18,7 @@ dependencies:
   hooks_riverpod:
   intl:
   http:
-  data_table_2:
+  data_table_2: 2.5.12
   simple_logger:
   loader_overlay:
   badges:

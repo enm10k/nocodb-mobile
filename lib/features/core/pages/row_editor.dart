@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -86,8 +87,12 @@ class RowEditor extends HookConsumerWidget {
     required BuildContext context,
     required String? rowId,
   }) {
-    final rowData =
-        rowId != null ? ref.watch(dataRowProvider(view, rowId)) : {};
+    final rows = ref.watch(dataRowsProvider(view)).valueOrNull?.list ?? [];
+    final table = ref.watch(tableProvider);
+    final rowData = rows.firstWhereOrNull((row) {
+          return table?.getPkFromRow(row) == rowId;
+        }) ??
+        {};
 
     final viewColumns = ref.watch(viewColumnListProvider(view.id)).valueOrNull;
     assert(viewColumns != null);
@@ -113,7 +118,7 @@ class RowEditor extends HookConsumerWidget {
     );
 
     return [...rqds, ...optionals].map((c) {
-      final initialValue = rowData?[c.title];
+      final initialValue = rowData[c.title];
 
       return Column(
         children: [

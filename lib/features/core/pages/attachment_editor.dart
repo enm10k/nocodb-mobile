@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
@@ -58,7 +57,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
   Future<void> uploadFile(
     BuildContext context,
     WidgetRef ref,
-    Refreshable<AttachedFiles> notifier,
+    Refreshable<Attachments> notifier,
     FileUploadType type,
     FnOnUpdate onUpdate,
   ) async {
@@ -109,7 +108,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
   Future<void> downloadFile(
     BuildContext context,
     WidgetRef ref,
-    Refreshable<AttachedFiles> notifier,
+    Refreshable<Attachments> notifier,
     NcAttachedFile file,
   ) async {
     final downloadDir = await getFileDownloadDirectory();
@@ -202,26 +201,10 @@ class AttachmentEditorPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: Organize initialization.
-    // NOTE: The initialization process needs to be the same for both AttachmentEditor and AttachmentEditorPage.
-    // If they differ, file synchronization will be lost when navigating between the two components.
     final view = ref.watch(viewProvider);
     if (view == null) {
       return const SizedBox();
     }
-    final table = ref.watch(tableProvider);
-    final rows = ref.watch(dataRowsProvider(view)).valueOrNull;
-    if (table == null || rows == null) {
-      return const SizedBox();
-    }
-
-    final row = rows.list.firstWhereOrNull((row) {
-      return table.getPkFromRow(row) == rowId;
-    });
-    if (row == null) {
-      return const SizedBox();
-    }
-
     onUpdate(row) {
       final dataRowsNotifier = ref.read(dataRowsProvider(view).notifier);
       dataRowsNotifier
@@ -234,16 +217,9 @@ class AttachmentEditorPage extends HookConsumerWidget {
           );
     }
 
-    // TODO: Adjust the design when files is empty.
-    final files = (row[columnTitle] ?? [])
-        .map<NcAttachedFile>(
-          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
-        )
-        .toList() as List<NcAttachedFile>;
-    logger.info(files);
-
-    final provider = attachedFilesProvider(files, columnTitle);
+    final provider = attachmentsProvider(view, rowId, columnTitle);
     final notifier = provider.notifier;
+    final files = ref.watch(provider);
 
     return Scaffold(
       appBar: AppBar(

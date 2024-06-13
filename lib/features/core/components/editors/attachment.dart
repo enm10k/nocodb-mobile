@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -56,31 +55,11 @@ class AttachmentEditor extends HookConsumerWidget {
       );
     }
 
-    // TODO: Organize initialization.
-    // NOTE: The initialization process needs to be the same for both AttachmentEditor and AttachmentEditorPage.
-    // If they differ, file synchronization will be lost when navigating between the two components.
     final view = ref.watch(viewProvider);
     if (view == null) {
       return const SizedBox();
     }
-    final table = ref.watch(tableProvider);
-    final rows = ref.watch(dataRowsProvider(view)).valueOrNull;
-    if (table == null || rows == null) {
-      return const SizedBox();
-    }
-
-    final row = rows.list.firstWhereOrNull((row) {
-      return table.getPkFromRow(row) == rowId;
-    });
-    if (row == null) {
-      return const SizedBox();
-    }
-
-    final files = (row[column.title] ?? [])
-        .map<NcAttachedFile>(
-          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
-        )
-        .toList() as List<NcAttachedFile>;
+    final files = ref.watch(attachmentsProvider(view, rowId, column.title));
 
     return GestureDetector(
       onTap: () {
