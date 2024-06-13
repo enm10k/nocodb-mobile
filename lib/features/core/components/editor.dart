@@ -35,7 +35,6 @@ class Editor extends HookConsumerWidget {
 
   Widget _build(WidgetRef ref) {
     final context = useContext();
-    final isMounted = useIsMounted();
 
     logger.info(
       'column: ${column.title}, rqd: ${column.rqd}, rowId: $rowId, value: $value',
@@ -57,7 +56,7 @@ class Editor extends HookConsumerWidget {
                 )
                 .then(
               (_) {
-                if (isMounted()) {
+                if (context.mounted) {
                   notifySuccess(context, message: 'Updated.');
                 }
               },

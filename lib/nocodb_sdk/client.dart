@@ -98,19 +98,15 @@ class _Api {
     throw Exception(exception);
   }
 
-  dynamic _decode(http.Response res) {
-    return _decodeWithAssert(res);
-  }
-
   _logResponse(http.Response res) {
     logger.finer(
       '<= ${res.request?.method} ${res.request?.url.path} ${res.statusCode} ${res.body}',
     );
   }
 
-  dynamic _decodeWithAssert(
+  dynamic _decode(
     http.Response res, {
-    List<int>? expectedStatusCode,
+    List<int> expectedStatusCode = const [],
   }) {
     _logResponse(res);
 
@@ -118,8 +114,7 @@ class _Api {
         res.headers['content-type']?.contains('application/json') ?? false;
     if (isJson && res.body.isNotEmpty) {
       final data = json.decode(res.body);
-      if (expectedStatusCode != null &&
-          !expectedStatusCode.contains(res.statusCode)) {
+      if (!expectedStatusCode.contains(res.statusCode)) {
         if (data is Map) {
           throwExceptionIfKeyExists(key: 'msg', data: data);
           throwExceptionIfKeyExists(key: 'message', data: data);
@@ -224,7 +219,7 @@ class _Api {
       httpClient: http.Client(), // This function should use plain HTTP client.
       headers: {'Content-type': 'application/json'},
     );
-    final data = _decodeWithAssert(res, expectedStatusCode: [200]);
+    final data = _decode(res, expectedStatusCode: [200]);
     final token = data['token'];
     _client.addHeaders({'xc-auth': token});
     return token;
@@ -425,7 +420,7 @@ class _Api {
       ],
       data: json.encode(data),
     );
-    return _decodeWithAssert(res, expectedStatusCode: [200]);
+    return _decode(res, expectedStatusCode: [200]);
   }
 
   Future<model.NcRowList> dbTableRowNestedList({
@@ -543,7 +538,7 @@ class _Api {
       ],
       data: json.encode(data),
     );
-    return _decodeWithAssert(res, expectedStatusCode: [200]);
+    return _decode(res, expectedStatusCode: [200]);
   }
 
   // listFilters({required String viewId}) async {
@@ -660,7 +655,7 @@ class _Api {
         refRowId,
       ],
     );
-    final data = _decodeWithAssert(res, expectedStatusCode: [200]);
+    final data = _decode(res, expectedStatusCode: [200]);
     return data['msg'].toString();
   }
 
@@ -683,7 +678,7 @@ class _Api {
         refRowId,
       ],
     );
-    final data = _decodeWithAssert(res, expectedStatusCode: [200]);
+    final data = _decode(res, expectedStatusCode: [200]);
     return data['msg'].toString();
   }
 
@@ -729,8 +724,8 @@ class _Api {
 
     final req = http.MultipartRequest('POST', uri);
     req.headers.addAll({
+      ..._client._headers,
       'Content-type': 'multipart/form-data',
-      'xc-auth': _client._headers['xc-auth']!,
     });
 
     _addFilesToMultipartRequest(req, files);
@@ -738,7 +733,7 @@ class _Api {
     final res = await http.Response.fromStream(await req.send());
     _logResponse(res);
 
-    final data = _decodeWithAssert(res, expectedStatusCode: [200]);
+    final data = _decode(res, expectedStatusCode: [200]);
     return data
         .map<NcAttachedFile>(
           (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
