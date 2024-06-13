@@ -76,7 +76,7 @@ class Cell {
     final view = ref.watch(viewProvider)!;
     return () {
       ref
-          .watch(dataRowsProvider(view).notifier)
+          .watch(dataRowsProvider.notifier)
           .updateRow(
             rowId: rowId!,
             data: {column.title: value != true},
@@ -102,7 +102,7 @@ class Cell {
     required NcView view,
   }) {
     ref
-        .watch(dataRowsProvider(view).notifier)
+        .watch(dataRowsProvider.notifier)
         .updateRow(
           rowId: rowId,
           data: {title: value},

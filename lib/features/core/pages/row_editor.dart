@@ -87,7 +87,7 @@ class RowEditor extends HookConsumerWidget {
     required BuildContext context,
     required String? rowId,
   }) {
-    final rows = ref.watch(dataRowsProvider(view)).valueOrNull?.list ?? [];
+    final rows = ref.watch(dataRowsProvider).valueOrNull?.list ?? [];
     final table = ref.watch(tableProvider);
     final rowData = rows.firstWhereOrNull((row) {
           return table?.getPkFromRow(row) == rowId;
@@ -171,7 +171,7 @@ class RowEditor extends HookConsumerWidget {
                   onPressed: () {
                     Navigator.pop(context);
                     ref
-                        .watch(dataRowsProvider(view).notifier)
+                        .watch(dataRowsProvider.notifier)
                         .deleteRow(rowId: rowId_!)
                         .then(
                           (_) => Navigator.pop(context),
@@ -217,7 +217,7 @@ class RowEditor extends HookConsumerWidget {
 
       if (isReadyToSave) {
         // TODO: This should be passed to Editor as a callback of onUpdate,
-        ref.read(dataRowsProvider(view).notifier).createRow(next).then((row) {
+        ref.read(dataRowsProvider.notifier).createRow(next).then((row) {
           notifySuccess(context, message: 'Saved');
           final pk = tables.table.getPkFromRow(row);
           rowId.value = pk;

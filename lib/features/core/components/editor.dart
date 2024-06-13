@@ -44,14 +44,14 @@ class Editor extends HookConsumerWidget {
 
     final onUpdate = isNew
         ? (Map<String, dynamic> data) {
-            final form = ref.watch(formProvider);
+            final form = ref.read(formProvider);
             final newForm = {...form, ...data};
             logger.info('form updated: $newForm');
             ref.watch(formProvider.notifier).state = newForm;
           }
         : (data) {
             ref
-                .read(dataRowsProvider(view).notifier)
+                .read(dataRowsProvider.notifier)
                 .updateRow(
                   rowId: rowId!,
                   data: data,

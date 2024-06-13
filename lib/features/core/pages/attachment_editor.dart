@@ -206,7 +206,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
       return const SizedBox();
     }
     onUpdate(row) {
-      final dataRowsNotifier = ref.read(dataRowsProvider(view).notifier);
+      final dataRowsNotifier = ref.read(dataRowsProvider.notifier);
       dataRowsNotifier
           .updateRow(rowId: rowId, data: row)
           .then(

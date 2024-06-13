@@ -203,13 +203,14 @@ class DataRows extends _$DataRows {
   }
 
   @override
-  Future<NcRowList?> build(NcView view) async {
+  Future<NcRowList?> build() async {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
       return null;
     }
     final table = ref.watch(tableProvider)!;
     final tables = ref.watch(tablesProvider)!;
+    final view = ref.watch(viewProvider)!;
 
     // This provider should be updated every time sort is updated.
     // final _ = ref.watch(sortListProvider(view.id));
@@ -232,7 +233,8 @@ class DataRows extends _$DataRows {
       return;
     }
 
-    final tables = ref.watch(tablesProvider)!;
+    final tables = ref.read(tablesProvider)!;
+    final view = ref.read(viewProvider)!;
     final value = state.value;
     if (value == null) {
       assert(false);
@@ -267,6 +269,7 @@ class DataRows extends _$DataRows {
   Future<void> deleteRow({
     required String rowId,
   }) async {
+    final view = ref.read(viewProvider)!;
     await api.dbViewRowDelete(
       view: view,
       rowId: rowId,
@@ -297,6 +300,7 @@ class DataRows extends _$DataRows {
     required Map<String, dynamic> data,
   }) async {
     // The result doesn't contain related fields.
+    final view = ref.read(viewProvider)!;
     final result = await api.dbViewRowUpdate(
       view: view,
       rowId: rowId,
@@ -336,6 +340,7 @@ class DataRows extends _$DataRows {
   }
 
   Future<Map<String, dynamic>> createRow(Map<String, dynamic> row) async {
+    final view = ref.read(viewProvider)!;
     final newRow = await api.dbViewRowCreate(
       view: view,
       data: row,
@@ -552,7 +557,7 @@ class SortList extends _$SortList {
 class Attachments extends _$Attachments {
   @override
   List<NcAttachedFile> build(NcView view, String? rowId, String columnTitle) {
-    final rows = ref.watch(dataRowsProvider(view)).valueOrNull?.list ?? [];
+    final rows = ref.watch(dataRowsProvider).valueOrNull?.list ?? [];
     final table = ref.watch(tableProvider);
     final row = rows.firstWhereOrNull((row) {
           return table?.getPkFromRow(row) == rowId;

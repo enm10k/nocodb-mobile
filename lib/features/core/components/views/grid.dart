@@ -73,7 +73,7 @@ class Grid extends HookConsumerWidget {
     logger.info('view: ${view.title} has ${columns.length} columns(s).');
     logger.info('columns: ${columns.map((e) => e.title).toList()}');
 
-    final dataRow = ref.watch(dataRowsProvider(view)).valueOrNull;
+    final dataRow = ref.watch(dataRowsProvider).valueOrNull;
     final rows = dataRow?.list ?? [];
 
     if (columns.isEmpty) {
@@ -169,7 +169,7 @@ class Grid extends HookConsumerWidget {
       onEnd: () async {
         context.loaderOverlay.show();
 
-        await ref.read(dataRowsProvider(view).notifier).loadNextPage().then(
+        await ref.read(dataRowsProvider.notifier).loadNextPage().then(
               (_) => Future.delayed(
                 const Duration(milliseconds: 500),
                 () => context.loaderOverlay.hide(),
