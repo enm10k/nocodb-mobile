@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/utils.dart';
 import 'package:nocodb/features/core/components/cells/attachment.dart';
 import 'package:nocodb/features/core/components/cells/checkbox.dart';
 import 'package:nocodb/features/core/components/cells/datetime.dart';
@@ -264,9 +265,10 @@ class Cell {
           column: c,
         );
       case UITypes.links:
-        assert(value is int?);
-        final meta = value <= 1 ? c.singular : c.plural;
-        return SimpleText('$value $meta');
+        final number = cast<num>(value);
+        final unit = (number!= null && 1 < number) ? c.plural : c.singular;
+
+        return SimpleText('$number $unit');
       case UITypes.attachment:
         return Attachment(value);
       default:
