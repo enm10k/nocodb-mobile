@@ -16,6 +16,7 @@ import 'package:nocodb/features/core/components/editors/datetime.dart';
 import 'package:nocodb/features/core/components/modal_editor_wrapper.dart';
 import 'package:nocodb/features/core/pages/attachment_editor.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/utils.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
 import 'package:nocodb/nocodb_sdk/types.dart';
@@ -67,69 +68,32 @@ class Cell {
         onTap: _onTap(),
       );
 
-  Function() _checkboxOnTap() => () async {
-        await ref
-            .watch(dataRowsProvider.notifier)
-            .updateRow(
-              rowId: rowId!,
-              data: {column.title: value != true},
-            )
-            .then(
-              (final _) => notifySuccess(
-                context,
-                message: value == true ? 'Checked' : 'Unchecked',
-              ),
-            )
-            .onError(
-              (final error, final stackTrace) =>
-                  notifyError(context, error, stackTrace),
-            );
-      };
-
-  Future<void> update({
-    required final rowId,
-    required final title,
-    required final value,
-    required final BuildContext context,
-    required final WidgetRef ref,
-    required final NcView view,
-  }) async {
-    await ref
-        .watch(dataRowsProvider.notifier)
-        .updateRow(
-          rowId: rowId,
-          data: {title: value},
-        )
-        .then(
-          (final _) => notifySuccess(context, message: 'Updated'),
-        )
-        .onError(
-          (final error, final stackTrace) =>
-              notifyError(context, error, stackTrace),
-        );
-  }
-
   Function() _onTap() {
     if (rowId == null) {
       return () => notifyError(context, 'Table has no PK.', null);
     }
 
-    final view = ref.watch(viewProvider)!;
     updateWrapper(final String value) async {
-      await update(
-        rowId: rowId,
-        title: column.title,
-        value: value,
-        context: context,
-        ref: ref,
-        view: view,
-      );
+      await upsert(context, ref, rowId!, {
+        column.title: value,
+      });
     }
 
     switch (c.uidt) {
       case UITypes.checkbox:
         assert(value is bool?);
-        return _checkboxOnTap();
+        return () async {
+          await upsert(
+            context,
+            ref,
+            rowId,
+            {column.title: value != true},
+            onUpdate: (final _) => notifySuccess(
+              context,
+              message: value != true ? 'Checked' : 'Unchecked',
+            ),
+          );
+        };
       case UITypes.dateTime:
       case UITypes.date:
       case UITypes.time:
@@ -266,7 +230,7 @@ class Cell {
         );
       case UITypes.links:
         final number = cast<num>(value);
-        final unit = (number!= null && 1 < number) ? c.plural : c.singular;
+        final unit = (number != null && 1 < number) ? c.plural : c.singular;
 
         return SimpleText('$number $unit');
       case UITypes.attachment:

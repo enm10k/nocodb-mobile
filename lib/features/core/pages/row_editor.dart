@@ -5,14 +5,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/features/core/components/editor.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/utils.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
 import 'package:nocodb/routes.dart';
-
-final formProvider = StateProvider<Map<String, dynamic>>(
-  (final ref) => throw UnimplementedError(),
-);
 
 bool isEditable(final model.NcTableColumn column, final bool isNew) =>
     !((!isNew && column.pk) || column.ai);
@@ -203,29 +200,37 @@ class RowEditor extends HookConsumerWidget {
 
     final rowId = useState<String?>(rowId_);
 
-    ref.listen(formProvider, (final previous, final next) async {
-      if (next.isEmpty) {
-        return;
-      }
+    ref
+      ..listen(newIdProvider, (final previous, final next) async {
+        if (previous == null && next != null) {
+          rowId.value = next;
 
-      final keys = next.keys.toList();
-      final isReadyToSave = tables.table.isReadyToSave(keys);
+          ref.read(newIdProvider.notifier).state = null;
+        }
+      })
+      ..listen(formProvider, (final previous, final next) async {
+        if (next.isEmpty) {
+          return;
+        }
 
-      if (isReadyToSave) {
-        // TODO: This should be passed to Editor as a callback of onUpdate,
-        await ref
-            .read(dataRowsProvider.notifier)
-            .createRow(next)
-            .then((final row) {
-          notifySuccess(context, message: 'Saved');
-          final pk = tables.table.getPkFromRow(row);
-          rowId.value = pk;
-        }).onError(
-          (final error, final stackTrace) =>
-              notifyError(context, error, stackTrace),
-        );
-      }
-    });
+        final keys = next.keys.toList();
+        final isReadyToSave = tables.table.isReadyToSave(keys);
+
+        if (isReadyToSave) {
+          // TODO: This should be passed to Editor as a callback of onUpdate,
+          await ref
+              .read(dataRowsProvider.notifier)
+              .createRow(next)
+              .then((final row) {
+            notifySuccess(context, message: 'Saved');
+            final pk = tables.table.getPkFromRow(row);
+            rowId.value = pk;
+          }).onError(
+            (final error, final stackTrace) =>
+                notifyError(context, error, stackTrace),
+          );
+        }
+      });
 
     final title = '${tables.table.title} - ${rowId.value ?? ''}';
 

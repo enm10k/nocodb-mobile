@@ -25,36 +25,7 @@ class AttachmentEditor extends HookConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    if (rowId == null) {
-      return InkWell(
-        onTap: () async {
-          await showDialog(
-            context: context,
-            builder: (final context) => AlertDialog(
-              title: const Text('Record is not yet created.'),
-              content: const Text(
-                'Once record is created, you can attach files.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        },
-        child: buildEmpty(),
-      );
-    }
-
-    final view = ref.watch(viewProvider);
-    if (view == null) {
-      return const SizedBox();
-    }
-    final files = ref.watch(attachmentsProvider(view, rowId, column.title));
+    final files = ref.watch(attachmentsProvider(rowId, column.title));
 
     return GestureDetector(
       onTap: () async {
@@ -62,7 +33,7 @@ class AttachmentEditor extends HookConsumerWidget {
           context,
           MaterialPageRoute(
             builder: (final context) =>
-                AttachmentEditorPage(rowId!, column.title),
+                AttachmentEditorPage(rowId, column.title),
           ),
         );
       },

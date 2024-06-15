@@ -121,8 +121,11 @@ extension NcTableEx on NcTable {
     return column.isHasMay ? pks.join('___') : pks.firstOrNull;
   }
 
-  dynamic getPkFromRow(final Map<String, dynamic> row) =>
-      getPksFromRow(row).firstOrNull;
+  dynamic getPkFromRow(final Map<String, dynamic> row) {
+    final pk = getPksFromRow(row).firstOrNull;
+    assert(pk != null, 'getPkFromRow failed');
+    return pk;
+  }
 
   List<NcTableColumn> get requiredColumns =>
       columns.where((final column) => column.rqd).toList();

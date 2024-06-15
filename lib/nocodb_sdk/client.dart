@@ -681,7 +681,9 @@ class _Api {
   }
 
   Future<http.MultipartFile> _createMultipartFile(
-      final NcFile file, final String field,) async {
+    final NcFile file,
+    final String field,
+  ) async {
     switch (file) {
       case NcPlatformFile(platformFile: final platformFile):
         final mimeType = lookupMimeType(platformFile.path!);

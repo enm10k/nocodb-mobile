@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/components/editors/attachment.dart';
 import 'package:nocodb/features/core/components/editors/checkbox.dart';
@@ -12,8 +11,8 @@ import 'package:nocodb/features/core/components/editors/link_to_another_record_b
 import 'package:nocodb/features/core/components/editors/multi_select.dart';
 import 'package:nocodb/features/core/components/editors/single_select.dart';
 import 'package:nocodb/features/core/components/editors/text_editor.dart';
-import 'package:nocodb/features/core/pages/row_editor.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/utils.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
@@ -38,44 +37,22 @@ class Editor extends HookConsumerWidget {
       'column: ${column.title}, rqd: ${column.rqd}, rowId: $rowId, value: $value',
     );
 
-    final onUpdate = isNew
-        ? (final Map<String, dynamic> data) {
-            final form = ref.read(formProvider);
-            final newForm = {...form, ...data};
-            logger.info('form updated: $newForm');
-            ref.watch(formProvider.notifier).state = newForm;
-          }
-        : (final data) async {
-            await ref
-                .read(dataRowsProvider.notifier)
-                .updateRow(
-                  rowId: rowId!,
-                  data: data,
-                )
-                .then(
-              (final _) {
-                if (context.mounted) {
-                  notifySuccess(context, message: 'Updated.');
-                }
-              },
-            ).onError(
-              (final error, final stackTrace) =>
-                  notifyError(context, error, stackTrace),
-            );
-          };
+    onUpdateWrapper(final NcRow row) async {
+      await upsert(context, ref, rowId, row);
+    }
 
     switch (column.uidt) {
       case UITypes.checkbox:
         return CheckboxEditor(
           column: column,
           initialValue: value == true,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       case UITypes.singleSelect:
         return SingleSelectEditor(
           column: column,
           initialValue: value,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       case UITypes.multiSelect:
         final List<String> initialValue =
@@ -83,12 +60,12 @@ class Editor extends HookConsumerWidget {
         return MultiSelectEditor(
           column: column,
           initialValue: initialValue..sort(),
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       case UITypes.number:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
           maxLines: null,
@@ -100,7 +77,7 @@ class Editor extends HookConsumerWidget {
       case UITypes.decimal:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
           maxLines: null,
@@ -113,7 +90,7 @@ class Editor extends HookConsumerWidget {
       case UITypes.longText:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
           maxLines: null,
@@ -144,20 +121,30 @@ class Editor extends HookConsumerWidget {
       case UITypes.time:
         return DateTimeEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           type: DateTimeType.fromUITypes(column.uidt),
         );
       case UITypes.attachment:
+        // return ProviderScope(
+        //   overrides: [
+        //     formProvider.overrideWith((final ref) => {}),
+        //   ],
+        //   child: AttachmentEditor(
+        //     rowId: rowId,
+        //     column: column,
+        //     onUpdate: onUpdateWrapper,
+        //   ),
+        // );
         return AttachmentEditor(
           rowId: rowId,
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       default:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
         );

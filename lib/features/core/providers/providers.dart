@@ -293,7 +293,7 @@ class DataRows extends _$DataRows {
     );
   }
 
-  Future<void> updateRow({
+  Future<NcRow> updateRow({
     required final String rowId,
     required final Map<String, dynamic> data,
   }) async {
@@ -313,10 +313,11 @@ class DataRows extends _$DataRows {
 
     if (currentRows == null) {
       logger.warning('currentRows is null');
-      return;
+      return {};
     }
 
-    final newRows = currentRows.map((final row) {
+    Map<String, dynamic> newRow = {};
+    final newRows = currentRows.map<Map<String, dynamic>>((final row) {
       if (row[_pkName].toString() != rowId) {
         return row;
       }
@@ -324,8 +325,8 @@ class DataRows extends _$DataRows {
       for (final updatedField in updatedFields) {
         row.update(updatedField, (final _) => result[updatedField]);
       }
-
-      return row;
+      newRow = row;
+      return newRow;
     }).toList();
 
     state = AsyncData(
@@ -334,7 +335,7 @@ class DataRows extends _$DataRows {
         pageInfo: state.value?.pageInfo,
       ),
     );
-    return;
+    return newRow;
   }
 
   Future<Map<String, dynamic>> createRow(final Map<String, dynamic> row) async {
@@ -541,7 +542,6 @@ class SortList extends _$SortList {
 class Attachments extends _$Attachments {
   @override
   List<NcAttachedFile> build(
-    final NcView view,
     final String? rowId,
     final String columnTitle,
   ) {

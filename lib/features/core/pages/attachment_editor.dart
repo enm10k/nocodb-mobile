@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loader_overlay/loader_overlay.dart';
@@ -14,11 +16,143 @@ import 'package:nocodb/features/core/components/attachment_file_card.dart';
 import 'package:nocodb/features/core/components/attachment_image_card.dart';
 import 'package:nocodb/features/core/components/dialog/file_rename_dialog.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/utils.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
-import 'package:nocodb/nocodb_sdk/symbols.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:popup_menu/popup_menu.dart';
+
+GlobalKey fabState = GlobalKey<ExpandableFabState>();
+
+class ExFab extends HookConsumerWidget {
+  const ExFab(this.rowId, this.columnTitle, {super.key});
+  final ValueNotifier<String?> rowId;
+  final String columnTitle;
+
+  Future<void> uploadFile(
+    final BuildContext context,
+    final WidgetRef ref,
+    final FileUploadType type,
+  ) async {
+    try {
+      final notifier = attachmentsProvider(rowId.value, columnTitle).notifier;
+      Future<void> onUpdateWrapper(final NcRow row) async => upsert(
+            context,
+            ref,
+            rowId.value,
+            row,
+            updateForm: false,
+            onCreate: (final row) {
+              final table = ref.read(tableProvider);
+              final pk = table?.getPkFromRow(row);
+              if (pk! == null) {
+                return;
+              }
+              rowId.value = pk;
+
+              // Notify new pk to RowEditor
+              ref.read(newIdProvider.notifier).state = pk;
+              notifySuccess(context, message: 'Saved.');
+            },
+          );
+
+      context.loaderOverlay.show();
+      switch (type) {
+        case FileUploadType.fromStorage:
+          // TODO: Setting withReadStream: true might be better for memory footprint.
+          // However, a downside is that it may complicate the code, so the priority is not high.
+          final result = await FilePicker.platform.pickFiles(
+            withData: true,
+            allowMultiple: true,
+          );
+          if (result == null) {
+            return;
+          }
+          ref.read(notifier).upload(
+                result.files.map(NcPlatformFile.new).toList(),
+                onUpdateWrapper,
+              );
+        case FileUploadType.fromCamera:
+        case FileUploadType.fromGallery:
+          final source = type == FileUploadType.fromCamera
+              ? ImageSource.camera
+              : ImageSource.gallery;
+          final file = await ImagePicker().pickImage(source: source);
+          if (file == null) {
+            return;
+          }
+          ref.read(notifier).upload(
+            [NcXFile(file)],
+            onUpdateWrapper,
+          );
+      }
+    } catch (e, s) {
+      logger
+        ..shout(e)
+        ..shout(s);
+      if (context.mounted) {
+        notifyError(context, e, s);
+      }
+    } finally {
+      if (context.mounted) {
+        context.loaderOverlay.hide();
+      }
+    }
+  }
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) =>
+      ExpandableFab(
+        type: ExpandableFabType.fan,
+        distance: 100,
+        key: fabState,
+        openButtonBuilder: RotateFloatingActionButtonBuilder(
+          child: const Icon(Icons.arrow_upward_rounded),
+          fabSize: ExpandableFabSize.regular,
+          shape: const CircleBorder(),
+        ),
+        closeButtonBuilder: DefaultFloatingActionButtonBuilder(
+          child: const Icon(Icons.close),
+          fabSize: ExpandableFabSize.small,
+          shape: const CircleBorder(),
+        ),
+        children: [
+          FloatingActionButton(
+            heroTag: 'upload_from_storage',
+            onPressed: () async {
+              await uploadFile(
+                context,
+                ref,
+                FileUploadType.fromStorage,
+              );
+            },
+            child: const Icon(Icons.upload_file_rounded, size: 32),
+          ),
+          FloatingActionButton(
+            heroTag: 'upload_from_camera',
+            onPressed: () async {
+              await uploadFile(
+                context,
+                ref,
+                FileUploadType.fromCamera,
+              );
+            },
+            child: const Icon(Icons.photo_camera_rounded, size: 32),
+          ),
+          FloatingActionButton(
+            heroTag: 'upload_from_gallery',
+            onPressed: () async {
+              await uploadFile(
+                context,
+                ref,
+                FileUploadType.fromGallery,
+              );
+            },
+            child: const Icon(Icons.image_rounded, size: 32),
+          ),
+        ],
+      );
+}
 
 enum PopupMenuAction {
   download,
@@ -46,69 +180,16 @@ enum FileUploadType {
 }
 
 class AttachmentEditorPage extends HookConsumerWidget {
-  AttachmentEditorPage(this.rowId, this.columnTitle, {super.key});
-  final String rowId;
+  const AttachmentEditorPage(this.rowId, this.columnTitle, {super.key});
+  final String? rowId;
   final String columnTitle;
 
   // TODO: Fix lifetime issue.
   // There is a possibility that the file upload will continue even after the screen is closed,
   // and there is a concern that the lifetime of onUpdate might expire when the file upload is complete.
-  Future<void> uploadFile(
-    final BuildContext context,
-    final WidgetRef ref,
-    final Refreshable<Attachments> notifier,
-    final FileUploadType type,
-    final FnOnUpdate onUpdate,
-  ) async {
-    try {
-      context.loaderOverlay.show();
-      switch (type) {
-        case FileUploadType.fromStorage:
-          // TODO: Setting withReadStream: true might be better for memory footprint.
-          // However, a downside is that it may complicate the code, so the priority is not high.
-          final result = await FilePicker.platform.pickFiles(
-            withData: true,
-            allowMultiple: true,
-          );
-          if (result == null) {
-            return;
-          }
-          ref.read(notifier).upload(
-                result.files.map(NcPlatformFile.new).toList(),
-                onUpdate,
-              );
-        case FileUploadType.fromCamera:
-        case FileUploadType.fromGallery:
-          final source = type == FileUploadType.fromCamera
-              ? ImageSource.camera
-              : ImageSource.gallery;
-          final file = await ImagePicker().pickImage(source: source);
-          if (file == null) {
-            return;
-          }
-          ref.read(notifier).upload(
-            [NcXFile(file)],
-            onUpdate,
-          );
-      }
-    } catch (e, s) {
-      logger
-        ..shout(e)
-        ..shout(s);
-      if (context.mounted) {
-        notifyError(context, e, s);
-      }
-    } finally {
-      if (context.mounted) {
-        context.loaderOverlay.hide();
-      }
-    }
-  }
-
   Future<void> downloadFile(
     final BuildContext context,
     final WidgetRef ref,
-    final Refreshable<Attachments> notifier,
     final NcAttachedFile file,
   ) async {
     final downloadDir = await getFileDownloadDirectory();
@@ -196,93 +277,21 @@ class AttachmentEditorPage extends HookConsumerWidget {
         ),
       ];
 
-  GlobalKey fabState = GlobalKey<ExpandableFabState>();
-
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final view = ref.watch(viewProvider);
-    if (view == null) {
-      return const SizedBox();
-    }
-    onUpdate(final row) async {
-      final dataRowsNotifier = ref.read(dataRowsProvider.notifier);
-      await dataRowsNotifier
-          .updateRow(rowId: rowId, data: row)
-          .then(
-            (final _) => notifySuccess(context, message: 'Updated'),
-          )
-          .onError(
-            (final error, final stackTrace) =>
-                notifyError(context, error, stackTrace),
-          );
-    }
-
-    final provider = attachmentsProvider(view, rowId, columnTitle);
+    final rowId_ = useState(rowId);
+    final provider = attachmentsProvider(rowId_.value, columnTitle);
     final notifier = provider.notifier;
     final files = ref.watch(provider);
 
+    Future<void> onUpdateWrapper(final NcRow row) async =>
+        upsert(context, ref, rowId_.value, row, updateForm: false);
     return Scaffold(
       appBar: AppBar(
         title: Text(columnTitle),
       ),
       floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: ExpandableFab(
-        type: ExpandableFabType.fan,
-        distance: 100,
-        key: fabState,
-        // fanAngle: 0,
-        openButtonBuilder: RotateFloatingActionButtonBuilder(
-          child: const Icon(Icons.arrow_upward_rounded),
-          fabSize: ExpandableFabSize.regular,
-          shape: const CircleBorder(),
-        ),
-        closeButtonBuilder: DefaultFloatingActionButtonBuilder(
-          child: const Icon(Icons.close),
-          fabSize: ExpandableFabSize.small,
-          shape: const CircleBorder(),
-        ),
-        children: [
-          FloatingActionButton(
-            heroTag: 'upload_from_storage',
-            onPressed: () async {
-              await uploadFile(
-                context,
-                ref,
-                notifier,
-                FileUploadType.fromStorage,
-                onUpdate,
-              );
-            },
-            child: const Icon(Icons.upload_file_rounded, size: 32),
-          ),
-          FloatingActionButton(
-            heroTag: 'upload_from_camera',
-            onPressed: () async {
-              await uploadFile(
-                context,
-                ref,
-                notifier,
-                FileUploadType.fromCamera,
-                onUpdate,
-              );
-            },
-            child: const Icon(Icons.photo_camera_rounded, size: 32),
-          ),
-          FloatingActionButton(
-            heroTag: 'upload_from_gallery',
-            onPressed: () async {
-              await uploadFile(
-                context,
-                ref,
-                notifier,
-                FileUploadType.fromGallery,
-                onUpdate,
-              );
-            },
-            child: const Icon(Icons.image_rounded, size: 32),
-          ),
-        ],
-      ),
+      floatingActionButton: ExFab(rowId_, columnTitle),
       body: GridView.count(
         crossAxisCount: 3,
         padding: const EdgeInsets.all(8),
@@ -297,7 +306,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
 
                   switch (userInfo.action) {
                     case kDownload:
-                      await downloadFile(context, ref, notifier, file);
+                      await downloadFile(context, ref, file);
                     case kRename:
                       await showDialog<String>(
                         context: context,
@@ -308,11 +317,13 @@ class AttachmentEditorPage extends HookConsumerWidget {
                         }
                         await ref
                             .read(notifier)
-                            .rename(userInfo.id, value, onUpdate);
+                            .rename(userInfo.id, value, onUpdateWrapper);
                       });
 
                     case kDelete:
-                      await ref.read(notifier).delete(userInfo.id, onUpdate);
+                      await ref
+                          .read(notifier)
+                          .delete(userInfo.id, onUpdateWrapper);
                       if (context.mounted) {
                         notifySuccess(context, message: 'Deleted');
                       }
