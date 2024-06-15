@@ -20,43 +20,47 @@ Future<void> upsert(
   final WidgetRef ref,
   final String? rowId,
   final NcRow row, {
+  // In an independent page other than RowEditor, you need to set `updateForm` to false.
   final bool updateForm = true,
-  final void Function(NcRow)? onCreate,
-  final void Function(NcRow)? onUpdate,
-  final void Function(Object?, StackTrace)? onError,
+  final void Function(NcRow)? onCreateCallback,
+  final void Function(NcRow)? onUpdateCallback,
+  final void Function(Object?, StackTrace)? onErrorCallback,
 }) async {
+  onError(final e, final s) => onErrorCallback != null
+      ? onErrorCallback(e, s)
+      : notifyError(context, e, s);
+
+  // Update the data if the rowId is not null.
   if (rowId != null) {
     final dataRowsNotifier = ref.read(dataRowsProvider.notifier);
     await dataRowsNotifier
         .updateRow(rowId: rowId, data: row)
         .then(
-          (final row) => onUpdate != null
-              ? onUpdate.call(row)
+          (final row) => onUpdateCallback != null
+              ? onUpdateCallback.call(row)
               : notifySuccess(context, message: 'Updated'),
         )
-        .onError(
-          (final e, final s) =>
-              onError != null ? onError(e, s) : notifyError(context, e, s),
-        );
+        .onError(onError);
     return;
   }
+
+  // update form
   if (updateForm) {
     final form = ref.read(formProvider);
     final newForm = {...form, ...row};
     logger.info('form updated: $newForm');
     ref.read(formProvider.notifier).state = newForm;
-  } else {
-    await ref
-        .read(dataRowsProvider.notifier)
-        .createRow(row)
-        .then(
-          (final row) => onCreate != null
-              ? onCreate.call(row)
-              : notifySuccess(context, message: 'Saved.'),
-        )
-        .onError(
-          (final e, final s) =>
-              onError != null ? onError(e, s) : notifyError(context, e, s),
-        );
+    return;
   }
+
+  // create
+  await ref
+      .read(dataRowsProvider.notifier)
+      .createRow(row)
+      .then(
+        (final row) => onCreateCallback != null
+            ? onCreateCallback.call(row)
+            : notifySuccess(context, message: 'Saved.'),
+      )
+      .onError(onError);
 }

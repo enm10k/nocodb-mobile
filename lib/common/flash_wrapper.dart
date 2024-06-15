@@ -18,6 +18,7 @@ notifySuccess(
   );
 }
 
+// TODO: Change to dialog?
 notifyError(
   final BuildContext context,
   final dynamic error,
@@ -31,6 +32,7 @@ notifyError(
   await context.showErrorBar(
     position: FlashPosition.top,
     duration: _errorDuration,
-    content: Text(error.toString()),
+    // content: Text('$error\n$stackTrace'),
+    content: Text('$error'),
   );
 }

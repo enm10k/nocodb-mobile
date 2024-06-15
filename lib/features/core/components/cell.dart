@@ -88,7 +88,7 @@ class Cell {
             ref,
             rowId,
             {column.title: value != true},
-            onUpdate: (final _) => notifySuccess(
+            onUpdateCallback: (final _) => notifySuccess(
               context,
               message: value != true ? 'Checked' : 'Unchecked',
             ),

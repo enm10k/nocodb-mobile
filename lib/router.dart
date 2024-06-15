@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/common/preferences.dart';
 import 'package:nocodb/common/settings.dart';
@@ -80,12 +81,20 @@ FutureOr<String?> redirect(
       );
 
       if (isAlive) {
-        final ok = await api.version(apiBaseUrl);
-        if (!ok) {
-          return const HomeRoute().location;
-        }
-        api.init(apiBaseUrl, authToken: authToken);
-        return const ProjectListRoute().location;
+        final result = await api.version(apiBaseUrl);
+        result.when(
+          ok: (final ok) {
+            if (!ok) {
+              if (!ok) {
+                return const HomeRoute().location;
+              }
+              api.init(apiBaseUrl, authToken: authToken);
+              return const ProjectListRoute().location;
+            }
+          },
+          ng: (final error, final stackTrace) =>
+              notifyError(context, error, stackTrace),
+        );
       }
     }
   } catch (e) {

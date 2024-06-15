@@ -42,7 +42,7 @@ class ExFab extends HookConsumerWidget {
             rowId.value,
             row,
             updateForm: false,
-            onCreate: (final row) {
+            onCreateCallback: (final row) {
               final table = ref.read(tableProvider);
               final pk = table?.getPkFromRow(row);
               if (pk! == null) {

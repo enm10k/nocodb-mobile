@@ -123,8 +123,14 @@ class SheetSelectorPage extends HookConsumerWidget {
             tabController.animateTo(index);
 
             final table = tables[index];
-            await api.dbTableRead(tableId: table.id).then((final table) {
-              ref.watch(viewProvider.notifier).set(table.views.first);
+            await api.dbTableRead(tableId: table.id).then((final result) {
+              result.when(
+                ok: (final table) {
+                  ref.watch(viewProvider.notifier).set(table.views.first);
+                },
+                ng: (final error, final stackTrace) =>
+                    notifyError(context, error, stackTrace),
+              );
             }).onError(
               (final error, final stackTrace) =>
                   notifyError(context, error, stackTrace),

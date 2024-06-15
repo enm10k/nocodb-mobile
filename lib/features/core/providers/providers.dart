@@ -31,11 +31,17 @@ Future<Map<String, NcTable>> getRelations(
 
   await Future.wait(
     table.foreignKeys.map((final fk) async {
-      await api.dbTableRead(tableId: fk).then((final relatedTable) {
-        logger.info(
-          'fetched relation. ${table.title}->${relatedTable.title}',
+      await api.dbTableRead(tableId: fk).then((final result) {
+        result.when(
+          ok: (final relatedTable) {
+            logger.info(
+              'fetched relation. ${table.title}->${relatedTable.title}',
+            );
+            relations[fk] = relatedTable;
+          },
+          ng: (final error, final stackTrace) =>
+              errorAdapter(error, stackTrace),
         );
-        relations[fk] = relatedTable;
       });
     }),
   );
@@ -52,40 +58,56 @@ class View extends _$View {
     if (view == null) {
       return;
     }
-    final newView = await api.dbViewUpdate(
+    (await api.dbViewUpdate(
       viewId: view.id,
       data: {
         'show_system_fields': show,
       },
-    );
-
-    state = newView;
+    ))
+        .when(ok: (final ok) => state = ok, ng: errorAdapter);
   }
 
   void set(final NcView view) => state = view;
 }
 
+FutureOr<T> errorAdapter<T>(final Object error, final StackTrace? stackTrace) {
+  if (stackTrace != null) {
+    Error.throwWithStackTrace(error, stackTrace);
+  } else {
+    throw error;
+  }
+}
+
 @riverpod
-Future<NcProjectList> projectList(final ProjectListRef ref) async =>
-    api.projectList();
+Future<NcList<NcProject>> projectList(final ProjectListRef ref) async {
+  final result = await api.projectList();
+  return result.when(
+    ok: (final ok) => ok,
+    // ng: (final error, final stackTrace) => errorAdapter(error, stackTrace),
+    ng: errorAdapter<NcList<NcProject>>,
+  );
+}
 
 @Riverpod(keepAlive: true)
 Future<NcSimpleTableList> tableList(
   final TableListRef ref,
   final String projectId,
 ) async =>
-    api.dbTableList(projectId: projectId);
+    (await api.dbTableList(projectId: projectId))
+        .when(ok: (final ok) => ok, ng: errorAdapter);
 
 @Riverpod(keepAlive: true)
 Future<ViewList> viewList(final ViewListRef ref, final String tableId) async =>
-    api.dbViewList(tableId: tableId);
+    (await api.dbViewList(tableId: tableId))
+        .when(ok: (final ok) => ok, ng: errorAdapter);
 
 @Riverpod(keepAlive: true)
 Future<List<NcViewColumn>> viewColumnList(
   final ViewColumnListRef ref,
   final String viewId,
 ) async =>
-    api.dbViewColumnList(viewId: viewId);
+    (await api.dbViewColumnList(viewId: viewId))
+        .when(ok: (final ok) => ok, ng: errorAdapter);
 
 // TODO: Move to proper file
 List<NcTableColumn> tablesToColumns(final NcTables tables) => [
@@ -216,12 +238,14 @@ class DataRows extends _$DataRows {
     final searchQuery = ref.watch(searchQueryFamily(view));
     logger.info('searchQuery: $searchQuery');
 
-    final rowList = await api.dbViewRowList(
+    return (await api.dbViewRowList(
       view: view,
       where: searchQuery,
+    ))
+        .when(
+      ok: (final rowList) => populate(rowList, table, tables.relationMap),
+      ng: errorAdapter,
     );
-
-    return populate(rowList, table, tables.relationMap);
   }
 
   Future<void> loadNextPage() async {
@@ -244,22 +268,26 @@ class DataRows extends _$DataRows {
     final searchQuery = ref.read(searchQueryFamily(view));
     logger.info('searchQuery: $searchQuery');
 
-    final newRowList = await api.dbViewRowList(
+    (await api.dbViewRowList(
       view: view,
       offset: pageInfo.page * pageInfo.pageSize,
       limit: pageInfo.pageSize,
       where: searchQuery,
-    );
-
-    state = AsyncData(
-      populate(
-        NcRowList(
-          list: [...currentRows, ...newRowList.list],
-          pageInfo: newRowList.pageInfo,
-        ),
-        tables.table,
-        tables.relationMap,
-      ),
+    ))
+        .when(
+      ok: (final newRowList) {
+        state = AsyncData(
+          populate(
+            NcRowList(
+              list: [...currentRows, ...newRowList.list],
+              pageInfo: newRowList.pageInfo,
+            ),
+            tables.table,
+            tables.relationMap,
+          ),
+        );
+      },
+      ng: errorAdapter,
     );
   }
 
@@ -306,54 +334,69 @@ class DataRows extends _$DataRows {
     );
     logger.info(result);
 
-    final updatedFields =
-        data.keys.where((final field) => result.keys.contains(field));
+    return (await api.dbViewRowUpdate(
+      view: view,
+      rowId: rowId,
+      data: data,
+    ))
+        .when(
+      ok: (final result) {
+        final updatedFields =
+            data.keys.where((final field) => result.keys.contains(field));
 
-    final currentRows = state.value?.list;
+        final currentRows = state.value?.list;
 
-    if (currentRows == null) {
-      logger.warning('currentRows is null');
-      return {};
-    }
+        if (currentRows == null) {
+          logger.warning('currentRows is null');
+          return {};
+        }
 
-    Map<String, dynamic> newRow = {};
-    final newRows = currentRows.map<Map<String, dynamic>>((final row) {
-      if (row[_pkName].toString() != rowId) {
-        return row;
-      }
+        Map<String, dynamic> newRow = {};
+        final newRows = currentRows.map<Map<String, dynamic>>((final row) {
+          if (row[_pkName].toString() != rowId) {
+            return row;
+          }
 
-      for (final updatedField in updatedFields) {
-        row.update(updatedField, (final _) => result[updatedField]);
-      }
-      newRow = row;
-      return newRow;
-    }).toList();
+          for (final updatedField in updatedFields) {
+            row.update(updatedField, (final _) => result[updatedField]);
+          }
+          newRow = row;
+          return newRow;
+        }).toList();
 
-    state = AsyncData(
-      NcRowList(
-        list: newRows,
-        pageInfo: state.value?.pageInfo,
-      ),
+        state = AsyncData(
+          NcRowList(
+            list: newRows,
+            pageInfo: state.value?.pageInfo,
+          ),
+        );
+        return newRow;
+      },
+      ng: errorAdapter,
     );
-    return newRow;
   }
 
   Future<Map<String, dynamic>> createRow(final Map<String, dynamic> row) async {
     final view = ref.read(viewProvider)!;
-    final newRow = await api.dbViewRowCreate(
+    return (await api.dbViewRowCreate(
       view: view,
       data: row,
+    ))
+        .when(
+      ok: ((final newRow) {
+        state = AsyncData(
+          NcRowList(
+            list: [
+              ...state.value?.list ?? [],
+              newRow,
+            ],
+            pageInfo: state.value?.pageInfo,
+          ),
+        );
+        return newRow;
+      }),
+      ng: errorAdapter,
     );
-    state = AsyncData(
-      NcRowList(
-        list: [
-          ...state.value?.list ?? [],
-          newRow,
-        ],
-        pageInfo: state.value?.pageInfo,
-      ),
-    );
-    return newRow;
   }
 
   Map<String, dynamic> getRow(final String? rowId) {
@@ -410,11 +453,12 @@ class RowNested extends _$RowNested {
     }
     final where = excluded ? ref.watch(rowNestedWhereProvider(column)) : null;
 
-    final result = await fn(column: column, rowId: rowId, where: where);
-
-    return (
-      _populate(result.list),
-      result.pageInfo!,
+    return (await fn(column: column, rowId: rowId, where: where)).when(
+      ok: (final result) => (
+        _populate(result.list),
+        result.pageInfo!,
+      ),
+      ng: errorAdapter,
     );
   }
 
@@ -436,13 +480,6 @@ class RowNested extends _$RowNested {
     final fn = excluded
         ? api.dbTableRowNestedChildrenExcludedList
         : api.dbTableRowNestedList;
-    final rowList = await fn(
-      column: column,
-      rowId: rowId,
-      offset: offset,
-      limit: limit,
-      where: where,
-    );
 
     if (column.isBelongsTo) {
       assert(
@@ -450,15 +487,24 @@ class RowNested extends _$RowNested {
         'excluded flag should be true for relation type belongsTo',
       );
     }
-
-    state = AsyncData(
-      (
-        [
-          ...list,
-          ..._populate(rowList.list),
-        ],
-        rowList.pageInfo,
+    (await fn(
+      column: column,
+      rowId: rowId,
+      offset: offset,
+      limit: limit,
+      where: where,
+    ))
+        .when(
+      ok: (final rowList) => state = AsyncData(
+        (
+          [
+            ...list,
+            ..._populate(rowList.list),
+          ],
+          rowList.pageInfo,
+        ),
       ),
+      ng: errorAdapter,
     );
   }
 
@@ -473,36 +519,43 @@ class RowNested extends _$RowNested {
 
   Future<String> remove({
     required final String refRowId,
-  }) async {
-    final msg = await api.dbTableRowNestedRemove(
-      column: column,
-      rowId: rowId,
-      refRowId: refRowId,
-    );
-
-    _invalidate();
-    return msg;
-  }
+  }) async =>
+      (await api.dbTableRowNestedRemove(
+        column: column,
+        rowId: rowId,
+        refRowId: refRowId,
+      ))
+          .when(
+        ok: (final msg) {
+          _invalidate();
+          return msg;
+        },
+        ng: errorAdapter,
+      );
 
   Future<String> link({
     required final refRowId,
-  }) async {
-    final msg = await api.dbTableRowNestedAdd(
-      column: column,
-      rowId: rowId,
-      refRowId: refRowId,
-    );
-
-    _invalidate();
-    return msg;
-  }
+  }) async =>
+      (await api.dbTableRowNestedAdd(
+        column: column,
+        rowId: rowId,
+        refRowId: refRowId,
+      ))
+          .when(
+        ok: (final msg) {
+          _invalidate();
+          return msg;
+        },
+        ng: errorAdapter,
+      );
 }
 
 @riverpod
 class SortList extends _$SortList {
   @override
   FutureOr<NcSortList?> build(final String viewId) async =>
-      api.dbTableSortList(viewId: viewId);
+      (await api.dbTableSortList(viewId: viewId))
+          .when(ok: (final ok) => ok, ng: errorAdapter);
 
   Future<void> create({
     required final String fkColumnId,
@@ -515,13 +568,14 @@ class SortList extends _$SortList {
       direction: direction,
     );
 
-    state = await AsyncValue.guard(() => api.dbTableSortList(viewId: viewId));
+    (await api.dbTableSortList(viewId: viewId))
+        .when(ok: (final ok) => state = AsyncValue.data(ok), ng: errorAdapter);
   }
 
   Future<void> delete(final String sortId) async {
     state = const AsyncLoading();
     await api.dbTableSortDelete(sortId: sortId);
-    state = await AsyncValue.guard(() => api.dbTableSortList(viewId: viewId));
+    ref.invalidateSelf();
   }
 
   Future<void> save({
@@ -534,7 +588,7 @@ class SortList extends _$SortList {
       fkColumnId: fkColumnId,
       direction: direction,
     );
-    state = await AsyncValue.guard(() => api.dbTableSortList(viewId: viewId));
+    ref.invalidateSelf();
   }
 }
 

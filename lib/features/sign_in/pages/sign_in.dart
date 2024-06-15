@@ -147,17 +147,23 @@ class SignInPage extends HookConsumerWidget {
               passwordController.text,
             )
                 .then((final authToken) async {
-              if (rememberMe.value) {
-                await settings.setEmail(emailController.text);
-                await settings.setRememberMe(rememberMe.value);
-              }
-
               // TODO: Need to rewrite Settings class. The following values should not be saved to the storage when rememberMe is false.
               await settings.setApiBaseUrl(apiUrlController.text);
-              await settings.setAuthToken(authToken);
-              if (context.mounted) {
-                const ProjectListRoute().go(context);
-              }
+              await authToken.when(
+                ok: (final token) async {
+                  if (rememberMe.value) {
+                    await settings.setEmail(emailController.text);
+                    await settings.setRememberMe(rememberMe.value);
+                    await settings.setAuthToken(token);
+                  }
+                  if (context.mounted) {
+                    const ProjectListRoute().go(context);
+                  }
+                },
+                ng: (final error, final stackTrace) {
+                  notifyError(context, error, stackTrace);
+                },
+              );
             }).onError(
               (final error, final stackTrace) =>
                   notifyError(context, error, stackTrace),

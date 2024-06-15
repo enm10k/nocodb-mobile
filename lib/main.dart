@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
@@ -37,7 +38,7 @@ void main() async {
   );
 }
 
-setUpProviderListeners(final WidgetRef ref) {
+setUpProviderListeners(final BuildContext context, final WidgetRef ref) {
   ref
     ..listen(projectProvider, (final previous, final next) async {
       logger.info('projectProvider is changed. prev: $previous, next: $next');
@@ -47,14 +48,23 @@ setUpProviderListeners(final WidgetRef ref) {
 
       // select first table when project is selected.
       await () async {
-        final tableList = await api.dbTableList(projectId: next.id);
-        final sTable = tableList.list.firstOrNull;
-        if (sTable == null) {
-          return;
-        }
-
-        final table = await api.dbTableRead(tableId: sTable.id);
-        ref.read(tableProvider.notifier).state = table;
+        (await api.dbTableList(projectId: next.id)).when(
+          ok: (final tableList) async {
+            final tableId = tableList.list.firstOrNull?.id;
+            if (tableId == null) {
+              return;
+            }
+            (await api.dbTableRead(tableId: tableId)).when(
+              ok: (final table) {
+                ref.read(tableProvider.notifier).state = table;
+              },
+              ng: (final error, final stackTrace) =>
+                  notifyError(context, error, stackTrace),
+            );
+          },
+          ng: (final error, final stackTrace) =>
+              notifyError(context, error, stackTrace),
+        );
       }();
     })
     ..listen(tableProvider, (final previous, final next) async {
@@ -76,13 +86,17 @@ setUpProviderListeners(final WidgetRef ref) {
       final view = ref.watch(viewProvider);
       // When a table is selected, update the view if necessary.
       if (view == null || view.fkModelId != table.id) {
-        await api.dbViewList(tableId: table.id).then((final viewList) {
-          final view = viewList.list.firstOrNull;
-          if (view == null) {
-            return;
-          }
-          ref.read(viewProvider.notifier).set(view);
-        });
+        (await api.dbViewList(tableId: table.id)).when(
+          ok: (final viewList) {
+            final view = viewList.list.firstOrNull;
+            if (view == null) {
+              return;
+            }
+            ref.read(viewProvider.notifier).set(view);
+          },
+          ng: (final error, final stackTrace) =>
+              notifyError(context, error, stackTrace),
+        );
       }
     })
     ..listen(viewProvider, (final previous, final next) async {
@@ -94,9 +108,11 @@ setUpProviderListeners(final WidgetRef ref) {
       // When a view is selected, update the table if necessary.
       final tableId = ref.watch(tableProvider)?.id;
       if (tableId != next.fkModelId) {
-        await api.dbTableRead(tableId: next.fkModelId).then((final table) {
-          ref.read(tableProvider.notifier).state = table;
-        });
+        (await api.dbTableRead(tableId: next.fkModelId)).when(
+          ok: (final table) => ref.read(tableProvider.notifier).state = table,
+          ng: (final error, final stackTrace) =>
+              notifyError(context, error, stackTrace),
+        );
       }
     });
 }
@@ -108,7 +124,7 @@ class App extends HookConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    setUpProviderListeners(ref); // TODO: Stop using ref.listen
+    setUpProviderListeners(context, ref); // TODO: Stop using ref.listen
     // No provider functionality is currently being used.
     final r = ref.watch(routerProvider);
 
