@@ -172,16 +172,22 @@ class Grid extends HookConsumerWidget {
         context.loaderOverlay.show();
 
         try {
+          if (ref.read(dataRowsProvider).valueOrNull?.pageInfo?.isLastPage ==
+              true) {
+            notifySuccess(context, message: 'This is the end of the table.');
+            context.loaderOverlay.hide();
+            return;
+          }
           await ref.read(dataRowsProvider.notifier).loadNextPage().then(
-                (final _) =>
-                Future.delayed(
+                (final _) => Future.delayed(
                   const Duration(milliseconds: 500),
-                      () => context.loaderOverlay.hide(),
+                  () => context.loaderOverlay.hide(),
                 ),
-          );
+              );
         } catch (e, s) {
-          logger..shout(e)
-          ..shout(s);
+          logger
+            ..shout(e)
+            ..shout(s);
           if (context.mounted) {
             notifyError(context, e, s);
           }

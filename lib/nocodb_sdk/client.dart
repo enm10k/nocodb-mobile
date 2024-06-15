@@ -680,38 +680,37 @@ class _Api {
     return data['msg'].toString();
   }
 
-  Future<void> _addFilesToMultipartRequest(
-    final http.MultipartRequest req,
-    final List<NcFile> files,
-  ) async {
-    for (final (index, file) in files.indexed) {
-      switch (file) {
-        case NcPlatformFile(platformFile: final platformFile):
-          if (platformFile.bytes == null || platformFile.path == null) {
-            continue;
-          }
-          final mimeType = lookupMimeType(platformFile.path!);
-          final multipartFile = http.MultipartFile.fromBytes(
-            'file_$index',
-            (platformFile.bytes) as List<int>,
-            filename: platformFile.name,
-            contentType:
-                MediaType.parse(mimeType ?? 'application/octet-stream'),
-          );
-          req.files.add(multipartFile);
-        case NcXFile(xFile: final xFile):
-          final mimeType = lookupMimeType(xFile.path);
-          final bytes = await xFile.readAsBytes();
-          final multipartFile = http.MultipartFile.fromBytes(
-            'file_$index',
-            bytes as List<int>,
-            filename: xFile.name,
-            contentType:
-                MediaType.parse(mimeType ?? 'application/octet-stream'),
-          );
-          req.files.add(multipartFile);
+  Future<http.MultipartFile> _createMultipartFile(
+      final NcFile file, final String field,) async {
+    switch (file) {
+      case NcPlatformFile(platformFile: final platformFile):
+        final mimeType = lookupMimeType(platformFile.path!);
+        return http.MultipartFile.fromBytes(
+          field,
+          (platformFile.bytes) as List<int>,
+          filename: platformFile.name,
+          contentType: MediaType.parse(mimeType ?? 'application/octet-stream'),
+        );
+      case NcXFile(xFile: final xFile):
+        final mimeType = lookupMimeType(xFile.path);
+        final bytes = await xFile.readAsBytes();
+        return http.MultipartFile.fromBytes(
+          field,
+          bytes as List<int>,
+          filename: xFile.name,
+          contentType: MediaType.parse(mimeType ?? 'application/octet-stream'),
+        );
+    }
+  }
+
+  bool _checkFileValid(final NcFile file) {
+    if (file is NcPlatformFile) {
+      final NcPlatformFile(:platformFile) = file;
+      if (platformFile.bytes == null || platformFile.path == null) {
+        return false;
       }
     }
+    return true;
   }
 
   Future<List<model.NcAttachedFile>> dbStorageUpload(
@@ -726,9 +725,14 @@ class _Api {
       'Content-type': 'multipart/form-data',
     });
 
-    await _addFilesToMultipartRequest(req, files);
-
+    files.asMap().forEach((final index, final file) async {
+      if (!_checkFileValid(file)) {
+        return;
+      }
+      req.files.add(await _createMultipartFile(file, 'field_$index'));
+    });
     final res = await http.Response.fromStream(await req.send());
+
     _logResponse(res);
 
     final data = _decode(res, expectedStatusCode: [200]);
