@@ -1,21 +1,20 @@
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import '/nocodb_sdk/client.dart';
-import '/nocodb_sdk/models.dart';
-import '/nocodb_sdk/symbols.dart';
-import '../../../common/logger.dart';
 
 part 'providers.g.dart';
 
-final projectProvider = StateProvider<NcProject?>((ref) => null);
+final projectProvider = StateProvider<NcProject?>((final ref) => null);
 
-final tableProvider = StateProvider<NcTable?>((ref) => null);
+final tableProvider = StateProvider<NcTable?>((final ref) => null);
 
-final tablesProvider = StateProvider<NcTables?>((ref) => null);
+final tablesProvider = StateProvider<NcTables?>((final ref) => null);
 
-final isLoadedProvider = Provider<bool>((ref) {
+final isLoadedProvider = Provider<bool>((final ref) {
   final table = ref.watch(tableProvider);
   final view = ref.watch(viewProvider);
   final tables = ref.watch(tablesProvider);
@@ -26,13 +25,13 @@ final isLoadedProvider = Provider<bool>((ref) {
 });
 
 Future<Map<String, NcTable>> getRelations(
-  NcTable table,
+  final NcTable table,
 ) async {
   final relations = <String, NcTable>{};
 
   await Future.wait(
-    table.foreignKeys.map((fk) async {
-      await api.dbTableRead(tableId: fk).then((relatedTable) {
+    table.foreignKeys.map((final fk) async {
+      await api.dbTableRead(tableId: fk).then((final relatedTable) {
         logger.info(
           'fetched relation. ${table.title}->${relatedTable.title}',
         );
@@ -46,11 +45,9 @@ Future<Map<String, NcTable>> getRelations(
 @Riverpod(keepAlive: true)
 class View extends _$View {
   @override
-  NcView? build() {
-    return null;
-  }
+  NcView? build() => null;
 
-  void showSystemFields(bool show) async {
+  void showSystemFields(final bool show) async {
     final view = state;
     if (view == null) {
       return;
@@ -65,47 +62,50 @@ class View extends _$View {
     state = newView;
   }
 
-  void set(NcView view) => state = view;
+  void set(final NcView view) => state = view;
 }
 
 @riverpod
-Future<NcProjectList> projectList(ProjectListRef ref) async =>
+Future<NcProjectList> projectList(final ProjectListRef ref) async =>
     api.projectList();
 
 @Riverpod(keepAlive: true)
-Future<NcSimpleTableList> tableList(TableListRef ref, String projectId) async =>
+Future<NcSimpleTableList> tableList(
+  final TableListRef ref,
+  final String projectId,
+) async =>
     api.dbTableList(projectId: projectId);
 
 @Riverpod(keepAlive: true)
-Future<ViewList> viewList(ViewListRef ref, String tableId) async =>
+Future<ViewList> viewList(final ViewListRef ref, final String tableId) async =>
     api.dbViewList(tableId: tableId);
 
 @Riverpod(keepAlive: true)
 Future<List<NcViewColumn>> viewColumnList(
-  ViewColumnListRef ref,
-  String viewId,
+  final ViewColumnListRef ref,
+  final String viewId,
 ) async =>
     api.dbViewColumnList(viewId: viewId);
 
 // TODO: Move to proper file
-List<NcTableColumn> tablesToColumns(NcTables tables) {
-  return [
-    ...tables.table.columns,
-    ...tables.relationMap.values.map((t) => t.columns).expand((v) => v),
-  ];
-}
+List<NcTableColumn> tablesToColumns(final NcTables tables) => [
+      ...tables.table.columns,
+      ...tables.relationMap.values
+          .map((final t) => t.columns)
+          .expand((final v) => v),
+    ];
 
 // TODO: Move to proper file
 List<NcTableColumn> rowsToTableColumns(
-  List<Map<String, dynamic>> rows,
-  Iterable<NcTableColumn> columns,
+  final List<Map<String, dynamic>> rows,
+  final Iterable<NcTableColumn> columns,
 ) {
   final titles = rows.firstOrNull?.keys ?? [];
   final columnsByTitle = Map.fromIterables(
-    columns.map((c) => c.title),
+    columns.map((final c) => c.title),
     columns,
   );
-  return titles.map((t) => columnsByTitle[t]).whereNotNull().toList();
+  return titles.map((final t) => columnsByTitle[t]).whereNotNull().toList();
 }
 
 @Riverpod()
@@ -113,7 +113,7 @@ class Fields extends _$Fields {
   static const debug = false;
 
   @override
-  Future<List<NcTableColumn>> build(NcView view) async {
+  Future<List<NcTableColumn>> build(final NcView view) async {
     final table = ref.watch(tableProvider);
     if (table == null) {
       return [];
@@ -121,12 +121,12 @@ class Fields extends _$Fields {
 
     return ref
         .watch(viewColumnListProvider(view.id).future)
-        .then((viewColumns) {
+        .then((final viewColumns) {
       final fields = viewColumns.getColumnsToShow(table, view)
-        ..sort((a, b) => a.order.compareTo(b.order));
+        ..sort((final a, final b) => a.order.compareTo(b.order));
       return fields
           .map(
-            (columns) => columns.toTableColumn(table.columns),
+            (final columns) => columns.toTableColumn(table.columns),
           )
           .whereNotNull()
           .toList();
@@ -135,33 +135,31 @@ class Fields extends _$Fields {
 }
 
 class SearchQuery {
-  final String columnName;
-  final String query;
-  final QueryOperator operator;
   const SearchQuery({
     required this.columnName,
     required this.operator,
     required this.query,
   });
+  final String columnName;
+  final String query;
+  final QueryOperator operator;
 
   @override
-  String toString() {
-    return '($columnName,$operator,$query)';
-  }
+  String toString() => '($columnName,$operator,$query)';
 }
 
 final searchQueryFamily =
-    StateProviderFamily<SearchQuery?, NcView>((ref, view) => null);
+    StateProviderFamily<SearchQuery?, NcView>((final ref, final view) => null);
 
 @riverpod
 class DataRows extends _$DataRows {
   late String? _pkName;
 
   dynamic _getForeignKeyPrimaryValue({
-    required Map<String, dynamic> row,
-    required String columnId,
-    required NcTable table,
-    required Map<String, NcTable> relations,
+    required final Map<String, dynamic> row,
+    required final String columnId,
+    required final NcTable table,
+    required final Map<String, NcTable> relations,
   }) {
     final parentColumn = table.getParentColumn(columnId);
     if (parentColumn == null) {
@@ -175,15 +173,15 @@ class DataRows extends _$DataRows {
   }
 
   NcRowList populate(
-    NcRowList rowList,
-    NcTable table,
-    Map<String, NcTable> relations,
+    final NcRowList rowList,
+    final NcTable table,
+    final Map<String, NcTable> relations,
   ) {
     final columns = rowsToTableColumns(rowList.list, table.columns);
     return rowList.copyWith(
       list: rowList.list
           .map(
-            (row) => {
+            (final row) => {
               // Use columns here instead of table.columns.
               // Using table.columns adds unnecessary columns.
               for (final column in columns)
@@ -266,7 +264,7 @@ class DataRows extends _$DataRows {
   }
 
   Future<void> deleteRow({
-    required String rowId,
+    required final String rowId,
   }) async {
     final view = ref.read(viewProvider)!;
     await api.dbViewRowDelete(
@@ -284,7 +282,8 @@ class DataRows extends _$DataRows {
       return;
     }
 
-    final newRows = currentRows.where((row) => row[_pkName] == rowId).toList();
+    final newRows =
+        currentRows.where((final row) => row[_pkName] == rowId).toList();
 
     state = AsyncData(
       NcRowList(
@@ -295,8 +294,8 @@ class DataRows extends _$DataRows {
   }
 
   Future<void> updateRow({
-    required String rowId,
-    required Map<String, dynamic> data,
+    required final String rowId,
+    required final Map<String, dynamic> data,
   }) async {
     // The result doesn't contain related fields.
     final view = ref.read(viewProvider)!;
@@ -308,7 +307,7 @@ class DataRows extends _$DataRows {
     logger.info(result);
 
     final updatedFields =
-        data.keys.where((field) => result.keys.contains(field));
+        data.keys.where((final field) => result.keys.contains(field));
 
     final currentRows = state.value?.list;
 
@@ -317,13 +316,13 @@ class DataRows extends _$DataRows {
       return;
     }
 
-    final newRows = currentRows.map((row) {
+    final newRows = currentRows.map((final row) {
       if (row[_pkName].toString() != rowId) {
         return row;
       }
 
       for (final updatedField in updatedFields) {
-        row.update(updatedField, (_) => result[updatedField]);
+        row.update(updatedField, (final _) => result[updatedField]);
       }
 
       return row;
@@ -338,7 +337,7 @@ class DataRows extends _$DataRows {
     return;
   }
 
-  Future<Map<String, dynamic>> createRow(Map<String, dynamic> row) async {
+  Future<Map<String, dynamic>> createRow(final Map<String, dynamic> row) async {
     final view = ref.read(viewProvider)!;
     final newRow = await api.dbViewRowCreate(
       view: view,
@@ -356,48 +355,47 @@ class DataRows extends _$DataRows {
     return newRow;
   }
 
-  Map<String, dynamic> getRow(String? rowId) {
+  Map<String, dynamic> getRow(final String? rowId) {
     if (rowId == null) {
       return {};
     }
 
     final table = ref.watch(tableProvider);
     final rows = state.valueOrNull?.list ?? [];
-    return rows.firstWhereOrNull((row) {
-          return table?.getPkFromRow(row) == rowId;
-        }) ??
+    return rows.firstWhereOrNull(
+          (final row) => table?.getPkFromRow(row) == rowId,
+        ) ??
         {};
   }
 }
 
-final rowNestedWhereProvider =
-    StateProvider.family<Where?, NcTableColumn>((ref, column) => null);
+final rowNestedWhereProvider = StateProvider.family<Where?, NcTableColumn>(
+  (final ref, final column) => null,
+);
 
 typedef PrimaryRecord = (String key, dynamic value);
 typedef PrimaryRecordList = (List<PrimaryRecord> list, NcPageInfo? pageInfo);
 
 @riverpod
 class RowNested extends _$RowNested {
-  List<PrimaryRecord> _populate(List<Map<String, dynamic>> list) {
-    return list
-        .map((row) {
-          final key = relation.getRefRowIdFromRow(column: column, row: row);
-          if (key == null) {
-            return null;
-          }
-          final value = relation.getPvFromRow(row);
-          return (key, value);
-        })
-        .whereNotNull()
-        .toList();
-  }
+  List<PrimaryRecord> _populate(final List<Map<String, dynamic>> list) => list
+      .map((final row) {
+        final key = relation.getRefRowIdFromRow(column: column, row: row);
+        if (key == null) {
+          return null;
+        }
+        final value = relation.getPvFromRow(row);
+        return (key, value);
+      })
+      .whereNotNull()
+      .toList();
 
   @override
   Future<PrimaryRecordList> build(
-    String rowId,
-    NcTableColumn column,
-    NcTable relation, {
-    excluded = false,
+    final String rowId,
+    final NcTableColumn column,
+    final NcTable relation, {
+    final excluded = false,
   }) async {
     final fn = excluded
         ? api.dbTableRowNestedChildrenExcludedList
@@ -464,15 +462,16 @@ class RowNested extends _$RowNested {
   }
 
   _invalidate() {
-    ref.invalidateSelf();
-    ref.invalidate(dataRowsProvider);
-    ref.invalidate(
-      rowNestedProvider(rowId, column, relation),
-    );
+    ref
+      ..invalidateSelf()
+      ..invalidate(dataRowsProvider)
+      ..invalidate(
+        rowNestedProvider(rowId, column, relation),
+      );
   }
 
   Future<String> remove({
-    required String refRowId,
+    required final String refRowId,
   }) async {
     final msg = await api.dbTableRowNestedRemove(
       column: column,
@@ -485,7 +484,7 @@ class RowNested extends _$RowNested {
   }
 
   Future<String> link({
-    required refRowId,
+    required final refRowId,
   }) async {
     final msg = await api.dbTableRowNestedAdd(
       column: column,
@@ -501,13 +500,12 @@ class RowNested extends _$RowNested {
 @riverpod
 class SortList extends _$SortList {
   @override
-  FutureOr<NcSortList?> build(String viewId) async {
-    return api.dbTableSortList(viewId: viewId);
-  }
+  FutureOr<NcSortList?> build(final String viewId) async =>
+      api.dbTableSortList(viewId: viewId);
 
   Future<void> create({
-    required String fkColumnId,
-    required SortDirectionTypes direction,
+    required final String fkColumnId,
+    required final SortDirectionTypes direction,
   }) async {
     state = const AsyncLoading();
     await api.dbTableSortCreate(
@@ -519,16 +517,16 @@ class SortList extends _$SortList {
     state = await AsyncValue.guard(() => api.dbTableSortList(viewId: viewId));
   }
 
-  Future<void> delete(String sortId) async {
+  Future<void> delete(final String sortId) async {
     state = const AsyncLoading();
     await api.dbTableSortDelete(sortId: sortId);
     state = await AsyncValue.guard(() => api.dbTableSortList(viewId: viewId));
   }
 
   Future<void> save({
-    required String sortId,
-    required String fkColumnId,
-    required SortDirectionTypes direction,
+    required final String sortId,
+    required final String fkColumnId,
+    required final SortDirectionTypes direction,
   }) async {
     await api.dbTableSortUpdate(
       sortId: sortId,
@@ -542,23 +540,27 @@ class SortList extends _$SortList {
 @riverpod
 class Attachments extends _$Attachments {
   @override
-  List<NcAttachedFile> build(NcView view, String? rowId, String columnTitle) {
+  List<NcAttachedFile> build(
+    final NcView view,
+    final String? rowId,
+    final String columnTitle,
+  ) {
     final rows = ref.watch(dataRowsProvider).valueOrNull?.list ?? [];
     final table = ref.watch(tableProvider);
-    final row = rows.firstWhereOrNull((row) {
-          return table?.getPkFromRow(row) == rowId;
-        }) ??
+    final row = rows.firstWhereOrNull(
+          (final row) => table?.getPkFromRow(row) == rowId,
+        ) ??
         {};
 
     final files = (row[columnTitle] ?? [])
         .map<NcAttachedFile>(
-          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
+          (final e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
         )
         .toList() as List<NcAttachedFile>;
     return files;
   }
 
-  upload(List<NcFile> files, FnOnUpdate onUpdate) async {
+  upload(final List<NcFile> files, final FnOnUpdate onUpdate) async {
     final newAttachedFiles = await api.dbStorageUpload(files);
     state = [
       ...state,
@@ -567,15 +569,17 @@ class Attachments extends _$Attachments {
     await onUpdate({columnTitle: state});
   }
 
-  delete(String id, FnOnUpdate onUpdate) async {
-    state = [...state].where((e) => e.id != id).toList();
+  delete(final String id, final FnOnUpdate onUpdate) async {
+    state = [...state].where((final e) => e.id != id).toList();
     await onUpdate({columnTitle: state});
   }
 
-  rename(String id, String title, FnOnUpdate onUpdate) async {
-    state = [...state].map<NcAttachedFile>((e) {
-      return e.id == id ? e.copyWith(title: title) : e;
-    }).toList();
+  rename(final String id, final String title, final FnOnUpdate onUpdate) async {
+    state = [...state]
+        .map<NcAttachedFile>(
+          (final e) => e.id == id ? e.copyWith(title: title) : e,
+        )
+        .toList();
     await onUpdate({columnTitle: state});
   }
 }

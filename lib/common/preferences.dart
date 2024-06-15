@@ -19,25 +19,20 @@ class Preferences {
   }
 
   Future<T?> get<T>({
-    required String key,
+    required final String key,
   }) async {
     dynamic v;
     switch (T) {
       case const (String):
         v = _prefs.getString(key);
-        break;
       case const (int):
         v = _prefs.getInt(key);
-        break;
       case const (bool):
         v = _prefs.getBool(key);
-        break;
       case const (double):
         v = _prefs.getDouble(key);
-        break;
       case const (List<String>):
         v = _prefs.getStringList(key);
-        break;
       default:
         throw Exception('unsupported type: ${v.runtimeType}');
     }
@@ -54,15 +49,14 @@ class Preferences {
   }
 
   Future<String?> getSecure({
-    required String key,
-  }) async {
-    return await _secureStorage.read(key: key);
-  }
+    required final String key,
+  }) async =>
+      await _secureStorage.read(key: key);
 
   Future<void> set({
-    required String key,
-    required dynamic value,
-    bool secure = false,
+    required final String key,
+    required final dynamic value,
+    final bool secure = false,
   }) async {
     if (value == null) {
       return;
@@ -72,7 +66,6 @@ class Preferences {
       switch (value.runtimeType) {
         case const (String):
           await _secureStorage.write(key: key, value: value);
-          break;
         default:
           throw Exception('unsupported type. key: $key');
       }
@@ -80,19 +73,14 @@ class Preferences {
       switch (value.runtimeType) {
         case const (String):
           await _prefs.setString(key, value);
-          break;
         case const (int):
           await _prefs.setInt(key, value);
-          break;
         case const (bool):
           await _prefs.setBool(key, value);
-          break;
         case const (double):
           await _prefs.setDouble(key, value);
-          break;
         case const (List<String>):
           await _prefs.setStringList(key, value);
-          break;
         default:
           throw Exception('unsupported type. key: $key, value: $value');
       }

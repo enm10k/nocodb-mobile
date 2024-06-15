@@ -2,29 +2,33 @@ import 'package:flash/flash.dart';
 import 'package:flash/flash_helper.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'logger.dart';
+import 'package:nocodb/common/logger.dart';
 
 const _successDuration = Duration(seconds: 1);
 const _errorDuration = Duration(seconds: 3);
 
 notifySuccess(
-  BuildContext context, {
-  required String message,
-}) {
-  context.showSuccessBar(
+  final BuildContext context, {
+  required final String message,
+}) async {
+  await context.showSuccessBar(
     position: FlashPosition.top,
     duration: _successDuration,
     content: Text(message),
   );
 }
 
-notifyError(BuildContext context, dynamic error, StackTrace? stackTrace) {
+notifyError(
+  final BuildContext context,
+  final dynamic error,
+  final StackTrace? stackTrace,
+) async {
   logger.warning(error);
   if (stackTrace != null) {
     logger.warning(stackTrace);
   }
 
-  context.showErrorBar(
+  await context.showErrorBar(
     position: FlashPosition.top,
     duration: _errorDuration,
     content: Text(error.toString()),

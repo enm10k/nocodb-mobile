@@ -1,54 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/models.dart';
-import '../../../../nocodb_sdk/symbols.dart';
-import '../../pages/attachment_editor.dart';
-import '../../providers/providers.dart';
-import '../attachment_file_card.dart';
-import '../attachment_image_card.dart';
-import '/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/features/core/components/attachment_file_card.dart';
+import 'package:nocodb/features/core/components/attachment_image_card.dart';
+import 'package:nocodb/features/core/pages/attachment_editor.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class AttachmentEditor extends HookConsumerWidget {
-  final String? rowId;
-  final model.NcTableColumn column;
-  final FnOnUpdate onUpdate;
   const AttachmentEditor({
     super.key,
     required this.rowId,
     required this.column,
     required this.onUpdate,
   });
+  final String? rowId;
+  final model.NcTableColumn column;
+  final FnOnUpdate onUpdate;
 
-  Widget buildEmpty({text = '-'}) {
-    return Container(
-      height: 80,
-    );
-  }
+  Widget buildEmpty({final text = '-'}) => Container(
+        height: 80,
+      );
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     if (rowId == null) {
       return InkWell(
-        onTap: () {
-          showDialog(
+        onTap: () async {
+          await showDialog(
             context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Record is not yet created.'),
-                content: const Text(
-                  'Once record is created, you can attach files.',
+            builder: (final context) => AlertDialog(
+              title: const Text('Record is not yet created.'),
+              content: const Text(
+                'Once record is created, you can attach files.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            },
+              ],
+            ),
           );
         },
         child: buildEmpty(),
@@ -62,13 +57,12 @@ class AttachmentEditor extends HookConsumerWidget {
     final files = ref.watch(attachmentsProvider(view, rowId, column.title));
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) {
-              return AttachmentEditorPage(rowId!, column.title);
-            },
+            builder: (final context) =>
+                AttachmentEditorPage(rowId!, column.title),
           ),
         );
       },
@@ -81,11 +75,13 @@ class AttachmentEditor extends HookConsumerWidget {
           shrinkWrap: true,
           crossAxisCount: 3,
           padding: const EdgeInsets.all(8),
-          children: files.map<Widget>((file) {
-            return file.isImage
-                ? AttachmentImageCard(file)
-                : AttachmentFileCard(file);
-          }).toList(),
+          children: files
+              .map<Widget>(
+                (final file) => file.isImage
+                    ? AttachmentImageCard(file)
+                    : AttachmentFileCard(file),
+              )
+              .toList(),
         ),
       ),
     );

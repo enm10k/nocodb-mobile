@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:nocodb/common/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import '../../common/logger.dart';
 
 part 'debug.freezed.dart';
 part 'debug.g.dart';
@@ -11,23 +10,21 @@ part 'debug.g.dart';
 typedef Record = (List<int>, List<int>);
 
 final patternsProvider = StateProvider<Record>(
-  (ref) => ([1, 2, 3], [4, 5, 6]),
+  (final ref) => ([1, 2, 3], [4, 5, 6]),
 );
 
 @freezed
 class Union with _$Union {
-  factory Union.first(int value) = _UnionFirst;
-  factory Union.second(double value) = _UnionSecond;
+  factory Union.first(final int value) = _UnionFirst;
+  factory Union.second(final double value) = _UnionSecond;
 }
 
 @Riverpod()
 class Patterns2 extends _$Patterns2 {
   @override
-  Record build() {
-    return ([7, 8, 9], [10, 11, 12]);
-  }
+  Record build() => ([7, 8, 9], [10, 11, 12]);
 
-  update(Record record) {
+  update(final Record record) {
     state = record;
   }
 }
@@ -35,22 +32,22 @@ class Patterns2 extends _$Patterns2 {
 class DebugPage extends HookConsumerWidget {
   const DebugPage({super.key});
 
-  _test(WidgetRef ref) {
+  _test(final WidgetRef ref) {
     // ignore_for_file: unnecessary_cast
     final (a, b) = ref.read(patternsProvider) as Record;
     ref.read(patternsProvider.notifier).state = (a..shuffle(), b..shuffle());
   }
 
-  _test2(WidgetRef ref) {
+  _test2(final WidgetRef ref) {
     final (a, b) = ref.read(patterns2Provider) as Record;
     ref.read(patterns2Provider.notifier).update((a..shuffle(), b..shuffle()));
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     // test union
-    Union n1 = Union.first(1);
-    Union n2 = Union.second(4.5);
+    final Union n1 = Union.first(1);
+    final Union n2 = Union.second(4.5);
     logger.info('$n1: $n1 ${n1.runtimeType}, n2: $n2 ${n2.runtimeType}');
 
     final (a, b) = ref.watch(patternsProvider);

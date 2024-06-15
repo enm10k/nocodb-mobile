@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/models.dart';
-import '../unlink_button.dart';
+import 'package:nocodb/features/core/components/unlink_button.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class LinkToAnotherRecordBt extends HookConsumerWidget {
-  final NcTableColumn column;
-  final dynamic rowId;
-  final NcTable relation;
-  final dynamic initialValue;
   const LinkToAnotherRecordBt({
     super.key,
     required this.column,
@@ -16,6 +11,10 @@ class LinkToAnotherRecordBt extends HookConsumerWidget {
     required this.relation,
     required this.initialValue,
   });
+  final NcTableColumn column;
+  final dynamic rowId;
+  final NcTable relation;
+  final dynamic initialValue;
 
   String? get pvName => relation.pvName;
   String? get pkName => relation.pkName;
@@ -23,7 +22,7 @@ class LinkToAnotherRecordBt extends HookConsumerWidget {
   String get pv => initialValue[pvName].toString();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     assert(column.isBelongsTo);
 
     final child = initialValue == null

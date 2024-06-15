@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/features/core/providers/providers.dart';
-import '/nocodb_sdk/models.dart';
-import '../../../common/settings.dart';
-import '../../../routes.dart';
-import '../components/dialog/new_project_dialog.dart';
+import 'package:nocodb/common/settings.dart';
+import 'package:nocodb/features/core/components/dialog/new_project_dialog.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/routes.dart';
 
 const _divider = Divider(height: 1);
 
 class ProjectListPage extends HookConsumerWidget {
   const ProjectListPage({super.key});
 
-  Widget _buildScaffold(Widget body) {
+  Widget _buildScaffold(final Widget body) {
     final context = useContext();
     return Scaffold(
       appBar: AppBar(
@@ -21,23 +20,23 @@ class ProjectListPage extends HookConsumerWidget {
         actions: [
           PopupMenuButton(
             icon: const Icon(Icons.account_circle),
-            itemBuilder: (context) => <PopupMenuEntry>[
+            itemBuilder: (final context) => <PopupMenuEntry>[
               PopupMenuItem(
                 child: const ListTile(
                   title: Text('Logout'),
                 ),
-                onTap: () {
-                  settings
+                onTap: () async {
+                  await settings
                       .clear()
-                      .then((value) => const HomeRoute().push(context));
+                      .then((final value) => const HomeRoute().push(context));
                 },
               ),
             ],
           ),
           const PopupMenuDivider(),
           IconButton(
-            onPressed: () {
-              const DebugRoute().push(context);
+            onPressed: () async {
+              await const DebugRoute().push(context);
             },
             icon: const Icon(Icons.bug_report),
           ),
@@ -47,28 +46,26 @@ class ProjectListPage extends HookConsumerWidget {
     );
   }
 
-  Widget _build(List<NcProject> projects, WidgetRef ref) {
+  Widget _build(final List<NcProject> projects, final WidgetRef ref) {
     final context = useContext();
     final content = Flexible(
       child: ListView.separated(
         shrinkWrap: true,
         itemCount: projects.length,
-        itemBuilder: (context, index) {
+        itemBuilder: (final context, final index) {
           final project = projects[index];
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
             child: ListTile(
               title: Text(project.title),
-              onTap: () {
+              onTap: () async {
                 ref.read(projectProvider.notifier).state = project;
-                const SheetRoute().push(context);
+                await const SheetRoute().push(context);
               },
             ),
           );
         },
-        separatorBuilder: (context, index) {
-          return _divider;
-        },
+        separatorBuilder: (final context, final index) => _divider,
       ),
     );
 
@@ -80,10 +77,10 @@ class ProjectListPage extends HookConsumerWidget {
           margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
           child: ListTile(
             title: const Text('New Project'),
-            onTap: () {
-              showDialog(
+            onTap: () async {
+              await showDialog(
                 context: context,
-                builder: (_) => const NewProjectDialog(),
+                builder: (final _) => const NewProjectDialog(),
               );
             },
           ),
@@ -94,17 +91,13 @@ class ProjectListPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _buildScaffold(
-      ref.watch(projectListProvider).when(
-            data: (data) {
-              return _build(data.list, ref);
-            },
-            error: (error, stacktrace) {
-              return Text('$error\n$stacktrace');
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-          ),
-    );
-  }
+  Widget build(final BuildContext context, final WidgetRef ref) =>
+      _buildScaffold(
+        ref.watch(projectListProvider).when(
+              data: (final data) => _build(data.list, ref),
+              error: (final error, final stacktrace) =>
+                  Text('$error\n$stacktrace'),
+              loading: () => const Center(child: CircularProgressIndicator()),
+            ),
+      );
 }

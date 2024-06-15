@@ -1,52 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/features/core/components/cells/attachment.dart';
+import 'package:nocodb/features/core/components/cells/checkbox.dart';
+import 'package:nocodb/features/core/components/cells/datetime.dart';
+import 'package:nocodb/features/core/components/cells/link_to_another_record.dart';
+import 'package:nocodb/features/core/components/cells/multi_select.dart';
+import 'package:nocodb/features/core/components/cells/number.dart';
+import 'package:nocodb/features/core/components/cells/simple_text.dart';
+import 'package:nocodb/features/core/components/cells/single_select.dart';
+import 'package:nocodb/features/core/components/child_list.dart';
+import 'package:nocodb/features/core/components/editor.dart';
+import 'package:nocodb/features/core/components/editors/datetime.dart';
+import 'package:nocodb/features/core/components/modal_editor_wrapper.dart';
+import 'package:nocodb/features/core/pages/attachment_editor.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
+import 'package:nocodb/nocodb_sdk/types.dart';
+import 'package:nocodb/routes.dart';
 
-import '../pages/attachment_editor.dart';
-import '/nocodb_sdk/symbols.dart';
-import '../../../common/flash_wrapper.dart';
-import '../../../nocodb_sdk/models.dart';
-import '../../../nocodb_sdk/types.dart';
-import '../../../routes.dart';
-import '../providers/providers.dart';
-import 'cells/attachment.dart';
-import 'cells/checkbox.dart';
-import 'cells/datetime.dart';
-import 'cells/link_to_another_record.dart';
-import 'cells/multi_select.dart';
-import 'cells/number.dart';
-import 'cells/simple_text.dart';
-import 'cells/single_select.dart';
-import 'child_list.dart';
-import 'editor.dart';
-import 'editors/datetime.dart';
-import 'modal_editor_wrapper.dart';
-
-void showModalEditor({
-  required BuildContext context,
-  required NcTableColumn column,
-  required String rowId,
-  required dynamic value,
-  isMultiline = false,
-}) {
-  showModalBottomSheet(
+Future<void> showModalEditor({
+  required final BuildContext context,
+  required final NcTableColumn column,
+  required final String rowId,
+  required final dynamic value,
+  final isMultiline = false,
+}) async {
+  await showModalBottomSheet(
     isScrollControlled: true,
     context: context,
-    builder: (context) {
-      return ModalEditorWrapper(
+    builder: (final context) => ModalEditorWrapper(
+      rowId: rowId,
+      title: column.title,
+      content: Editor(
         rowId: rowId,
-        title: column.title,
-        content: Editor(
-          rowId: rowId,
-          column: column,
-          value: value,
-        ),
-      );
-    },
+        column: column,
+        value: value,
+      ),
+    ),
   );
 }
 
 // TODO: Fix. Assertions are duplicated.
 class Cell {
+  Cell({
+    required this.rowId,
+    required this.context,
+    required this.ref,
+    required this.column,
+    required this.value,
+  });
   final String? rowId;
   final BuildContext context;
   final WidgetRef ref;
@@ -55,62 +59,52 @@ class Cell {
 
   NcTableColumn get c => column;
 
-  Cell({
-    required this.rowId,
-    required this.context,
-    required this.ref,
-    required this.column,
-    required this.value,
-  });
-
   static const emptyCell = DataCell(SizedBox());
 
-  DataCell build() {
-    return DataCell(
-      _buildChild(),
-      onTap: _onTap(),
-    );
-  }
+  DataCell build() => DataCell(
+        _buildChild(),
+        onTap: _onTap(),
+      );
 
-  Function() _checkboxOnTap() {
-    return () {
-      ref
-          .watch(dataRowsProvider.notifier)
-          .updateRow(
-            rowId: rowId!,
-            data: {column.title: value != true},
-          )
-          .then(
-            (_) => notifySuccess(
-              context,
-              message: value == true ? 'Checked' : 'Unchecked',
-            ),
-          )
-          .onError(
-            (error, stackTrace) => notifyError(context, error, stackTrace),
-          );
-    };
-  }
+  Function() _checkboxOnTap() => () async {
+        await ref
+            .watch(dataRowsProvider.notifier)
+            .updateRow(
+              rowId: rowId!,
+              data: {column.title: value != true},
+            )
+            .then(
+              (final _) => notifySuccess(
+                context,
+                message: value == true ? 'Checked' : 'Unchecked',
+              ),
+            )
+            .onError(
+              (final error, final stackTrace) =>
+                  notifyError(context, error, stackTrace),
+            );
+      };
 
-  void update({
-    required rowId,
-    required title,
-    required value,
-    required BuildContext context,
-    required WidgetRef ref,
-    required NcView view,
-  }) {
-    ref
+  Future<void> update({
+    required final rowId,
+    required final title,
+    required final value,
+    required final BuildContext context,
+    required final WidgetRef ref,
+    required final NcView view,
+  }) async {
+    await ref
         .watch(dataRowsProvider.notifier)
         .updateRow(
           rowId: rowId,
           data: {title: value},
         )
         .then(
-          (_) => notifySuccess(context, message: 'Updated'),
+          (final _) => notifySuccess(context, message: 'Updated'),
         )
         .onError(
-          (error, stackTrace) => notifyError(context, error, stackTrace),
+          (final error, final stackTrace) =>
+              notifyError(context, error, stackTrace),
         );
   }
 
@@ -120,8 +114,8 @@ class Cell {
     }
 
     final view = ref.watch(viewProvider)!;
-    updateWrapper(String value) {
-      update(
+    updateWrapper(final String value) async {
+      await update(
         rowId: rowId,
         title: column.title,
         value: value,
@@ -144,21 +138,25 @@ class Cell {
           case DateTimeType.datetime:
             final initialDateTime = NocoDateTime.getInitialValue(value).dt;
 
-            return () {
-              pickDateTime(
+            return () async {
+              await pickDateTime(
                 context,
                 initialDateTime,
-                (pickedDateTime) {
-                  updateWrapper(NocoDateTime(pickedDateTime).toApiValue());
+                (final pickedDateTime) async {
+                  await updateWrapper(
+                    NocoDateTime(pickedDateTime).toApiValue(),
+                  );
                 },
               );
             };
           case DateTimeType.date:
             final initialDate = NocoDate.getInitialValue(value).dt;
 
-            return () {
-              pickDate(context, initialDate, (pickedDate) {
-                updateWrapper(NocoDate.fromDateTime(pickedDate).toApiValue());
+            return () async {
+              await pickDate(context, initialDate, (final pickedDate) async {
+                await updateWrapper(
+                  NocoDate.fromDateTime(pickedDate).toApiValue(),
+                );
               });
             };
 
@@ -166,8 +164,8 @@ class Cell {
             final initialTime =
                 TimeOfDay.fromDateTime(NocoTime.getInitialValue(value).dt);
 
-            return () {
-              pickTime(context, initialTime, (pickedTime) {
+            return () async {
+              await pickTime(context, initialTime, (final pickedTime) {
                 updateWrapper(NocoTime.fromLocalTime(pickedTime).toApiValue());
               });
             };
@@ -185,13 +183,13 @@ class Cell {
         }
 
         if (column.isBelongsTo) {
-          return () =>
+          return () async =>
               LinkRecordRoute(columnId: column.id, rowId: rowId!).push(context);
         } else {
-          return () => showModalBottomSheet(
+          return () async => showModalBottomSheet(
                 isScrollControlled: true,
                 context: context,
-                builder: (context) {
+                builder: (final context) {
                   final tables = ref.read(tablesProvider);
                   final relation = tables!.relationMap[column.fkRelatedModelId];
                   return ChildList(
@@ -203,10 +201,10 @@ class Cell {
               );
         }
       case UITypes.attachment:
-        return () => Navigator.push(
+        return () async => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
+                builder: (final context) =>
                     AttachmentEditorPage(rowId!, column.title),
               ),
             );
@@ -217,8 +215,8 @@ class Cell {
               value is double? ||
               value is List, // Only Attachment?
         );
-        return () {
-          showModalEditor(
+        return () async {
+          await showModalEditor(
             context: context,
             column: c,
             rowId: rowId!,
@@ -250,7 +248,7 @@ class Cell {
         assert(value is String?);
         return SingleSelect(value, column: c);
       case UITypes.multiSelect:
-        assert(value is List);
+        // assert(value is List);
         return MultiSelect(
           value is String ? value.split(',') : [],
           column: c,

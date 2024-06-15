@@ -2,38 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../nocodb_sdk/models.dart';
-import '/nocodb_sdk/models.dart' as model;
-import '../../../common/flash_wrapper.dart';
-import '../../../common/logger.dart';
-import '../../../nocodb_sdk/symbols.dart';
-import '../pages/row_editor.dart';
-import '../providers/providers.dart';
-import 'editors/attachment.dart';
-import 'editors/checkbox.dart';
-import 'editors/datetime.dart';
-import 'editors/link_to_another_record.dart';
-import 'editors/link_to_another_record_bt.dart';
-import 'editors/multi_select.dart';
-import 'editors/single_select.dart';
-import 'editors/text_editor.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/components/editors/attachment.dart';
+import 'package:nocodb/features/core/components/editors/checkbox.dart';
+import 'package:nocodb/features/core/components/editors/datetime.dart';
+import 'package:nocodb/features/core/components/editors/link_to_another_record.dart';
+import 'package:nocodb/features/core/components/editors/link_to_another_record_bt.dart';
+import 'package:nocodb/features/core/components/editors/multi_select.dart';
+import 'package:nocodb/features/core/components/editors/single_select.dart';
+import 'package:nocodb/features/core/components/editors/text_editor.dart';
+import 'package:nocodb/features/core/pages/row_editor.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class Editor extends HookConsumerWidget {
-  final String? rowId;
-  final model.NcTableColumn column;
-  final dynamic value;
-
   const Editor({
     super.key,
     this.rowId,
     required this.column,
     required this.value,
   });
+  final String? rowId;
+  final model.NcTableColumn column;
+  final dynamic value;
 
   bool get isNew => rowId == null;
 
-  Widget _build(WidgetRef ref) {
+  Widget _build(final WidgetRef ref) {
     final context = useContext();
 
     logger.info(
@@ -41,27 +39,28 @@ class Editor extends HookConsumerWidget {
     );
 
     final onUpdate = isNew
-        ? (Map<String, dynamic> data) {
+        ? (final Map<String, dynamic> data) {
             final form = ref.read(formProvider);
             final newForm = {...form, ...data};
             logger.info('form updated: $newForm');
             ref.watch(formProvider.notifier).state = newForm;
           }
-        : (data) {
-            ref
+        : (final data) async {
+            await ref
                 .read(dataRowsProvider.notifier)
                 .updateRow(
                   rowId: rowId!,
                   data: data,
                 )
                 .then(
-              (_) {
+              (final _) {
                 if (context.mounted) {
                   notifySuccess(context, message: 'Updated.');
                 }
               },
             ).onError(
-              (error, stackTrace) => notifyError(context, error, stackTrace),
+              (final error, final stackTrace) =>
+                  notifyError(context, error, stackTrace),
             );
           };
 
@@ -166,7 +165,5 @@ class Editor extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _build(ref);
-  }
+  Widget build(final BuildContext context, final WidgetRef ref) => _build(ref);
 }

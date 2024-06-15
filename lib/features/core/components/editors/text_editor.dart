@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/symbols.dart';
-import '/nocodb_sdk/models.dart' as model;
-import '../../../../common/logger.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 const _emptyFormatters = <TextInputFormatter>[];
 const _debounceDuration = Duration(milliseconds: 500);
 
-String isnull(dynamic v) {
+String isnull(final dynamic v) {
   if (v == null) {
     return '';
   }
@@ -23,13 +22,6 @@ String isnull(dynamic v) {
 }
 
 class TextEditor extends HookConsumerWidget {
-  final model.NcTableColumn column;
-  final FnOnUpdate onUpdate;
-  final dynamic initialValue;
-  final bool isNew;
-  final int? maxLines;
-  final TextInputType keyboardType;
-  final List<TextInputFormatter> inputFormatters;
   const TextEditor({
     super.key,
     required this.column,
@@ -40,9 +32,16 @@ class TextEditor extends HookConsumerWidget {
     this.keyboardType = TextInputType.text,
     this.inputFormatters = _emptyFormatters,
   });
+  final model.NcTableColumn column;
+  final FnOnUpdate onUpdate;
+  final dynamic initialValue;
+  final bool isNew;
+  final int? maxLines;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter> inputFormatters;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     // This flag is necessary to avoid unnecessary update.
     final changed = useState(false);
 
@@ -93,14 +92,14 @@ class TextEditor extends HookConsumerWidget {
       onEditingComplete: () {
         logger.info('onEditingComplete');
       },
-      onFieldSubmitted: (value) {
+      onFieldSubmitted: (final value) {
         logger.info('onFieldSubmitted: $value');
         Navigator.pop(context);
       },
-      onSaved: (value) {
+      onSaved: (final value) {
         logger.info('onSaved: $value');
       },
-      onChanged: (value) {
+      onChanged: (final value) {
         logger.info('onChanged: $value');
 
         EasyDebounce.debounce(

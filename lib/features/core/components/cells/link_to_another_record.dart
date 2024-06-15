@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/models.dart';
-import '../../providers/providers.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class LinkToAnotherRecord extends HookConsumerWidget {
-  final dynamic value;
-  final NcTableColumn column;
-
   const LinkToAnotherRecord(
     this.value, {
     super.key,
     required this.column,
   });
+  final dynamic value;
+  final NcTableColumn column;
 
   static const offset = 25;
 
-  String getPrimaryValues(NcTable table, dynamic value) {
-    return (value is List)
-        ? value.map((row) => table.getPvFromRow(row)).join(', ')
-        : table.getPvFromRow(value).toString();
-  }
+  String getPrimaryValues(final NcTable table, final dynamic value) =>
+      (value is List)
+          ? value
+              .map((final e) => table.getPvFromRow(e as Map<String, dynamic>))
+              .join(', ')
+          : table.getPvFromRow(value).toString();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final tables = ref.watch(tablesProvider);
     if (value == null || tables == null) {
       return const SizedBox();

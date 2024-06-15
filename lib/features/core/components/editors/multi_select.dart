@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/symbols.dart';
-import '/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class MultiSelectEditor extends HookConsumerWidget {
-  final model.NcTableColumn column;
-  final FnOnUpdate? onUpdate;
-  final List<String> initialValue;
   const MultiSelectEditor({
     super.key,
     required this.column,
     this.onUpdate,
     required this.initialValue,
   });
+  final model.NcTableColumn column;
+  final FnOnUpdate? onUpdate;
+  final List<String> initialValue;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final options = column.colOptions?.options;
     assert(options != null);
     if (options == null) {
       return Container();
     }
-    final titles = options.map((option) => option.title);
+    final titles = options.map((final option) => option.title);
 
     final values = useState<List<String>>(
-      initialValue.where((value) => titles.contains(value)).toList(),
+      initialValue.where(titles.contains).toList(),
     );
     final children = options.map(
-      (option) {
+      (final option) {
         final color = column.colOptions?.getOptionColor(option.title);
 
         return Container(
@@ -40,20 +39,21 @@ class MultiSelectEditor extends HookConsumerWidget {
           child: FilterChip(
             label: Text(option.title),
             selected: values.value.contains(option.title),
-            onSelected: (selected) {
+            onSelected: (final selected) {
               if (selected == true) {
                 // add
                 values.value = [...values.value, option.title];
               } else {
                 // delete
                 values.value = values.value
-                    .where((element) => element != option.title)
+                    .where((final element) => element != option.title)
                     .toList();
               }
 
-              final options =
-                  values.value.where((element) => element != 'null').toList();
-              options.sort();
+              final options = values.value
+                  .where((final element) => element != 'null')
+                  .toList()
+                ..sort();
               onUpdate?.call({
                 column.title: options.join(','),
               });

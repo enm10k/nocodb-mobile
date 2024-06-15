@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/features/core/components/views/grid.dart';
-import '/features/core/providers/providers.dart';
-import '/nocodb_sdk/symbols.dart';
-import '../../../common/extensions.dart';
+import 'package:nocodb/common/extensions.dart';
+import 'package:nocodb/features/core/components/views/grid.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class ViewSwitcher extends HookConsumerWidget {
   const ViewSwitcher({super.key});
 
-  Widget _build(ViewTypes type) {
+  Widget _build(final ViewTypes type) {
     switch (type) {
       case ViewTypes.grid:
         return const Grid();
@@ -23,8 +22,8 @@ class ViewSwitcher extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final type = ref.watch(viewProvider.select((v) => v?.type));
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final type = ref.watch(viewProvider.select((final v) => v?.type));
     return type != null ? _build(type) : const CircularProgressIndicator();
   }
 }

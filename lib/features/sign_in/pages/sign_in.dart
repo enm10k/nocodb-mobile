@@ -2,16 +2,15 @@ import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/nocodb_sdk/client.dart';
-import '../../../common/flash_wrapper.dart';
-import '../../../common/settings.dart';
-import '../../../routes.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/settings.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/routes.dart';
 
 class SignInPage extends HookConsumerWidget {
   const SignInPage({super.key});
 
-  Widget? _getConnectivityIcon(bool? connectivity) {
+  Widget? _getConnectivityIcon(final bool? connectivity) {
     if (connectivity == null) {
       return null;
     } else if (connectivity) {
@@ -34,7 +33,7 @@ class SignInPage extends HookConsumerWidget {
     }
   }
 
-  Widget _buildDialog(BuildContext context, WidgetRef ref) {
+  Widget _buildDialog(final BuildContext context, final WidgetRef ref) {
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
     final apiUrlController = useTextEditingController();
@@ -45,6 +44,7 @@ class SignInPage extends HookConsumerWidget {
 
     useEffect(
       () {
+        // ignore: discarded_futures
         () async {
           emailController.text = await settings.email ?? '';
           apiUrlController.text = await settings.apiBaseUrl ?? '';
@@ -92,15 +92,17 @@ class SignInPage extends HookConsumerWidget {
                 obscureText: !showPassword.value,
               ),
               TextField(
-                onChanged: (value) {
+                onChanged: (final value) {
                   EasyDebounce.debounce(
                     'sign_in_password',
                     const Duration(seconds: 1),
-                    () {
-                      api.version(apiUrlController.text).then((result) {
+                    () async {
+                      await api
+                          .version(apiUrlController.text)
+                          .then((final result) {
                         connectivity.value = true;
                       }).onError(
-                        (error, stackTrace) {
+                        (final error, final stackTrace) {
                           notifyError(context, error, stackTrace);
                           connectivity.value = false;
                         },
@@ -122,7 +124,7 @@ class SignInPage extends HookConsumerWidget {
                 children: [
                   Checkbox(
                     value: rememberMe.value,
-                    onChanged: (_) {
+                    onChanged: (final _) {
                       rememberMe.value = !rememberMe.value;
                     },
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -137,25 +139,28 @@ class SignInPage extends HookConsumerWidget {
       actions: [
         TextButton(
           child: const Text('SIGN IN'),
-          onPressed: () {
+          onPressed: () async {
             api.init(apiUrlController.text);
-            api
+            await api
                 .authSignin(
               emailController.text,
               passwordController.text,
             )
-                .then((authToken) {
+                .then((final authToken) async {
               if (rememberMe.value) {
-                settings.setEmail(emailController.text);
-                settings.setRememberMe(rememberMe.value);
+                await settings.setEmail(emailController.text);
+                await settings.setRememberMe(rememberMe.value);
               }
 
               // TODO: Need to rewrite Settings class. The following values should not be saved to the storage when rememberMe is false.
-              settings.setApiBaseUrl(apiUrlController.text);
-              settings.setAuthToken(authToken);
-              const ProjectListRoute().go(context);
+              await settings.setApiBaseUrl(apiUrlController.text);
+              await settings.setAuthToken(authToken);
+              if (context.mounted) {
+                const ProjectListRoute().go(context);
+              }
             }).onError(
-              (error, stackTrace) => notifyError(context, error, stackTrace),
+              (final error, final stackTrace) =>
+                  notifyError(context, error, stackTrace),
             );
           },
         ),
@@ -164,15 +169,13 @@ class SignInPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NocoDB'),
-      ),
-      body: Center(
-        // TODO: Stop using dialog?
-        child: _buildDialog(context, ref),
-      ),
-    );
-  }
+  Widget build(final BuildContext context, final WidgetRef ref) => Scaffold(
+        appBar: AppBar(
+          title: const Text('NocoDB'),
+        ),
+        body: Center(
+          // TODO: Stop using dialog?
+          child: _buildDialog(context, ref),
+        ),
+      );
 }

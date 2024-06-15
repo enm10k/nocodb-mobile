@@ -2,18 +2,17 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/common/preferences.dart';
+import 'package:nocodb/common/settings.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/routes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import 'common/logger.dart';
-import 'common/preferences.dart';
-import 'common/settings.dart';
-import 'nocodb_sdk/client.dart';
-import 'routes.dart';
 
 part 'router.g.dart';
 
 (Map<String, dynamic> header, Map<String, dynamic> payload) decodeJwt(
-  String jwt,
+  final String jwt,
 ) {
   final parts = jwt.split('.');
   assert(parts.length == 3);
@@ -26,31 +25,33 @@ part 'router.g.dart';
   return (jsonDecode(header), jsonDecode(payload));
 }
 
-jwtTsToDateTime(int timestamp) {
-  return DateTime.fromMicrosecondsSinceEpoch(timestamp * 1000 * 1000);
-}
+jwtTsToDateTime(final int timestamp) =>
+    DateTime.fromMicrosecondsSinceEpoch(timestamp * 1000 * 1000);
 
 (DateTime iat, DateTime exp) getIatAndExpFromPayload(
-  Map<String, dynamic> payload,
-) {
-  return (jwtTsToDateTime(payload['iat']), jwtTsToDateTime(payload['exp']));
-}
+  final Map<String, dynamic> payload,
+) =>
+    (jwtTsToDateTime(payload['iat']), jwtTsToDateTime(payload['exp']));
 
-bool isAuthTokenAlive(String authToken) {
+bool isAuthTokenAlive(final String authToken) {
   final (header, payload) = decodeJwt(authToken);
   logger.fine('authToken.header: $header');
 
   final (iat, exp) = getIatAndExpFromPayload(payload);
   final now = DateTime.now();
-  logger.fine('authToken.iat: $iat');
-  logger.fine('authToken.exp: $exp');
-  logger.fine('now: $now');
+  logger
+    ..fine('authToken.iat: $iat')
+    ..fine('authToken.exp: $exp')
+    ..fine('now: $now');
 
   return now.isBefore(exp);
 }
 
 // FutureOr<String?> redirect(context, state) async {
-FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {
+FutureOr<String?> redirect(
+  final BuildContext context,
+  final GoRouterState state,
+) async {
   try {
     if (!settings.initialized) {
       final prefs = Preferences();
@@ -96,10 +97,10 @@ FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {
 }
 
 @riverpod
-GoRouter router(RouterRef ref) => GoRouter(
+GoRouter router(final RouterRef ref) => GoRouter(
       routes: $appRoutes,
       debugLogDiagnostics: true,
-      redirect: (context, state) async {
+      redirect: (final context, final state) async {
         logger.info('redirecting ...');
         final location = await redirect(context, state);
         if (location == null) {

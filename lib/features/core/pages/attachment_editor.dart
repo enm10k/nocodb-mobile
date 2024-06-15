@@ -7,19 +7,18 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:nocodb/common/extensions.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/components/attachment_file_card.dart';
+import 'package:nocodb/features/core/components/attachment_image_card.dart';
+import 'package:nocodb/features/core/components/dialog/file_rename_dialog.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:popup_menu/popup_menu.dart';
-
-import '../../../common/extensions.dart';
-import '../../../common/flash_wrapper.dart';
-import '../../../common/logger.dart';
-import '../../../nocodb_sdk/client.dart';
-import '../../../nocodb_sdk/models.dart';
-import '../../../nocodb_sdk/symbols.dart';
-import '../components/attachment_file_card.dart';
-import '../components/attachment_image_card.dart';
-import '../components/dialog/file_rename_dialog.dart';
-import '../providers/providers.dart';
 
 enum PopupMenuAction {
   download,
@@ -28,9 +27,9 @@ enum PopupMenuAction {
 }
 
 class PopupMenuUserInfo {
+  PopupMenuUserInfo(this.action, this.id);
   final PopupMenuAction action;
   final String id;
-  PopupMenuUserInfo(this.action, this.id);
 
 // Map<String, dynamic> toJson() {
 //   return {
@@ -47,19 +46,19 @@ enum FileUploadType {
 }
 
 class AttachmentEditorPage extends HookConsumerWidget {
+  AttachmentEditorPage(this.rowId, this.columnTitle, {super.key});
   final String rowId;
   final String columnTitle;
-  AttachmentEditorPage(this.rowId, this.columnTitle, {super.key});
 
   // TODO: Fix lifetime issue.
   // There is a possibility that the file upload will continue even after the screen is closed,
   // and there is a concern that the lifetime of onUpdate might expire when the file upload is complete.
   Future<void> uploadFile(
-    BuildContext context,
-    WidgetRef ref,
-    Refreshable<Attachments> notifier,
-    FileUploadType type,
-    FnOnUpdate onUpdate,
+    final BuildContext context,
+    final WidgetRef ref,
+    final Refreshable<Attachments> notifier,
+    final FileUploadType type,
+    final FnOnUpdate onUpdate,
   ) async {
     try {
       context.loaderOverlay.show();
@@ -75,7 +74,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
             return;
           }
           ref.read(notifier).upload(
-                result.files.map((e) => NcPlatformFile(e)).toList(),
+                result.files.map(NcPlatformFile.new).toList(),
                 onUpdate,
               );
         case FileUploadType.fromCamera:
@@ -93,8 +92,9 @@ class AttachmentEditorPage extends HookConsumerWidget {
           );
       }
     } catch (e, s) {
-      logger.shout(e);
-      logger.shout(s);
+      logger
+        ..shout(e)
+        ..shout(s);
       if (context.mounted) {
         notifyError(context, e, s);
       }
@@ -106,10 +106,10 @@ class AttachmentEditorPage extends HookConsumerWidget {
   }
 
   Future<void> downloadFile(
-    BuildContext context,
-    WidgetRef ref,
-    Refreshable<Attachments> notifier,
-    NcAttachedFile file,
+    final BuildContext context,
+    final WidgetRef ref,
+    final Refreshable<Attachments> notifier,
+    final NcAttachedFile file,
   ) async {
     final downloadDir = await getFileDownloadDirectory();
     logger.info('downloadDir: $downloadDir');
@@ -122,7 +122,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
       return;
     }
 
-    FlutterDownloader.enqueue(
+    await FlutterDownloader.enqueue(
       url: file.signedUrl(api.uri),
       fileName: file.title,
       savedDir: downloadDir,
@@ -130,12 +130,13 @@ class AttachmentEditorPage extends HookConsumerWidget {
       // TODO: Ask permission to notify file download.
       openFileFromNotification: true,
       saveInPublicStorage: true,
-    ).then((value) {
+    ).then((final value) {
       logger.info('Download started: $value');
       notifySuccess(context, message: 'Download started.');
-    }).onError((e, s) {
-      logger.severe(e);
-      logger.severe(s);
+    }).onError((final e, final s) {
+      logger
+        ..severe(e)
+        ..severe(s);
       if (context.mounted) {
         notifyError(context, e, s);
       }
@@ -159,61 +160,60 @@ class AttachmentEditorPage extends HookConsumerWidget {
     }
   }
 
-  List<MenuItemProvider> buildPopupMenuItems(String id) {
-    return [
-      MenuItem(
-        title: kDownload.name.capitalize(),
-        image: const Icon(
-          Icons.download,
-          color: Colors.white,
+  List<MenuItemProvider> buildPopupMenuItems(final String id) => [
+        MenuItem(
+          title: kDownload.name.capitalize(),
+          image: const Icon(
+            Icons.download,
+            color: Colors.white,
+          ),
+          userInfo: PopupMenuUserInfo(
+            kDownload,
+            id,
+          ),
         ),
-        userInfo: PopupMenuUserInfo(
-          kDownload,
-          id,
+        MenuItem(
+          title: kRename.name.capitalize(),
+          image: const Icon(
+            Icons.edit,
+            color: Colors.white,
+          ),
+          userInfo: PopupMenuUserInfo(
+            kRename,
+            id,
+          ),
         ),
-      ),
-      MenuItem(
-        title: kRename.name.capitalize(),
-        image: const Icon(
-          Icons.edit,
-          color: Colors.white,
+        MenuItem(
+          title: kDelete.name.capitalize(),
+          image: const Icon(
+            Icons.delete,
+            color: Colors.white,
+          ),
+          userInfo: PopupMenuUserInfo(
+            kDelete,
+            id,
+          ),
         ),
-        userInfo: PopupMenuUserInfo(
-          kRename,
-          id,
-        ),
-      ),
-      MenuItem(
-        title: kDelete.name.capitalize(),
-        image: const Icon(
-          Icons.delete,
-          color: Colors.white,
-        ),
-        userInfo: PopupMenuUserInfo(
-          kDelete,
-          id,
-        ),
-      ),
-    ];
-  }
+      ];
 
   GlobalKey fabState = GlobalKey<ExpandableFabState>();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final view = ref.watch(viewProvider);
     if (view == null) {
       return const SizedBox();
     }
-    onUpdate(row) {
+    onUpdate(final row) async {
       final dataRowsNotifier = ref.read(dataRowsProvider.notifier);
-      dataRowsNotifier
+      await dataRowsNotifier
           .updateRow(rowId: rowId, data: row)
           .then(
-            (_) => notifySuccess(context, message: 'Updated'),
+            (final _) => notifySuccess(context, message: 'Updated'),
           )
           .onError(
-            (error, stackTrace) => notifyError(context, error, stackTrace),
+            (final error, final stackTrace) =>
+                notifyError(context, error, stackTrace),
           );
     }
 
@@ -244,8 +244,8 @@ class AttachmentEditorPage extends HookConsumerWidget {
         children: [
           FloatingActionButton(
             heroTag: 'upload_from_storage',
-            onPressed: () {
-              uploadFile(
+            onPressed: () async {
+              await uploadFile(
                 context,
                 ref,
                 notifier,
@@ -257,8 +257,8 @@ class AttachmentEditorPage extends HookConsumerWidget {
           ),
           FloatingActionButton(
             heroTag: 'upload_from_camera',
-            onPressed: () {
-              uploadFile(
+            onPressed: () async {
+              await uploadFile(
                 context,
                 ref,
                 notifier,
@@ -270,8 +270,8 @@ class AttachmentEditorPage extends HookConsumerWidget {
           ),
           FloatingActionButton(
             heroTag: 'upload_from_gallery',
-            onPressed: () {
-              uploadFile(
+            onPressed: () async {
+              await uploadFile(
                 context,
                 ref,
                 notifier,
@@ -287,22 +287,22 @@ class AttachmentEditorPage extends HookConsumerWidget {
         crossAxisCount: 3,
         padding: const EdgeInsets.all(8),
         children: files.map(
-          (file) {
+          (final file) {
             // TODO: Implement a file details screen instead of using PopupMenu.
             final popupMenu = PopupMenu(
               items: buildPopupMenuItems(file.id),
-              onClickMenu: (item) async {
+              onClickMenu: (final item) async {
                 try {
                   final userInfo = item.menuUserInfo as PopupMenuUserInfo;
 
                   switch (userInfo.action) {
                     case kDownload:
-                      downloadFile(context, ref, notifier, file);
+                      await downloadFile(context, ref, notifier, file);
                     case kRename:
-                      showDialog<String>(
+                      await showDialog<String>(
                         context: context,
-                        builder: (_) => FileRenameDialog(file),
-                      ).then((value) async {
+                        builder: (final _) => FileRenameDialog(file),
+                      ).then((final value) async {
                         if (value == null) {
                           return;
                         }
@@ -318,8 +318,9 @@ class AttachmentEditorPage extends HookConsumerWidget {
                       }
                   }
                 } catch (e, s) {
-                  logger.severe(e);
-                  logger.severe(s);
+                  logger
+                    ..severe(e)
+                    ..severe(s);
                   if (context.mounted) {
                     notifyError(context, e, s);
                   }

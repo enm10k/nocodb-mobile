@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/nocodb_sdk/models.dart' as model;
-import '../../../../common/logger.dart';
-import '../../../../nocodb_sdk/symbols.dart';
-import '../../../../nocodb_sdk/types.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/symbols.dart';
+import 'package:nocodb/nocodb_sdk/types.dart';
 
 final firstDate = DateTime(0);
 final lastDate = DateTime(2200);
 
-void pickDate(
-  BuildContext context,
-  DateTime initialDate,
-  Function(DateTime pickedDateTime) onUpdate,
-) {
-  showDatePicker(
+Future<void> pickDate(
+  final BuildContext context,
+  final DateTime initialDate,
+  final Function(DateTime pickedDateTime) onUpdate,
+) async {
+  await showDatePicker(
     context: context,
     initialDate: initialDate.toLocal(),
     firstDate: firstDate,
     lastDate: lastDate,
-  ).then((pickedDateTime) {
+  ).then((final pickedDateTime) {
     if (pickedDateTime == null) {
       return;
     }
@@ -32,21 +31,19 @@ void pickDate(
   });
 }
 
-void pickTime(
-  BuildContext context,
-  TimeOfDay initialTime,
-  Function(TimeOfDay pickedTime) onUpdate,
-) {
-  showTimePicker(
+Future<void> pickTime(
+  final BuildContext context,
+  final TimeOfDay initialTime,
+  final Function(TimeOfDay pickedTime) onUpdate,
+) async {
+  await showTimePicker(
     context: context,
     initialTime: initialTime,
-    builder: (context, child) {
-      return MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      );
-    },
-  ).then((pickedTime) {
+    builder: (final context, final child) => MediaQuery(
+      data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+      child: child!,
+    ),
+  ).then((final pickedTime) {
     if (pickedTime == null) {
       return;
     }
@@ -55,16 +52,16 @@ void pickTime(
   });
 }
 
-void pickDateTime(
-  BuildContext context,
-  DateTime initialDateTime,
-  Function(DateTime) onUpdate, {
-  TextEditingController? controller,
-}) {
+Future<void> pickDateTime(
+  final BuildContext context,
+  final DateTime initialDateTime,
+  final Function(DateTime) onUpdate, {
+  final TextEditingController? controller,
+}) async {
   final initialTime = NocoTime.fromDateTime(initialDateTime).getLocalTime();
 
-  pickDate(context, initialDateTime, (pickedDate) {
-    pickTime(context, initialTime, (pickedTime) {
+  await pickDate(context, initialDateTime, (final pickedDate) async {
+    await pickTime(context, initialTime, (final pickedTime) {
       final pickedDateTime = DateTime(
         pickedDate.year,
         pickedDate.month,
@@ -83,7 +80,7 @@ enum DateTimeType {
   time,
   unknown;
 
-  factory DateTimeType.fromUITypes(UITypes type) {
+  factory DateTimeType.fromUITypes(final UITypes type) {
     switch (type) {
       case UITypes.dateTime:
         return DateTimeType.datetime;
@@ -99,10 +96,6 @@ enum DateTimeType {
 }
 
 class DateTimeEditor extends HookConsumerWidget {
-  final model.NcTableColumn column;
-  final FnOnUpdate onUpdate;
-  final dynamic initialValue;
-  final DateTimeType type;
   const DateTimeEditor({
     super.key,
     required this.column,
@@ -110,9 +103,13 @@ class DateTimeEditor extends HookConsumerWidget {
     required this.initialValue,
     required this.type,
   });
+  final model.NcTableColumn column;
+  final FnOnUpdate onUpdate;
+  final dynamic initialValue;
+  final DateTimeType type;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final controller =
         useTextEditingController(text: initialValue?.toString() ?? '');
     return TextFormField(
@@ -121,13 +118,14 @@ class DateTimeEditor extends HookConsumerWidget {
       decoration: InputDecoration(
         suffixIcon: IconButton(
           icon: const Icon(Icons.edit_calendar),
-          onPressed: () {
+          onPressed: () async {
             switch (type) {
               case DateTimeType.datetime:
                 final initialDateTime =
                     NocoDateTime.getInitialValue(initialValue).dt;
 
-                pickDateTime(context, initialDateTime, (pickedDateTime) async {
+                await pickDateTime(context, initialDateTime,
+                    (final pickedDateTime) async {
                   final v = NocoDate.fromDateTime(pickedDateTime);
                   await onUpdate({column.title: v.toApiValue()});
                   controller.text = v.toString();
@@ -135,18 +133,17 @@ class DateTimeEditor extends HookConsumerWidget {
               case DateTimeType.date:
                 final initialDate = NocoDate.getInitialValue(initialValue).dt;
 
-                pickDate(context, initialDate, (pickedDate) async {
+                await pickDate(context, initialDate, (final pickedDate) async {
                   final v = NocoDate.fromDateTime(pickedDate);
                   await onUpdate({column.title: v.toApiValue()});
                   controller.text = v.toString();
                 });
-                break;
               case DateTimeType.time:
                 final initialTime = TimeOfDay.fromDateTime(
                   NocoTime.getInitialValue(initialValue).dt,
                 );
 
-                pickTime(context, initialTime, (pickedTime) async {
+                await pickTime(context, initialTime, (final pickedTime) async {
                   final v = NocoTime.fromLocalTime(pickedTime);
 
                   // TODO: improve error handling

@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/models.dart';
-import '../../providers/providers.dart';
-import '../child_list.dart';
-import '../unlink_button.dart';
+import 'package:nocodb/features/core/components/child_list.dart';
+import 'package:nocodb/features/core/components/unlink_button.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class LinkToAnotherRecord extends HookConsumerWidget {
-  final NcTableColumn column;
-  final dynamic rowId;
-  final NcTable relation;
-  final dynamic initialValue;
   const LinkToAnotherRecord({
     super.key,
     required this.column,
@@ -19,6 +14,10 @@ class LinkToAnotherRecord extends HookConsumerWidget {
     required this.relation,
     required this.initialValue,
   });
+  final NcTableColumn column;
+  final dynamic rowId;
+  final NcTable relation;
+  final dynamic initialValue;
 
   String? get pvName => relation.pvName;
   String? get pkName => relation.pkName;
@@ -26,34 +25,33 @@ class LinkToAnotherRecord extends HookConsumerWidget {
   String get pv => initialValue[pvName].toString();
 
   Widget _buildCard({
-    required String value,
-    required String refRowId,
-    required WidgetRef ref,
-  }) {
-    return Card(
-      elevation: 4,
-      child: ListTile(
-        title: Text(value),
-        subtitle: Text('key: $refRowId'),
-        trailing: UnlinkIconButton(
-          rowId: rowId,
-          column: column,
-          relation: relation,
-          refRowId: refRowId,
+    required final String value,
+    required final String refRowId,
+    required final WidgetRef ref,
+  }) =>
+      Card(
+        elevation: 4,
+        child: ListTile(
+          title: Text(value),
+          subtitle: Text('key: $refRowId'),
+          trailing: UnlinkIconButton(
+            rowId: rowId,
+            column: column,
+            relation: relation,
+            refRowId: refRowId,
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   List<Widget> _buildChildren({
-    required PrimaryRecordList list,
-    required WidgetRef ref,
+    required final PrimaryRecordList list,
+    required final WidgetRef ref,
   }) {
     final context = useContext();
     final (records, _) = list;
 
     return [
-      ...records.map<Widget>((record) {
+      ...records.map<Widget>((final record) {
         final (pk, pv) = record;
         return _buildCard(value: pv, refRowId: pk, ref: ref);
       }),
@@ -65,17 +63,15 @@ class LinkToAnotherRecord extends HookConsumerWidget {
               'See more linked records.',
             ),
             leading: const Icon(Icons.open_in_new),
-            onTap: () {
-              showModalBottomSheet(
+            onTap: () async {
+              await showModalBottomSheet(
                 isScrollControlled: true,
                 context: context,
-                builder: (context) {
-                  return ChildList(
-                    column: column,
-                    rowId: rowId!,
-                    relation: relation,
-                  );
-                },
+                builder: (final context) => ChildList(
+                  column: column,
+                  rowId: rowId!,
+                  relation: relation,
+                ),
               );
             },
           ),
@@ -83,15 +79,13 @@ class LinkToAnotherRecord extends HookConsumerWidget {
     ];
   }
 
-  _buildEmptyCard() {
-    return const Card(
-      elevation: 4,
-      child: ListTile(title: Text('No record linked yet.')),
-    );
-  }
+  _buildEmptyCard() => const Card(
+        elevation: 4,
+        child: ListTile(title: Text('No record linked yet.')),
+      );
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     assert(!column.isBelongsTo);
 
     if (rowId == null) {
@@ -106,17 +100,14 @@ class LinkToAnotherRecord extends HookConsumerWidget {
           ),
         )
         .when(
-          data: (list) {
-            return list.$1.isEmpty
-                ? _buildEmptyCard()
-                : ListView(
-                    shrinkWrap: true,
-                    children: _buildChildren(list: list, ref: ref),
-                  );
-          },
-          error: (error, stackTrace) {
-            return Center(child: Text('$error\n$stackTrace'));
-          },
+          data: (final list) => list.$1.isEmpty
+              ? _buildEmptyCard()
+              : ListView(
+                  shrinkWrap: true,
+                  children: _buildChildren(list: list, ref: ref),
+                ),
+          error: (final error, final stackTrace) =>
+              Center(child: Text('$error\n$stackTrace')),
           loading: () => const CircularProgressIndicator(),
         );
     return ConstrainedBox(

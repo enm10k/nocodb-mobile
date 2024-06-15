@@ -5,8 +5,8 @@ enum ViewTypes {
   grid(value: 3),
   kanban(value: 4);
 
-  final int value;
   const ViewTypes({required this.value});
+  final int value;
 }
 
 enum UITypes {
@@ -47,8 +47,8 @@ enum UITypes {
   button(value: 'Button'),
   unknown(value: 'unknown');
 
-  final String value;
   const UITypes({required this.value});
+  final String value;
 }
 
 enum RelationTypes {
@@ -57,8 +57,8 @@ enum RelationTypes {
   belongsTo(value: 'bt'),
   unknown(value: 'unknown');
 
-  final String value;
   const RelationTypes({required this.value});
+  final String value;
 
   @override
   String toString() => value;
@@ -69,8 +69,8 @@ enum SortDirectionTypes {
   desc(value: 'desc'),
   unknown(value: 'unknown');
 
-  final String value;
   const SortDirectionTypes({required this.value});
+  final String value;
 
   @override
   String toString() => value;
@@ -80,8 +80,8 @@ enum QueryOperator {
   eq(value: 'eq'),
   like(value: 'like');
 
-  final String value;
   const QueryOperator({required this.value});
+  final String value;
 
   String toDisplayString() {
     switch (this) {
@@ -101,9 +101,7 @@ typedef Where = (String column, QueryOperator op, String query);
 extension WhereEx on Where {
   // We cannot override toString for a Record type.
   // For details see: https://github.com/dart-lang/language/issues/2389
-  String toString_() {
-    return '(${$1},${$2},${$3})';
-  }
+  String toString_() => '(${$1},${$2},${$3})';
 }
 
 typedef FnOnUpdate = Function(Map<String, dynamic>);

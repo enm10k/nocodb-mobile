@@ -1,33 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
-import '/nocodb_sdk/models.dart';
-import '/nocodb_sdk/symbols.dart';
-import '../../../../common/flash_wrapper.dart';
-import '../../../../common/logger.dart';
-import '../../providers/providers.dart';
-
-void refresh({
-  required Future<void> future,
-  required WidgetRef ref,
-  required BuildContext context,
-  required NcView view,
-}) {
-  future.then((_) {
+Future<void> refresh({
+  required final Future<void> future,
+  required final WidgetRef ref,
+  required final BuildContext context,
+  required final NcView view,
+}) async {
+  await future.then((final _) {
     ref.invalidate(dataRowsProvider);
     notifySuccess(context, message: 'Updated.');
   }).onError(
-    (error, stackTrace) => notifyError(context, error, stackTrace),
+    (final error, final stackTrace) => notifyError(context, error, stackTrace),
   );
 }
 
 class SortOptionItem extends HookConsumerWidget {
-  static const debug = true;
-  final NcView view;
-  final NcSort? sort;
-  final Function(Key) onRemoved;
-  final List<NcTableColumn> tableColumns;
   const SortOptionItem({
     super.key,
     required this.view,
@@ -35,9 +29,14 @@ class SortOptionItem extends HookConsumerWidget {
     this.sort,
     required this.tableColumns,
   });
+  static const debug = true;
+  final NcView view;
+  final NcSort? sort;
+  final Function(Key) onRemoved;
+  final List<NcTableColumn> tableColumns;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     assert(key != null, 'key must be specified for $runtimeType');
 
     final isNew = sort == null;
@@ -48,10 +47,11 @@ class SortOptionItem extends HookConsumerWidget {
 
     final columnItems = tableColumns
         .where(
-          (tableColumn) => !(tableColumn.isManyToMany || tableColumn.isHasMay),
+          (final tableColumn) =>
+              !(tableColumn.isManyToMany || tableColumn.isHasMay),
         )
         .map(
-          (tableColumn) => DropdownMenuItem(
+          (final tableColumn) => DropdownMenuItem(
             value: tableColumn.id,
             child: Text(
               tableColumn.title,
@@ -91,7 +91,7 @@ class SortOptionItem extends HookConsumerWidget {
             value: fkColumnId.value,
             isExpanded: true,
             items: columnItems,
-            onChanged: (newFkColumnId) {
+            onChanged: (final newFkColumnId) async {
               if (newFkColumnId == null) {
                 return;
               }
@@ -102,14 +102,24 @@ class SortOptionItem extends HookConsumerWidget {
                   fkColumnId: newFkColumnId,
                   direction: direction.value,
                 );
-                refresh(future: future, ref: ref, context: context, view: view);
+                await refresh(
+                  future: future,
+                  ref: ref,
+                  context: context,
+                  view: view,
+                );
               } else {
                 final future = notifier.save(
                   sortId: sort!.id,
                   fkColumnId: newFkColumnId,
                   direction: direction.value,
                 );
-                refresh(future: future, ref: ref, context: context, view: view);
+                await refresh(
+                  future: future,
+                  ref: ref,
+                  context: context,
+                  view: view,
+                );
               }
             },
           ),
@@ -133,7 +143,7 @@ class SortOptionItem extends HookConsumerWidget {
                 child: Text('DESC'),
               ),
             ],
-            onChanged: (newDirection) {
+            onChanged: (final newDirection) async {
               final newFkColumnId = fkColumnId.value;
               if (newDirection == null || newFkColumnId == null) {
                 return;
@@ -145,7 +155,12 @@ class SortOptionItem extends HookConsumerWidget {
                     fkColumnId: newFkColumnId,
                     direction: direction.value,
                   );
-              refresh(future: future, ref: ref, context: context, view: view);
+              await refresh(
+                future: future,
+                ref: ref,
+                context: context,
+                view: view,
+              );
             },
           ),
         ),
@@ -155,21 +170,22 @@ class SortOptionItem extends HookConsumerWidget {
 }
 
 class SortDialogContent extends HookConsumerWidget {
-  static const debug = true;
-  final NcView view;
-  final NcTable table;
   const SortDialogContent({
     super.key,
     required this.view,
     required this.table,
   });
+  static const debug = true;
+  final NcView view;
+  final NcTable table;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final sortList = ref.watch(sortListProvider(view.id));
     if (sortList.hasError) {
-      logger.info(sortList.error);
-      logger.info(sortList.stackTrace);
+      logger
+        ..info(sortList.error)
+        ..info(sortList.stackTrace);
     }
 
     final tableColumns = table.columns;
@@ -182,18 +198,18 @@ class SortDialogContent extends HookConsumerWidget {
     final children = useState<List<Widget>>([]);
     useEffect(
       () {
-        final newChildren = sorts
+        children.value = sorts
             .map(
-              (sort) => SortOptionItem(
+              (final sort) => SortOptionItem(
                 key: UniqueKey(),
                 view: view,
                 tableColumns: tableColumns,
                 sort: sort,
-                onRemoved: (key) {
+                onRemoved: (final key) async {
                   final future = ref
                       .watch(sortListProvider(view.id).notifier)
                       .delete(sort.id);
-                  refresh(
+                  await refresh(
                     future: future,
                     ref: ref,
                     context: context,
@@ -202,10 +218,11 @@ class SortDialogContent extends HookConsumerWidget {
                 },
               ),
             )
-            .toList();
-        newChildren
-            .sort((a, b) => (a.sort?.order ?? 0).compareTo(b.sort?.order ?? 0));
-        children.value = newChildren;
+            .toList()
+          ..sort(
+            (final a, final b) =>
+                (a.sort?.order ?? 0).compareTo(b.sort?.order ?? 0),
+          );
         return null;
       },
       [sorts],
@@ -227,10 +244,9 @@ class SortDialogContent extends HookConsumerWidget {
                     key: UniqueKey(),
                     view: view,
                     tableColumns: tableColumns,
-                    onRemoved: (key) {
-                      final newChildren = [...children.value];
-                      newChildren.removeWhere((element) => element.key == key);
-                      children.value = newChildren;
+                    onRemoved: (final key) {
+                      children.value = [...children.value]
+                        ..removeWhere((final element) => element.key == key);
                     },
                   ),
                 ];
@@ -245,19 +261,17 @@ class SortDialogContent extends HookConsumerWidget {
 }
 
 class SortDialog extends HookConsumerWidget {
-  final NcView view;
-  final NcTable table;
   const SortDialog({
     super.key,
     required this.view,
     required this.table,
   });
+  final NcView view;
+  final NcTable table;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return AlertDialog(
-      title: const Text('Sort'),
-      content: SortDialogContent(view: view, table: table),
-    );
-  }
+  Widget build(final BuildContext context, final WidgetRef ref) => AlertDialog(
+        title: const Text('Sort'),
+        content: SortDialogContent(view: view, table: table),
+      );
 }
