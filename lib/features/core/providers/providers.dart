@@ -294,6 +294,7 @@ class DataRows extends _$DataRows {
   Future<void> deleteRow({
     required final String rowId,
   }) async {
+    state = const AsyncValue.loading();
     final view = ref.read(viewProvider)!;
     await api.dbViewRowDelete(
       view: view,
@@ -310,8 +311,9 @@ class DataRows extends _$DataRows {
       return;
     }
 
-    final newRows =
-        currentRows.where((final row) => row[_pkName] == rowId).toList();
+    final newRows = currentRows
+        .whereNot((final row) => row[_pkName].toString() == rowId)
+        .toList();
 
     state = AsyncData(
       NcRowList(
@@ -511,10 +513,7 @@ class RowNested extends _$RowNested {
   _invalidate() {
     ref
       ..invalidateSelf()
-      ..invalidate(dataRowsProvider)
-      ..invalidate(
-        rowNestedProvider(rowId, column, relation),
-      );
+      ..invalidate(dataRowsProvider);
   }
 
   Future<String> remove({
