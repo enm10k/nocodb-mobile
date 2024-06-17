@@ -31,16 +31,17 @@ class _Card extends HookConsumerWidget {
           subtitle: Text('PrimaryKey: $refRowId'),
           onTap: () async {
             await ref
-                .watch(
+                .read(
                   rowNestedProvider(rowId, column, relation, excluded: true)
                       .notifier,
                 )
                 .link(refRowId: refRowId)
-                .then((final msg) => notifySuccess(context, message: msg))
-                .onError(
-                  (final error, final stackTrace) =>
-                      notifyError(context, error, stackTrace),
-                );
+                .then((final msg) {
+              notifySuccess(context, message: msg);
+            }).onError(
+              (final error, final stackTrace) =>
+                  notifyError(context, error, stackTrace),
+            );
           },
         ),
       );
@@ -90,7 +91,7 @@ class LinkRecordPage extends HookConsumerWidget {
         }
         context.loaderOverlay.show();
         await ref
-            .watch(
+            .read(
               rowNestedProvider(rowId, column, relation, excluded: true)
                   .notifier,
             )

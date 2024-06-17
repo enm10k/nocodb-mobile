@@ -441,7 +441,7 @@ class RowNested extends _$RowNested {
     final String rowId,
     final NcTableColumn column,
     final NcTable relation, {
-    final excluded = false,
+    final bool excluded = false,
   }) async {
     final fn = excluded
         ? api.dbTableRowNestedChildrenExcludedList
@@ -513,7 +513,10 @@ class RowNested extends _$RowNested {
   _invalidate() {
     ref
       ..invalidateSelf()
-      ..invalidate(dataRowsProvider);
+      ..invalidate(dataRowsProvider)
+      ..invalidate(
+        rowNestedProvider(rowId, column, relation, excluded: !excluded),
+      );
   }
 
   Future<String> remove({

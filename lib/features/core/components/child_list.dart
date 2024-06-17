@@ -166,7 +166,7 @@ class ChildList extends HookConsumerWidget {
         }
         context.loaderOverlay.show();
         await ref
-            .watch(rowNestedProvider(rowId, column, relation).notifier)
+            .read(rowNestedProvider(rowId, column, relation).notifier)
             .load()
             .then((final _) {
           Future.delayed(
