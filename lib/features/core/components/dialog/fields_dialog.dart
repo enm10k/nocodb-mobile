@@ -157,15 +157,15 @@ class FieldsDialog extends HookConsumerWidget {
           InkWell(
             onTap: () {
               ref
-                  .watch(viewProvider.notifier)
-                  .showSystemFields(view.showSystemFields);
+                  .read(viewProvider.notifier)
+                  .showSystemFields();
             },
             child: Row(
               children: [
                 Checkbox(
                   value: view.showSystemFields,
                   onChanged: (final value) {
-                    ref.watch(viewProvider.notifier).showSystemFields(value!);
+                    ref.read(viewProvider.notifier).showSystemFields();
                   },
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

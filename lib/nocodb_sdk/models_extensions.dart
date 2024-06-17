@@ -1,11 +1,24 @@
 part of 'models.dart';
 
-extension NctablesEx on NcTables {
+extension NcTablesEx on NcTables {
   List<NcView> get views => table.views;
   List<NcTableColumn> get columns => table.columns;
 
   NcTable? getRelation(final String relatedTableId) =>
       relationMap[relatedTableId];
+}
+
+extension NcRowListEx on NcRowList {
+  List<NcTableColumn> toTableColumns(
+    final Iterable<NcTableColumn> columns,
+  ) {
+    final titles = list.firstOrNull?.keys ?? [];
+    final columnsByTitle = Map.fromIterables(
+      columns.map((final c) => c.title),
+      columns,
+    );
+    return titles.map((final t) => columnsByTitle[t]).whereNotNull().toList();
+  }
 }
 
 extension NcColOptionsEx on NcColOptions {

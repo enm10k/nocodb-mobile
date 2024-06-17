@@ -67,6 +67,15 @@ enum HttpMethod {
   delete,
 }
 
+extension HttpMethodEx on HttpMethod {
+  model.HttpFn toFn(final http.Client client) => switch (this) {
+        HttpMethod.get => HttpFn.get(client.get),
+        HttpMethod.post => HttpFn.others(client.post),
+        HttpMethod.patch => HttpFn.others(client.patch),
+        HttpMethod.delete => HttpFn.others(client.delete),
+      };
+}
+
 class _Api {
   late final _HttpClient _client = _HttpClient(http.Client());
   late Uri _baseUri;
@@ -150,55 +159,7 @@ class _Api {
           );
   }
 
-  Future<http.Response> _send({
-    required final HttpMethod method,
-    final Uri? baseUri,
-    final String? path,
-    final Iterable<String> pathSegments = const [],
-    final String? data,
-    final Map<String, dynamic>? queryParameters,
-    final String? baseUrl,
-    final http.Client? httpClient,
-    final Map<String, String>? headers,
-  }) async {
-    final client = httpClient ?? _client;
-    final uri = _uri(
-      baseUri: baseUri,
-      path: path,
-      pathSegments: pathSegments,
-      queryParameters: queryParameters,
-      baseUrl: baseUrl,
-    );
-    final censored = data?.contains('password') == true ? '{***}' : data;
-
-    logger.finer(
-      '=> ${method.name.toUpperCase()} ${uri.path} ${uri.queryParametersAll.isNotEmpty ? uri.queryParametersAll : '-'} ${censored ?? '-'}',
-    );
-    switch (method) {
-      case HttpMethod.get:
-        return await client.get(uri, headers: headers);
-      case HttpMethod.post:
-        return await client.post(
-          uri,
-          body: data,
-          headers: headers,
-        );
-      case HttpMethod.patch:
-        return await client.patch(
-          uri,
-          body: data,
-          headers: headers,
-        );
-      case HttpMethod.delete:
-        return await client.delete(
-          uri,
-          body: data,
-          headers: headers,
-        );
-    }
-  }
-
-  Future<Result<T>> _send2<T>({
+  Future<Result<T>> _send<T>({
     required final HttpMethod method,
     final Uri? baseUri,
     final String? path,
@@ -209,7 +170,6 @@ class _Api {
     final http.Client? httpClient,
     final Map<String, String>? headers,
     final List<int> expectedStatusCode = const [],
-    // required final Result<T> Function(http.Response) serializer,
     required final T Function(http.Response res, dynamic data) serializer,
   }) async {
     try {
@@ -226,24 +186,14 @@ class _Api {
       logger.finer(
         '=> ${method.name.toUpperCase()} ${uri.path} ${uri.queryParametersAll.isNotEmpty ? uri.queryParametersAll : '-'} ${censored ?? '-'}',
       );
-      final res = switch (method) {
-        HttpMethod.get => await client.get(uri, headers: headers),
-        HttpMethod.post => await client.post(
-            uri,
-            body: body,
-            headers: headers,
-          ),
-        HttpMethod.patch => await client.patch(
-            uri,
-            body: body,
-            headers: headers,
-          ),
-        HttpMethod.delete => await client.delete(
-            uri,
-            body: body,
-            headers: headers,
-          )
-      };
+      final res = await method.toFn(client).when(
+            get: (final fn) async => await fn.call(uri, headers: headers),
+            others: (final fn) async => await fn.call(
+              uri,
+              body: body,
+              headers: headers,
+            ),
+          );
       final data = _decode(res, expectedStatusCode: expectedStatusCode);
 
       return Result.ok(serializer(res, data));
@@ -257,7 +207,7 @@ class _Api {
     final String? authToken,
   }) async {
     final headers = authToken != null ? {'xc-auth': authToken} : null;
-    return await _send2(
+    return await _send(
       baseUri: Uri.parse(endpoint),
       method: HttpMethod.get,
       path: '/api/v1/version',
@@ -271,7 +221,7 @@ class _Api {
     final String email,
     final String password,
   ) async =>
-      await _send2<String>(
+      await _send<String>(
         method: HttpMethod.post,
         path: '/api/v1/auth/user/signin',
         body: json.encode({
@@ -305,7 +255,7 @@ class _Api {
   //     );
 
   Future<model.Result<model.NcList<model.NcProject>>> projectList() async =>
-      await _send2(
+      await _send(
         method: HttpMethod.get,
         path: '/api/v1/db/meta/projects',
         serializer: (final _, final data) => model.NcProjectList.fromJson(
@@ -317,7 +267,7 @@ class _Api {
   Future<model.Result<model.NcSimpleTableList>> dbTableList({
     required final String projectId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.get,
         pathSegments: [
           '/api/v1/db/meta/projects',
@@ -331,7 +281,7 @@ class _Api {
   Future<model.Result<model.NcTable>> dbTableRead({
     required final String tableId,
   }) async =>
-      _send2(
+      _send(
         method: HttpMethod.get,
         pathSegments: [
           '/api/v1/db/meta/tables',
@@ -343,7 +293,7 @@ class _Api {
   Future<model.Result<model.ViewList>> dbViewList({
     required final String tableId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.get,
         pathSegments: [
           '/api/v1/db/meta/tables',
@@ -357,7 +307,7 @@ class _Api {
     required final String viewId,
     required final Map<String, dynamic> data,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.patch,
         pathSegments: [
           '/api/v1/db/meta/views',
@@ -370,7 +320,7 @@ class _Api {
   Future<Result<List<model.NcViewColumn>>> dbViewColumnList({
     required final String viewId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.get,
         pathSegments: [
           '/api/v1/db/meta/views',
@@ -401,7 +351,7 @@ class _Api {
     required final model.NcViewColumn column,
     required final Map<String, dynamic> data,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.patch,
         pathSegments: [
           '/api/v1/db/meta/views',
@@ -445,7 +395,7 @@ class _Api {
       queryParameters['where'] = where.toString();
     }
 
-    return await _send2(
+    return await _send(
       method: HttpMethod.get,
       pathSegments: [
         '/api/v1/db/data',
@@ -466,7 +416,7 @@ class _Api {
     required final NcView view,
     required final Map<String, dynamic> data,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.post,
         pathSegments: [
           '/api/v1/db/data',
@@ -493,7 +443,7 @@ class _Api {
       limit: limit,
       where: where,
     );
-    return await _send2(
+    return await _send(
       method: HttpMethod.get,
       pathSegments: [
         '/api/v1/db/data',
@@ -525,7 +475,7 @@ class _Api {
     return queryParameters;
   }
 
-  Future<Result<model.NcRowList>> dbTableRowNestedChildrenExcludedList({
+  Future<Result<NcRowList>> dbTableRowNestedChildrenExcludedList({
     final org = _defaultOrg,
     required final NcTableColumn column,
     required final String rowId,
@@ -538,7 +488,7 @@ class _Api {
       limit: limit,
       where: where,
     );
-    return await _send2(
+    return await _send(
       method: HttpMethod.get,
       pathSegments: [
         '/api/v1/db/data',
@@ -561,7 +511,7 @@ class _Api {
     required final NcView view,
     required final String rowId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.delete,
         pathSegments: [
           '/api/v1/db/data',
@@ -581,7 +531,7 @@ class _Api {
     required final String rowId,
     required final Map<String, dynamic> data,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.patch,
         pathSegments: [
           '/api/v1/db/data',
@@ -606,7 +556,7 @@ class _Api {
   Future<model.Result<model.NcList<model.NcSort>>> dbTableSortList({
     required final String viewId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.get,
         pathSegments: [
           '/api/v1/db/meta/views',
@@ -623,7 +573,7 @@ class _Api {
     required final String fkColumnId,
     required final SortDirectionTypes direction,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.post,
         pathSegments: [
           '/api/v1/db/meta/views',
@@ -640,7 +590,7 @@ class _Api {
   Future<Result<EmptyResult>> dbTableSortDelete({
     required final String sortId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.delete,
         pathSegments: [
           '/api/v1/db/meta/sorts',
@@ -654,7 +604,7 @@ class _Api {
     required final String fkColumnId,
     required final SortDirectionTypes direction,
   }) async =>
-      _send2(
+      _send(
         method: HttpMethod.patch,
         pathSegments: [
           '/api/v1/db/meta/sorts',
@@ -672,7 +622,7 @@ class _Api {
     required final String title,
     required final UITypes uidt,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.post,
         pathSegments: [
           '/api/v1/db/meta/tables',
@@ -688,12 +638,12 @@ class _Api {
       );
 
   // TODO: Fix. "msg" might cause a crash.
-  Future<model.Result> dbTableRowNestedAdd({
+  Future<model.Result<String>> dbTableRowNestedAdd({
     required final NcTableColumn column,
     required final String rowId,
     required final String refRowId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.post,
         pathSegments: [
           'api/v1/db/data',
@@ -716,7 +666,7 @@ class _Api {
     required final String rowId,
     required final String refRowId,
   }) async =>
-      await _send2(
+      await _send(
         method: HttpMethod.delete,
         pathSegments: [
           '/api/v1/db/data',

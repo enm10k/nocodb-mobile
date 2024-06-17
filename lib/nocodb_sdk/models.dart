@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:http/http.dart';
 
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
@@ -10,25 +12,31 @@ part 'models.freezed.dart';
 part 'models.g.dart';
 part 'models_extensions.dart';
 
-/*
-@freezed
-abstract class Result<T> with _$Result<T> {
-  const factory Result.success() = Success;
-  const factory Result.successWithValue(final T value) = SuccessWithValue<T>;
-
-  const factory Result.error(final Error error) = ResultError<T>;
-
-  const factory Result.exception(final Exception exception) =
-      ResultException<T>;
-}
- */
-
 @freezed
 abstract class Result<T> with _$Result<T> {
   const factory Result.ok(final T value) = Ok<T>;
 
   const factory Result.ng(final Object error, final StackTrace? stackTrace) =
       Ng<T>;
+}
+
+@freezed
+abstract class HttpFn with _$HttpFn {
+  const factory HttpFn.get(
+    final Future<Response> Function(
+      Uri url, {
+      Map<String, String>? headers,
+    }) value,
+  ) = HttpFnGet;
+
+  const factory HttpFn.others(
+    final Future<Response> Function(
+      Uri url, {
+      Map<String, String>? headers,
+      Object? body,
+      Encoding? encoding,
+    }) value,
+  ) = HttpFnOthers;
 }
 
 @Freezed(genericArgumentFactories: true)
