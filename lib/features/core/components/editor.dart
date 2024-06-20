@@ -96,6 +96,7 @@ class Editor extends HookConsumerWidget {
           maxLines: null,
           keyboardType: TextInputType.multiline,
         );
+      case UITypes.links:
       case UITypes.linkToAnotherRecord:
         final tables = ref.watch(tablesProvider);
         final relation = tables?.relationMap[column.fkRelatedModelId];

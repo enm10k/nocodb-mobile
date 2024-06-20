@@ -30,7 +30,6 @@ void main() async {
     return stack;
   };
 
-  // WidgetsFlutterBinding.ensureInitialized();
   runApp(
     const ProviderScope(
       child: App(),

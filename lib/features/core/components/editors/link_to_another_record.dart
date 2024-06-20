@@ -53,7 +53,7 @@ class LinkToAnotherRecord extends HookConsumerWidget {
     return [
       ...records.map<Widget>((final record) {
         final (pk, pv) = record;
-        return _buildCard(value: pv, refRowId: pk, ref: ref);
+        return _buildCard(value: pv.toString(), refRowId: pk, ref: ref);
       }),
       if (9 < records.length)
         Card(

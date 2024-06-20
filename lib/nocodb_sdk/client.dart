@@ -83,7 +83,6 @@ class _Api {
 
   init(final String url, {final String? authToken}) {
     _baseUri = Uri.parse(url);
-    logger.info(_baseUri);
     if (authToken != null) {
       _client.addHeaders({'xc-auth': authToken});
     } else {
@@ -243,16 +242,14 @@ class _Api {
         },
       );
 
-  // Future<Result<model.NcUser>> me(
-  //         [final Map<String, dynamic>? queryParameters]) async =>
-  //     await _send2(
-  //       method: HttpMethod.get,
-  //       path: '/api/v1/auth/user/me',
-  //       serializer: (final _, final data) {
-  //         final user = model.NcUser.fromJson(data);
-  //         return Result.ok(user);
-  //       },
-  //     );
+  Future<Result<model.NcUser>> authUserMe([
+    final Map<String, dynamic>? queryParameters,
+  ]) async =>
+      await _send(
+        method: HttpMethod.get,
+        path: '/api/v1/auth/user/me',
+        serializer: (final _, final data) => model.NcUser.fromJson(data),
+      );
 
   Future<model.Result<model.NcList<model.NcProject>>> projectList() async =>
       await _send(

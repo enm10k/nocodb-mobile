@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/common/preferences.dart';
 import 'package:nocodb/common/settings.dart';
@@ -21,8 +20,10 @@ part 'router.g.dart';
   final rawHeader = parts[0];
   final rawPayload = parts[1];
 
-  final header = String.fromCharCodes(base64Decode(rawHeader));
-  final payload = String.fromCharCodes(base64Decode(rawPayload));
+  final header =
+      String.fromCharCodes(base64Decode(base64.normalize(rawHeader)));
+  final payload =
+      String.fromCharCodes(base64Decode(base64.normalize(rawPayload)));
   return (jsonDecode(header), jsonDecode(payload));
 }
 
@@ -62,14 +63,17 @@ FutureOr<String?> redirect(
     }
 
     final rememberMe = await settings.rememberMe;
+    if (!rememberMe) {
+      return null;
+    }
+
     final apiBaseUrl = await settings.apiBaseUrl;
     final authToken = await settings.authToken;
 
     logger.config('apiBaseUrl: $apiBaseUrl');
-
     if (authToken == null || apiBaseUrl == null) {
       return const HomeRoute().location;
-    } else if (state.path == const HomeRoute().location) {
+    } else if (state.path == null || state.path == const HomeRoute().location) {
       if (!rememberMe) {
         await settings.clear();
         return const HomeRoute().location;
@@ -81,24 +85,23 @@ FutureOr<String?> redirect(
       );
 
       if (isAlive) {
-        final result = await api.version(apiBaseUrl);
-        result.when(
-          ok: (final ok) {
-            if (!ok) {
-              if (!ok) {
-                return const HomeRoute().location;
-              }
-              api.init(apiBaseUrl, authToken: authToken);
-              return const ProjectListRoute().location;
-            }
-          },
-          ng: (final error, final stackTrace) =>
-              notifyError(context, error, stackTrace),
-        );
+        api.init(apiBaseUrl, authToken: authToken);
+        return const ProjectListRoute().location;
+        // final result = await api.authUserMe();
+        // return result.when(
+        //   ok: (final ok) {
+        //     api.init(apiBaseUrl, authToken: authToken);
+        //     return const ProjectListRoute().location;
+        //   },
+        //   ng: (final error, final stackTrace) =>
+        //       notifyError(context, error, stackTrace),
+        // );
       }
     }
-  } catch (e) {
-    logger.warning(e);
+  } catch (e, s) {
+    logger
+      ..warning(e)
+      ..warning(s);
     return const HomeRoute().location;
   }
 
@@ -110,9 +113,8 @@ GoRouter router(final RouterRef ref) => GoRouter(
       routes: $appRoutes,
       debugLogDiagnostics: true,
       redirect: (final context, final state) async {
-        logger.info('redirecting ...');
         final location = await redirect(context, state);
-        if (location == null) {
+        if (location != null) {
           logger.info('redirected to $location');
         }
         return location;

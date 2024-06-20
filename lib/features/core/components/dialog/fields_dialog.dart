@@ -156,9 +156,7 @@ class FieldsDialog extends HookConsumerWidget {
           ),
           InkWell(
             onTap: () {
-              ref
-                  .read(viewProvider.notifier)
-                  .showSystemFields();
+              ref.read(viewProvider.notifier).showSystemFields();
             },
             child: Row(
               children: [

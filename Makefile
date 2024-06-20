@@ -1,8 +1,10 @@
-fix:
-	dart fix --apply lib
+run_integration_test rit:
+	flutter run --dart-define-from-file=integration_test/.env -t integration_test/hello_test.dart
 
 fmt:
-	dart format lib
+	dart fix --apply lib
+	dart fix --apply integration_test
+	dart format lib integration_test
 
 build-runner-watch watch:
 	# flutter pub run build_runner build -d -v
@@ -24,7 +26,6 @@ enable-db-log:
 
 tail-db-log:
 	cd _nocodb/docker-compose/pg && docker-compose logs -f root_db
-
 
 remove-generated-files:
 	find . | grep -e 'freezed\.dart' -e '\.g\.dart' | xargs -I {} rm {}

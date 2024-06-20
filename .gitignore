@@ -49,3 +49,5 @@ app.*.map.json
 .fvm/flutter_sdk
 
 _nocodb
+
+integration_test/.env

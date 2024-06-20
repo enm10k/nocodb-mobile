@@ -60,7 +60,8 @@ class View extends _$View {
         data: {
           'show_system_fields': !state!.showSystemFields,
         },
-      ), serializer: (final ok) => state = ok,
+      ),
+      serializer: (final ok) => state = ok,
     );
   }
 

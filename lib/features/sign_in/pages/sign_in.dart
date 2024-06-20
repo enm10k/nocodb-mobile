@@ -62,6 +62,7 @@ class SignInPage extends HookConsumerWidget {
           child: Column(
             children: [
               TextField(
+                key: const ValueKey('email'),
                 autofillHints: const [
                   AutofillHints.email,
                   AutofillHints.username,
@@ -72,6 +73,7 @@ class SignInPage extends HookConsumerWidget {
                 ),
               ),
               TextField(
+                key: const ValueKey('password'),
                 autofillHints: const [
                   AutofillHints.password,
                 ],
@@ -92,9 +94,10 @@ class SignInPage extends HookConsumerWidget {
                 obscureText: !showPassword.value,
               ),
               TextField(
+                key: const ValueKey('endpoint'),
                 onChanged: (final value) {
                   EasyDebounce.debounce(
-                    'sign_in_password',
+                    'api_endpoint',
                     const Duration(seconds: 1),
                     () async {
                       await api
@@ -138,6 +141,7 @@ class SignInPage extends HookConsumerWidget {
       ),
       actions: [
         TextButton(
+          key: const ValueKey('sign_in_button'),
           child: const Text('SIGN IN'),
           onPressed: () async {
             api.init(apiUrlController.text);
@@ -147,7 +151,6 @@ class SignInPage extends HookConsumerWidget {
               passwordController.text,
             )
                 .then((final authToken) async {
-              // TODO: Need to rewrite Settings class. The following values should not be saved to the storage when rememberMe is false.
               await settings.setApiBaseUrl(apiUrlController.text);
               await authToken.when(
                 ok: (final token) async {
@@ -155,6 +158,8 @@ class SignInPage extends HookConsumerWidget {
                     await settings.setEmail(emailController.text);
                     await settings.setRememberMe(rememberMe.value);
                     await settings.setAuthToken(token);
+                  } else {
+                    await settings.clear();
                   }
                   if (context.mounted) {
                     const ProjectListRoute().go(context);
