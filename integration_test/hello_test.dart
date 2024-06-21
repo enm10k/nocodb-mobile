@@ -6,9 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:nocodb/main.dart';
 
-const NC_ENDPOINT = String.fromEnvironment('NC_ENDPOINT');
-const NC_USER = String.fromEnvironment('NC_USER');
-const NC_PASS = String.fromEnvironment('NC_PASS');
+const ncEndpoint = String.fromEnvironment('NC_ENDPOINT');
+const ncUser = String.fromEnvironment('NC_USER');
+const ncPass = String.fromEnvironment('NC_PASS');
 
 // https://github.com/flutter/flutter/issues/88765#issuecomment-1113140289
 Future<void> waitFor(
@@ -42,15 +42,15 @@ void main() {
 
     await tester.enterText(
       find.byKey(const ValueKey('email')),
-      NC_USER,
+      ncUser,
     );
     await tester.enterText(
       find.byKey(const ValueKey('password')),
-      NC_PASS,
+      ncPass,
     );
     await tester.enterText(
       find.byKey(const ValueKey('endpoint')),
-      NC_ENDPOINT,
+      ncEndpoint,
     );
     await tester.tap(
       find.byKey(const ValueKey('sign_in_button')),
