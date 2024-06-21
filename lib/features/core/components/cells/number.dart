@@ -9,7 +9,7 @@ class Number extends HookConsumerWidget {
   final dynamic value;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => SizedBox(
+  Widget build(BuildContext context, WidgetRef ref) => SizedBox(
         width: double.infinity,
         child: Text(
           value != null ? value.toString() : '',

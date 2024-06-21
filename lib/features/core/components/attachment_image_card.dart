@@ -15,19 +15,18 @@ class AttachmentImageCard extends HookConsumerWidget {
   final PopupMenu? popupMenu;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final anchor = popupMenu != null ? GlobalKey() : null;
     final child = SizedBox(
       width: 80,
       height: 80,
       child: CachedNetworkImage(
         imageUrl: _file.signedUrl(api.uri),
-        placeholder: (final context, final url) => const Padding(
+        placeholder: (context, url) => const Padding(
           padding: EdgeInsets.all(24),
           child: CircularProgressIndicator(),
         ),
-        errorWidget: (final context, final url, final error) =>
-            const Icon(Icons.error),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
       ),
     );
 

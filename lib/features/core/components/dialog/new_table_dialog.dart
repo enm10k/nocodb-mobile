@@ -9,8 +9,7 @@ class NewTableDialog extends HookConsumerWidget {
   });
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      SingleValueDialog(
+  Widget build(BuildContext context, WidgetRef ref) => SingleValueDialog(
         title: 'Create New Table',
         labelText: 'Table name',
         actions: [
@@ -18,7 +17,7 @@ class NewTableDialog extends HookConsumerWidget {
             onPressed: () async {
               await showDialog(
                 context: context,
-                builder: (final _) => const NotImplementedDialog(),
+                builder: (_) => const NotImplementedDialog(),
               );
             },
             child: const Text('Submit'),

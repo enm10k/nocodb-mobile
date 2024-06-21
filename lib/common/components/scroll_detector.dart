@@ -11,9 +11,8 @@ class ScrollDetector extends HookConsumerWidget {
   final Future<void> Function()? onEnd;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      NotificationListener(
-        onNotification: (final ScrollEndNotification n) {
+  Widget build(BuildContext context, WidgetRef ref) => NotificationListener(
+        onNotification: (ScrollEndNotification n) {
           if (n.metrics.axis != Axis.vertical) {
             return true;
           }

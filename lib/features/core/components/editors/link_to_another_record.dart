@@ -25,9 +25,9 @@ class LinkToAnotherRecord extends HookConsumerWidget {
   String get pv => initialValue[pvName].toString();
 
   Widget _buildCard({
-    required final String value,
-    required final String refRowId,
-    required final WidgetRef ref,
+    required String value,
+    required String refRowId,
+    required WidgetRef ref,
   }) =>
       Card(
         elevation: 4,
@@ -44,14 +44,14 @@ class LinkToAnotherRecord extends HookConsumerWidget {
       );
 
   List<Widget> _buildChildren({
-    required final PrimaryRecordList list,
-    required final WidgetRef ref,
+    required PrimaryRecordList list,
+    required WidgetRef ref,
   }) {
     final context = useContext();
     final (records, _) = list;
 
     return [
-      ...records.map<Widget>((final record) {
+      ...records.map<Widget>((record) {
         final (pk, pv) = record;
         return _buildCard(value: pv.toString(), refRowId: pk, ref: ref);
       }),
@@ -67,7 +67,7 @@ class LinkToAnotherRecord extends HookConsumerWidget {
               await showModalBottomSheet(
                 isScrollControlled: true,
                 context: context,
-                builder: (final context) => ChildList(
+                builder: (context) => ChildList(
                   column: column,
                   rowId: rowId!,
                   relation: relation,
@@ -85,7 +85,7 @@ class LinkToAnotherRecord extends HookConsumerWidget {
       );
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     assert(!column.isBelongsTo);
 
     if (rowId == null) {
@@ -100,13 +100,13 @@ class LinkToAnotherRecord extends HookConsumerWidget {
           ),
         )
         .when(
-          data: (final list) => list.$1.isEmpty
+          data: (list) => list.$1.isEmpty
               ? _buildEmptyCard()
               : ListView(
                   shrinkWrap: true,
                   children: _buildChildren(list: list, ref: ref),
                 ),
-          error: (final error, final stackTrace) =>
+          error: (error, stackTrace) =>
               Center(child: Text('$error\n$stackTrace')),
           loading: () => const CircularProgressIndicator(),
         );

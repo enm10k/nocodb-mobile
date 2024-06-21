@@ -13,7 +13,7 @@ class Datetime extends HookConsumerWidget {
   final DateTimeType type;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     switch (type) {
       case DateTimeType.datetime:
         return Text(

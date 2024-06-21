@@ -22,7 +22,7 @@ class LinkToAnotherRecordBt extends HookConsumerWidget {
   String get pv => initialValue[pvName].toString();
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     assert(column.isBelongsTo);
 
     final child = initialValue == null

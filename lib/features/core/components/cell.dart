@@ -23,16 +23,16 @@ import 'package:nocodb/nocodb_sdk/types.dart';
 import 'package:nocodb/routes.dart';
 
 Future<void> showModalEditor({
-  required final BuildContext context,
-  required final NcTableColumn column,
-  required final String rowId,
-  required final dynamic value,
-  final isMultiline = false,
+  required BuildContext context,
+  required NcTableColumn column,
+  required String rowId,
+  required dynamic value,
+  isMultiline = false,
 }) async {
   await showModalBottomSheet(
     isScrollControlled: true,
     context: context,
-    builder: (final context) => ModalEditorWrapper(
+    builder: (context) => ModalEditorWrapper(
       rowId: rowId,
       title: column.title,
       content: Editor(
@@ -73,7 +73,7 @@ class Cell {
       return () => notifyError(context, 'Table has no PK.', null);
     }
 
-    updateWrapper(final String value) async {
+    updateWrapper(String value) async {
       await upsert(context, ref, rowId!, {
         column.title: value,
       });
@@ -88,7 +88,7 @@ class Cell {
             ref,
             rowId,
             {column.title: value != true},
-            onUpdateCallback: (final _) => notifySuccess(
+            onUpdateCallback: (_) => notifySuccess(
               context,
               message: value != true ? 'Checked' : 'Unchecked',
             ),
@@ -107,7 +107,7 @@ class Cell {
               await pickDateTime(
                 context,
                 initialDateTime,
-                (final pickedDateTime) async {
+                (pickedDateTime) async {
                   await updateWrapper(
                     NocoDateTime(pickedDateTime).toApiValue(),
                   );
@@ -118,7 +118,7 @@ class Cell {
             final initialDate = NocoDate.getInitialValue(value).dt;
 
             return () async {
-              await pickDate(context, initialDate, (final pickedDate) async {
+              await pickDate(context, initialDate, (pickedDate) async {
                 await updateWrapper(
                   NocoDate.fromDateTime(pickedDate).toApiValue(),
                 );
@@ -130,7 +130,7 @@ class Cell {
                 TimeOfDay.fromDateTime(NocoTime.getInitialValue(value).dt);
 
             return () async {
-              await pickTime(context, initialTime, (final pickedTime) {
+              await pickTime(context, initialTime, (pickedTime) {
                 updateWrapper(NocoTime.fromLocalTime(pickedTime).toApiValue());
               });
             };
@@ -154,7 +154,7 @@ class Cell {
           return () async => showModalBottomSheet(
                 isScrollControlled: true,
                 context: context,
-                builder: (final context) {
+                builder: (context) {
                   final tables = ref.read(tablesProvider);
                   final relation = tables!.relationMap[column.fkRelatedModelId];
                   return ChildList(
@@ -169,7 +169,7 @@ class Cell {
         return () async => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (final context) =>
+                builder: (context) =>
                     AttachmentEditorPage(rowId!, column.title),
               ),
             );

@@ -16,11 +16,11 @@ class CheckboxEditor extends HookConsumerWidget {
   final bool initialValue;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final checked = useState<bool>(initialValue);
     return Checkbox(
       value: checked.value,
-      onChanged: (final value) {
+      onChanged: (value) {
         onUpdate({
           column.title: value != true,
         });

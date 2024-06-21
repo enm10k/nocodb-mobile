@@ -12,7 +12,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'router.g.dart';
 
 (Map<String, dynamic> header, Map<String, dynamic> payload) decodeJwt(
-  final String jwt,
+  String jwt,
 ) {
   final parts = jwt.split('.');
   assert(parts.length == 3);
@@ -27,15 +27,15 @@ part 'router.g.dart';
   return (jsonDecode(header), jsonDecode(payload));
 }
 
-jwtTsToDateTime(final int timestamp) =>
+jwtTsToDateTime(int timestamp) =>
     DateTime.fromMicrosecondsSinceEpoch(timestamp * 1000 * 1000);
 
 (DateTime iat, DateTime exp) getIatAndExpFromPayload(
-  final Map<String, dynamic> payload,
+  Map<String, dynamic> payload,
 ) =>
     (jwtTsToDateTime(payload['iat']), jwtTsToDateTime(payload['exp']));
 
-bool isAuthTokenAlive(final String authToken) {
+bool isAuthTokenAlive(String authToken) {
   final (header, payload) = decodeJwt(authToken);
   logger.fine('authToken.header: $header');
 
@@ -51,8 +51,8 @@ bool isAuthTokenAlive(final String authToken) {
 
 // FutureOr<String?> redirect(context, state) async {
 FutureOr<String?> redirect(
-  final BuildContext context,
-  final GoRouterState state,
+  BuildContext context,
+  GoRouterState state,
 ) async {
   try {
     if (!settings.initialized) {
@@ -109,10 +109,10 @@ FutureOr<String?> redirect(
 }
 
 @riverpod
-GoRouter router(final RouterRef ref) => GoRouter(
+GoRouter router(RouterRef ref) => GoRouter(
       routes: $appRoutes,
       debugLogDiagnostics: true,
-      redirect: (final context, final state) async {
+      redirect: (context, state) async {
         final location = await redirect(context, state);
         if (location != null) {
           logger.info('redirected to $location');

@@ -24,15 +24,15 @@ class _UnlinkButton extends HookConsumerWidget {
   final UnlinkButtonType type;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     onPressed() async {
       await ref
           .watch(rowNestedProvider(rowId, column, relation).notifier)
           .remove(refRowId: refRowId)
-          .then((final msg) {
+          .then((msg) {
         notifySuccess(context, message: msg);
       }).onError(
-        (final error, final stackTrace) => notifyError(
+        (error, stackTrace) => notifyError(
           context,
           error,
           stackTrace,
@@ -66,8 +66,7 @@ class UnlinkTextButton extends HookConsumerWidget {
   final NcTable relation;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      _UnlinkButton(
+  Widget build(BuildContext context, WidgetRef ref) => _UnlinkButton(
         column: column,
         rowId: rowId,
         refRowId: refRowId,
@@ -90,8 +89,7 @@ class UnlinkIconButton extends HookConsumerWidget {
   final NcTable relation;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      _UnlinkButton(
+  Widget build(BuildContext context, WidgetRef ref) => _UnlinkButton(
         column: column,
         rowId: rowId,
         refRowId: refRowId,

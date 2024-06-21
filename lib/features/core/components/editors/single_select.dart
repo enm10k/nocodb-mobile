@@ -16,7 +16,7 @@ class SingleSelectEditor extends HookConsumerWidget {
   final String? initialValue;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final options = column.colOptions?.options;
     assert(options != null);
     if (options == null) {
@@ -25,7 +25,7 @@ class SingleSelectEditor extends HookConsumerWidget {
     final value = useState<String?>(initialValue);
 
     final children = options.map(
-      (final option) {
+      (option) {
         final color = column.colOptions?.getOptionColor(option.title);
 
         return Container(
@@ -36,7 +36,7 @@ class SingleSelectEditor extends HookConsumerWidget {
           child: FilterChip(
             label: Text(option.title),
             selected: value.value == option.title,
-            onSelected: (final selected) {
+            onSelected: (selected) {
               if (selected == true) {
                 value.value = option.title;
                 onUpdate?.call({

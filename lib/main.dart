@@ -19,7 +19,7 @@ void main() async {
     ignoreSsl: true,
   );
   // https://api.flutter.dev/flutter/foundation/FlutterError/demangleStackTrace.html
-  FlutterError.demangleStackTrace = (final stack) {
+  FlutterError.demangleStackTrace = (stack) {
     // Trace and Chain are classes in package:stack_trace
     if (stack is Trace) {
       return stack.vmTrace;
@@ -37,9 +37,9 @@ void main() async {
   );
 }
 
-setUpProviderListeners(final BuildContext context, final WidgetRef ref) {
+setUpProviderListeners(BuildContext context, WidgetRef ref) {
   ref
-    ..listen(projectProvider, (final previous, final next) async {
+    ..listen(projectProvider, (previous, next) async {
       logger.info('projectProvider is changed. prev: $previous, next: $next');
       if (next == null) {
         return;
@@ -48,25 +48,24 @@ setUpProviderListeners(final BuildContext context, final WidgetRef ref) {
       // select first table when project is selected.
       await () async {
         (await api.dbTableList(projectId: next.id)).when(
-          ok: (final tableList) async {
+          ok: (tableList) async {
             final tableId = tableList.list.firstOrNull?.id;
             if (tableId == null) {
               return;
             }
             (await api.dbTableRead(tableId: tableId)).when(
-              ok: (final table) {
+              ok: (table) {
                 ref.read(tableProvider.notifier).state = table;
               },
-              ng: (final error, final stackTrace) =>
+              ng: (error, stackTrace) =>
                   notifyError(context, error, stackTrace),
             );
           },
-          ng: (final error, final stackTrace) =>
-              notifyError(context, error, stackTrace),
+          ng: (error, stackTrace) => notifyError(context, error, stackTrace),
         );
       }();
     })
-    ..listen(tableProvider, (final previous, final next) async {
+    ..listen(tableProvider, (previous, next) async {
       logger.info('tableProvider is changed. prev: $previous, next: $next');
       if (next == null) {
         return;
@@ -75,8 +74,7 @@ setUpProviderListeners(final BuildContext context, final WidgetRef ref) {
 
       // get relations
       await getRelations(next).then(
-        (final relations) =>
-            ref.watch(tablesProvider.notifier).state = NcTables(
+        (relations) => ref.watch(tablesProvider.notifier).state = NcTables(
           table: table,
           relationMap: relations,
         ),
@@ -86,19 +84,18 @@ setUpProviderListeners(final BuildContext context, final WidgetRef ref) {
       // When a table is selected, update the view if necessary.
       if (view == null || view.fkModelId != table.id) {
         (await api.dbViewList(tableId: table.id)).when(
-          ok: (final viewList) {
+          ok: (viewList) {
             final view = viewList.list.firstOrNull;
             if (view == null) {
               return;
             }
             ref.read(viewProvider.notifier).set(view);
           },
-          ng: (final error, final stackTrace) =>
-              notifyError(context, error, stackTrace),
+          ng: (error, stackTrace) => notifyError(context, error, stackTrace),
         );
       }
     })
-    ..listen(viewProvider, (final previous, final next) async {
+    ..listen(viewProvider, (previous, next) async {
       logger.info('viewProvider is changed. prev: $previous, next: $next');
       if (next == null) {
         return;
@@ -108,9 +105,8 @@ setUpProviderListeners(final BuildContext context, final WidgetRef ref) {
       final tableId = ref.watch(tableProvider)?.id;
       if (tableId != next.fkModelId) {
         (await api.dbTableRead(tableId: next.fkModelId)).when(
-          ok: (final table) => ref.read(tableProvider.notifier).state = table,
-          ng: (final error, final stackTrace) =>
-              notifyError(context, error, stackTrace),
+          ok: (table) => ref.read(tableProvider.notifier).state = table,
+          ng: (error, stackTrace) => notifyError(context, error, stackTrace),
         );
       }
     });
@@ -122,7 +118,7 @@ class App extends HookConsumerWidget {
   });
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     setUpProviderListeners(context, ref); // TODO: Stop using ref.listen
     // No provider functionality is currently being used.
     final r = ref.watch(routerProvider);

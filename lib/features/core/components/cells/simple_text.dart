@@ -9,7 +9,7 @@ class SimpleText extends HookConsumerWidget {
   final dynamic value;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => Text(
+  Widget build(BuildContext context, WidgetRef ref) => Text(
         value != null ? value.toString() : '',
         overflow: TextOverflow.ellipsis,
       );

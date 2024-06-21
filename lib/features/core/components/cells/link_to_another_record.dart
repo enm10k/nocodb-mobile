@@ -14,15 +14,14 @@ class LinkToAnotherRecord extends HookConsumerWidget {
 
   static const offset = 25;
 
-  String getPrimaryValues(final NcTable table, final dynamic value) =>
-      (value is List)
-          ? value
-              .map((final e) => table.getPvFromRow(e as Map<String, dynamic>))
-              .join(', ')
-          : table.getPvFromRow(value).toString();
+  String getPrimaryValues(NcTable table, dynamic value) => (value is List)
+      ? value
+          .map((e) => table.getPvFromRow(e as Map<String, dynamic>))
+          .join(', ')
+      : table.getPvFromRow(value).toString();
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tables = ref.watch(tablesProvider);
     if (value == null || tables == null) {
       return const SizedBox();

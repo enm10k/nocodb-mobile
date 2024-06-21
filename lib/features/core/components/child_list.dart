@@ -24,7 +24,7 @@ class _Card extends HookConsumerWidget {
   final NcTable relation;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => Card(
+  Widget build(BuildContext context, WidgetRef ref) => Card(
         child: Column(
           children: [
             ListTile(
@@ -61,8 +61,8 @@ class ChildList extends HookConsumerWidget {
   static const debug = true;
 
   Widget _buildBase({
-    required final Widget child,
-    final Future<void> Function()? onEnd,
+    required Widget child,
+    Future<void> Function()? onEnd,
   }) {
     final context = useContext();
     return Column(
@@ -131,14 +131,14 @@ class ChildList extends HookConsumerWidget {
   }
 
   _build({
-    required final PrimaryRecordList list,
-    required final WidgetRef ref,
+    required PrimaryRecordList list,
+    required WidgetRef ref,
   }) {
     final (records, pageInfo) = list;
 
     final children = records
         .map(
-          (final record) {
+          (record) {
             final (refRowId, value) = record;
 
             return _Card(
@@ -168,7 +168,7 @@ class ChildList extends HookConsumerWidget {
         await ref
             .read(rowNestedProvider(rowId, column, relation).notifier)
             .load()
-            .then((final _) {
+            .then((_) {
           Future.delayed(
             const Duration(milliseconds: 500),
             () {
@@ -181,14 +181,14 @@ class ChildList extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
+  Widget build(BuildContext context, WidgetRef ref) =>
       ref.watch(rowNestedProvider(rowId, column, relation)).when(
-            data: (final list) => list.$1.isEmpty
+            data: (list) => list.$1.isEmpty
                 ? _buildBase(
                     child: const Center(child: Text('No child records.')),
                   )
                 : _build(list: list, ref: ref),
-            error: (final error, final stackTrace) =>
+            error: (error, stackTrace) =>
                 Center(child: Text('$error\n$stackTrace')),
             loading: () => const Center(child: CircularProgressIndicator()),
           );

@@ -9,17 +9,16 @@ class Attachment extends HookConsumerWidget {
   const Attachment(this.initialValue, {super.key});
   final dynamic initialValue;
 
-  List<Widget> buildChildren(final List<NcAttachedFile> files) => files
+  List<Widget> buildChildren(List<NcAttachedFile> files) => files
       .map(
-        (final file) => file.isImage
+        (file) => file.isImage
             ? Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                 child: CachedNetworkImage(
                   imageUrl: file.signedUrl(api.uri),
-                  placeholder: (final context, final url) =>
+                  placeholder: (context, url) =>
                       const CircularProgressIndicator(),
-                  errorWidget: (final context, final url, final error) =>
-                      const Icon(Icons.error),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               )
             : const Icon(Icons.description_outlined),
@@ -27,10 +26,10 @@ class Attachment extends HookConsumerWidget {
       .toList();
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final files = (initialValue ?? [])
         .map<NcAttachedFile>(
-          (final c) => NcAttachedFile.fromJson(c),
+          (c) => NcAttachedFile.fromJson(c),
         )
         .toList();
     return ListView(

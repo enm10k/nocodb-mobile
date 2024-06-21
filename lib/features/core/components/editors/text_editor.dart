@@ -10,7 +10,7 @@ import 'package:nocodb/nocodb_sdk/symbols.dart';
 const _emptyFormatters = <TextInputFormatter>[];
 const _debounceDuration = Duration(milliseconds: 500);
 
-String isnull(final dynamic v) {
+String isnull(dynamic v) {
   if (v == null) {
     return '';
   }
@@ -41,7 +41,7 @@ class TextEditor extends HookConsumerWidget {
   final List<TextInputFormatter> inputFormatters;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // This flag is necessary to avoid unnecessary update.
     final changed = useState(false);
 
@@ -92,14 +92,14 @@ class TextEditor extends HookConsumerWidget {
       onEditingComplete: () {
         logger.info('onEditingComplete');
       },
-      onFieldSubmitted: (final value) {
+      onFieldSubmitted: (value) {
         logger.info('onFieldSubmitted: $value');
         Navigator.pop(context);
       },
-      onSaved: (final value) {
+      onSaved: (value) {
         logger.info('onSaved: $value');
       },
-      onChanged: (final value) {
+      onChanged: (value) {
         logger.info('onChanged: $value');
 
         EasyDebounce.debounce(

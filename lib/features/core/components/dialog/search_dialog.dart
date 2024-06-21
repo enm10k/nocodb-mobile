@@ -19,7 +19,7 @@ class _SearchDialog extends HookConsumerWidget {
   final String initialValue;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isActive = useState(false);
     final controller = useTextEditingController();
 
@@ -44,7 +44,7 @@ class _SearchDialog extends HookConsumerWidget {
               decoration: const InputDecoration(
                 labelText: 'Keyword',
               ),
-              onChanged: (final value) {
+              onChanged: (value) {
                 isActive.value = value.isNotEmpty;
               },
             ),
@@ -76,7 +76,7 @@ class SheetSearchDialog extends HookConsumerWidget {
   });
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
       return const CircularProgressIndicator();
@@ -87,7 +87,7 @@ class SheetSearchDialog extends HookConsumerWidget {
     final columns = table.columns;
     final items = columns
         .map(
-          (final column) => DropdownMenuItem(
+          (column) => DropdownMenuItem(
             value: column.title,
             child: Text(column.title),
           ),
@@ -115,7 +115,7 @@ class SheetSearchDialog extends HookConsumerWidget {
           labelText: 'Field',
         ),
         items: items,
-        onChanged: (final newColumn) {
+        onChanged: (newColumn) {
           columnName.value = newColumn!;
         },
         value: columnName.value,
@@ -128,14 +128,14 @@ class SheetSearchDialog extends HookConsumerWidget {
           DropdownButton<QueryOperator>(
             items: QueryOperator.values
                 .map(
-                  (final mode) => DropdownMenuItem(
+                  (mode) => DropdownMenuItem(
                     value: mode,
                     child: Text(mode.toDisplayString()),
                   ),
                 )
                 .toList(),
             value: operator.value,
-            onChanged: (final newColumn) => operator.value = newColumn!,
+            onChanged: (newColumn) => operator.value = newColumn!,
           ),
         ],
       ),
@@ -143,7 +143,7 @@ class SheetSearchDialog extends HookConsumerWidget {
 
     return _SearchDialog(
       initialValue: query?.query ?? '',
-      onSearch: (final String query) {
+      onSearch: (String query) {
         ref.watch(searchQueryProvider.notifier).state = query.isEmpty
             ? null
             : SearchQuery(
@@ -171,7 +171,7 @@ class LinkRecordSearchDialog extends HookConsumerWidget {
   final String pvName;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
       return const CircularProgressIndicator();
@@ -196,14 +196,14 @@ class LinkRecordSearchDialog extends HookConsumerWidget {
           DropdownButton<QueryOperator>(
             items: QueryOperator.values
                 .map(
-                  (final mode) => DropdownMenuItem(
+                  (mode) => DropdownMenuItem(
                     value: mode,
                     child: Text(mode.toDisplayString()),
                   ),
                 )
                 .toList(),
             value: operator.value,
-            onChanged: (final newColumn) => operator.value = newColumn!,
+            onChanged: (newColumn) => operator.value = newColumn!,
           ),
         ],
       ),
@@ -212,7 +212,7 @@ class LinkRecordSearchDialog extends HookConsumerWidget {
       ref.read(rowNestedWhereProvider(column).notifier).state = null;
     }
 
-    onSearch(final String query) {
+    onSearch(String query) {
       ref.read(rowNestedWhereProvider(column).notifier).state =
           query.isEmpty ? null : (pvName, operator.value, query);
       Navigator.pop(context);

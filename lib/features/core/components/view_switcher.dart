@@ -8,7 +8,7 @@ import 'package:nocodb/nocodb_sdk/symbols.dart';
 class ViewSwitcher extends HookConsumerWidget {
   const ViewSwitcher({super.key});
 
-  Widget _build(final ViewTypes type) {
+  Widget _build(ViewTypes type) {
     switch (type) {
       case ViewTypes.grid:
         return const Grid();
@@ -22,8 +22,8 @@ class ViewSwitcher extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    final type = ref.watch(viewProvider.select((final v) => v?.type));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final type = ref.watch(viewProvider.select((v) => v?.type));
     return type != null ? _build(type) : const CircularProgressIndicator();
   }
 }

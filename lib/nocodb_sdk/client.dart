@@ -29,7 +29,7 @@ class EmptyResult {}
 
 final emptyResult = EmptyResult();
 
-String pp(final Map<String, dynamic> json) =>
+String pp(Map<String, dynamic> json) =>
     const JsonEncoder.withIndent('  ').convert(json);
 
 class _HttpClient extends http.BaseClient {
@@ -37,16 +37,16 @@ class _HttpClient extends http.BaseClient {
   final http.Client _baseHttpClient;
   final Map<String, String> _headers = {};
 
-  addHeaders(final Map<String, String> headers) {
+  addHeaders(Map<String, String> headers) {
     _headers.addAll(headers);
   }
 
-  removeHeader(final String key) {
+  removeHeader(String key) {
     _headers.remove(key);
   }
 
   @override
-  Future<http.StreamedResponse> send(final http.BaseRequest request) {
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
     final headers = _headers;
     if (0 < (request.contentLength ?? 0)) {
       headers.addAll(
@@ -68,7 +68,7 @@ enum HttpMethod {
 }
 
 extension HttpMethodEx on HttpMethod {
-  model.HttpFn toFn(final http.Client client) => switch (this) {
+  model.HttpFn toFn(http.Client client) => switch (this) {
         HttpMethod.get => HttpFn.get(client.get),
         HttpMethod.post => HttpFn.others(client.post),
         HttpMethod.patch => HttpFn.others(client.patch),
@@ -81,7 +81,7 @@ class _Api {
   late Uri _baseUri;
   Uri get uri => _baseUri;
 
-  init(final String url, {final String? authToken}) {
+  init(String url, {String? authToken}) {
     _baseUri = Uri.parse(url);
     if (authToken != null) {
       _client.addHeaders({'xc-auth': authToken});
@@ -93,8 +93,8 @@ class _Api {
   bool get isReady => _client._headers.containsKey('xc-auth');
 
   void throwExceptionIfKeyExists({
-    required final String key,
-    required final Map data,
+    required String key,
+    required Map data,
   }) {
     if (!data.containsKey(key)) {
       return;
@@ -107,15 +107,15 @@ class _Api {
     throw Exception(exception);
   }
 
-  _logResponse(final http.Response res) {
+  _logResponse(http.Response res) {
     logger.finer(
       '<= ${res.request?.method} ${res.request?.url.path} ${res.statusCode} ${res.body}',
     );
   }
 
   dynamic _decode(
-    final http.Response res, {
-    final List<int> expectedStatusCode = const [],
+    http.Response res, {
+    List<int> expectedStatusCode = const [],
   }) {
     _logResponse(res);
 
@@ -140,36 +140,35 @@ class _Api {
   }
 
   Uri _uri({
-    final Uri? baseUri,
-    final String? path,
-    final Iterable<String> pathSegments = const [],
-    final Map<String, dynamic>? queryParameters,
-    final String? baseUrl,
+    Uri? baseUri,
+    String? path,
+    Iterable<String> pathSegments = const [],
+    Map<String, dynamic>? queryParameters,
+    String? baseUrl,
   }) {
     assert(path != null || pathSegments.isNotEmpty);
     final uri = baseUri ?? _baseUri;
     return path != null
         ? uri.replace(path: path, queryParameters: queryParameters)
         : uri.replace(
-            pathSegments: pathSegments
-                .map((final v) => v.split('/'))
-                .expand((final v) => v),
+            pathSegments:
+                pathSegments.map((v) => v.split('/')).expand((v) => v),
             queryParameters: queryParameters,
           );
   }
 
   Future<Result<T>> _send<T>({
-    required final HttpMethod method,
-    final Uri? baseUri,
-    final String? path,
-    final Iterable<String> pathSegments = const [],
-    final String? body,
-    final Map<String, dynamic>? queryParameters,
-    final String? baseUrl,
-    final http.Client? httpClient,
-    final Map<String, String>? headers,
-    final List<int> expectedStatusCode = const [],
-    required final T Function(http.Response res, dynamic data) serializer,
+    required HttpMethod method,
+    Uri? baseUri,
+    String? path,
+    Iterable<String> pathSegments = const [],
+    String? body,
+    Map<String, dynamic>? queryParameters,
+    String? baseUrl,
+    http.Client? httpClient,
+    Map<String, String>? headers,
+    List<int> expectedStatusCode = const [],
+    required T Function(http.Response res, dynamic data) serializer,
   }) async {
     try {
       final client = httpClient ?? _client;
@@ -186,8 +185,8 @@ class _Api {
         '=> ${method.name.toUpperCase()} ${uri.path} ${uri.queryParametersAll.isNotEmpty ? uri.queryParametersAll : '-'} ${censored ?? '-'}',
       );
       final res = await method.toFn(client).when(
-            get: (final fn) async => await fn.call(uri, headers: headers),
-            others: (final fn) async => await fn.call(
+            get: (fn) async => await fn.call(uri, headers: headers),
+            others: (fn) async => await fn.call(
               uri,
               body: body,
               headers: headers,
@@ -202,8 +201,8 @@ class _Api {
   }
 
   Future<model.Result<bool>> version(
-    final String endpoint, {
-    final String? authToken,
+    String endpoint, {
+    String? authToken,
   }) async {
     final headers = authToken != null ? {'xc-auth': authToken} : null;
     return await _send(
@@ -212,13 +211,13 @@ class _Api {
       path: '/api/v1/version',
       httpClient: http.Client(), // This function should use plain HTTP client.
       headers: headers,
-      serializer: (final res, final _) => res.statusCode == 200,
+      serializer: (res, _) => res.statusCode == 200,
     );
   }
 
   Future<model.Result<String>> authSignin(
-    final String email,
-    final String password,
+    String email,
+    String password,
   ) async =>
       await _send<String>(
         method: HttpMethod.post,
@@ -231,7 +230,7 @@ class _Api {
             http.Client(), // This function should use plain HTTP client.
         headers: {'Content-type': 'application/json'},
         expectedStatusCode: [200],
-        serializer: (final _, final data) {
+        serializer: (_, data) {
           final {'token': token} = data;
           if (token == null) {
             throw Exception('authSignin failed.');
@@ -243,26 +242,26 @@ class _Api {
       );
 
   Future<Result<model.NcUser>> authUserMe([
-    final Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? queryParameters,
   ]) async =>
       await _send(
         method: HttpMethod.get,
         path: '/api/v1/auth/user/me',
-        serializer: (final _, final data) => model.NcUser.fromJson(data),
+        serializer: (_, data) => model.NcUser.fromJson(data),
       );
 
   Future<model.Result<model.NcList<model.NcProject>>> projectList() async =>
       await _send(
         method: HttpMethod.get,
         path: '/api/v1/db/meta/projects',
-        serializer: (final _, final data) => model.NcProjectList.fromJson(
+        serializer: (_, data) => model.NcProjectList.fromJson(
           data,
           model.fromJsonT<model.NcProject>,
         ),
       );
 
   Future<model.Result<model.NcSimpleTableList>> dbTableList({
-    required final String projectId,
+    required String projectId,
   }) async =>
       await _send(
         method: HttpMethod.get,
@@ -271,12 +270,11 @@ class _Api {
           projectId,
           'tables',
         ],
-        serializer: (final res, final data) =>
-            model.NcSimpleTableList.fromJson(data),
+        serializer: (res, data) => model.NcSimpleTableList.fromJson(data),
       );
 
   Future<model.Result<model.NcTable>> dbTableRead({
-    required final String tableId,
+    required String tableId,
   }) async =>
       _send(
         method: HttpMethod.get,
@@ -284,11 +282,11 @@ class _Api {
           '/api/v1/db/meta/tables',
           tableId,
         ],
-        serializer: (final res, final data) => model.NcTable.fromJson(data),
+        serializer: (res, data) => model.NcTable.fromJson(data),
       );
 
   Future<model.Result<model.ViewList>> dbViewList({
-    required final String tableId,
+    required String tableId,
   }) async =>
       await _send(
         method: HttpMethod.get,
@@ -297,12 +295,12 @@ class _Api {
           tableId,
           'views',
         ],
-        serializer: (final res, final data) => model.ViewList.fromJson(data),
+        serializer: (res, data) => model.ViewList.fromJson(data),
       );
 
   Future<model.Result<model.NcView>> dbViewUpdate({
-    required final String viewId,
-    required final Map<String, dynamic> data,
+    required String viewId,
+    required Map<String, dynamic> data,
   }) async =>
       await _send(
         method: HttpMethod.patch,
@@ -311,11 +309,11 @@ class _Api {
           viewId,
         ],
         body: json.encode(data),
-        serializer: (final _, final data) => model.NcView.fromJson(data),
+        serializer: (_, data) => model.NcView.fromJson(data),
       );
 
   Future<Result<List<model.NcViewColumn>>> dbViewColumnList({
-    required final String viewId,
+    required String viewId,
   }) async =>
       await _send(
         method: HttpMethod.get,
@@ -324,29 +322,29 @@ class _Api {
           viewId,
           'columns',
         ],
-        serializer: (final _, final data) {
+        serializer: (_, data) {
           final {'list': list as List} = data;
           return List<model.NcViewColumn>.from(
-            list.map((final c) => model.NcViewColumn.fromJson(c)),
+            list.map((c) => model.NcViewColumn.fromJson(c)),
           );
         },
       );
 
   Future<Result<EmptyResult>> dbViewColumnUpdateOrder({
-    required final model.NcViewColumn column,
-    required final int order,
+    required model.NcViewColumn column,
+    required int order,
   }) async =>
       await dbViewColumnUpdate(column: column, data: {'order': order});
 
   Future<Result<EmptyResult>> dbViewColumnUpdateShow({
-    required final model.NcViewColumn column,
-    required final bool show,
+    required model.NcViewColumn column,
+    required bool show,
   }) async =>
       await dbViewColumnUpdate(column: column, data: {'show': show});
 
   Future<Result<EmptyResult>> dbViewColumnUpdate({
-    required final model.NcViewColumn column,
-    required final Map<String, dynamic> data,
+    required model.NcViewColumn column,
+    required Map<String, dynamic> data,
   }) async =>
       await _send(
         method: HttpMethod.patch,
@@ -357,7 +355,7 @@ class _Api {
           column.id,
         ],
         body: json.encode(data),
-        serializer: (final res, final data) => emptyResult,
+        serializer: (res, data) => emptyResult,
       );
 
   // Future<model.Result<List<model.NcViewColumn>>> dbViewGridColumnsList({
@@ -377,11 +375,11 @@ class _Api {
   //   );
 
   Future<model.Result<model.NcRowList>> dbViewRowList({
-    final org = _defaultOrg,
-    required final NcView view,
-    final offset = 0,
-    final limit = 25,
-    final SearchQuery? where,
+    org = _defaultOrg,
+    required NcView view,
+    offset = 0,
+    limit = 25,
+    SearchQuery? where,
   }) async {
     final queryParameters = {
       'offset': offset.toString(),
@@ -403,15 +401,15 @@ class _Api {
         view.id,
       ],
       queryParameters: queryParameters,
-      serializer: (final res, final data) =>
+      serializer: (res, data) =>
           NcRowList.fromJson(data, model.fromJsonT<NcRow>),
     );
   }
 
   Future<model.Result<NcRow>> dbViewRowCreate({
-    final org = _defaultOrg,
-    required final NcView view,
-    required final Map<String, dynamic> data,
+    org = _defaultOrg,
+    required NcView view,
+    required Map<String, dynamic> data,
   }) async =>
       await _send(
         method: HttpMethod.post,
@@ -424,16 +422,16 @@ class _Api {
           view.id,
         ],
         body: json.encode(data),
-        serializer: (final res, final data) => data,
+        serializer: (res, data) => data,
       );
 
   Future<model.Result<model.NcRowList>> dbTableRowNestedList({
-    final org = _defaultOrg,
-    required final NcTableColumn column,
-    required final String rowId,
-    final offset = 0,
-    final limit = 10,
-    final Where? where,
+    org = _defaultOrg,
+    required NcTableColumn column,
+    required String rowId,
+    offset = 0,
+    limit = 10,
+    Where? where,
   }) async {
     final queryParameters = _buildQueryParameters(
       offset: offset,
@@ -452,15 +450,15 @@ class _Api {
         column.title,
       ],
       queryParameters: queryParameters,
-      serializer: (final res, final data) =>
+      serializer: (res, data) =>
           NcRowList.fromJson(data, model.fromJsonT<NcRow>),
     );
   }
 
   Map<String, dynamic> _buildQueryParameters({
-    final offset = 0,
-    final limit = 10,
-    final Where? where,
+    offset = 0,
+    limit = 10,
+    Where? where,
   }) {
     final queryParameters = {
       'offset': offset.toString(),
@@ -473,12 +471,12 @@ class _Api {
   }
 
   Future<Result<NcRowList>> dbTableRowNestedChildrenExcludedList({
-    final org = _defaultOrg,
-    required final NcTableColumn column,
-    required final String rowId,
-    final offset = 0,
-    final limit = 10,
-    final Where? where,
+    org = _defaultOrg,
+    required NcTableColumn column,
+    required String rowId,
+    offset = 0,
+    limit = 10,
+    Where? where,
   }) async {
     final queryParameters = _buildQueryParameters(
       offset: offset,
@@ -498,15 +496,15 @@ class _Api {
         'exclude',
       ],
       queryParameters: queryParameters,
-      serializer: (final res, final data) =>
+      serializer: (res, data) =>
           NcRowList.fromJson(data, model.fromJsonT<NcRow>),
     );
   }
 
   Future<Result<EmptyResult>> dbViewRowDelete({
-    final org = _defaultOrg,
-    required final NcView view,
-    required final String rowId,
+    org = _defaultOrg,
+    required NcView view,
+    required String rowId,
   }) async =>
       await _send(
         method: HttpMethod.delete,
@@ -519,14 +517,14 @@ class _Api {
           view.id,
           rowId,
         ],
-        serializer: (final res, final data) => emptyResult,
+        serializer: (res, data) => emptyResult,
       );
 
   Future<Result<NcRow>> dbViewRowUpdate({
-    final org = _defaultOrg,
-    required final NcView view,
-    required final String rowId,
-    required final Map<String, dynamic> data,
+    org = _defaultOrg,
+    required NcView view,
+    required String rowId,
+    required Map<String, dynamic> data,
   }) async =>
       await _send(
         method: HttpMethod.patch,
@@ -541,7 +539,7 @@ class _Api {
         ],
         body: json.encode(data),
         expectedStatusCode: [200],
-        serializer: (final res, final data) => data,
+        serializer: (res, data) => data,
       );
 
   // listFilters({required String viewId}) async {
@@ -551,7 +549,7 @@ class _Api {
   // }
 
   Future<model.Result<model.NcList<model.NcSort>>> dbTableSortList({
-    required final String viewId,
+    required String viewId,
   }) async =>
       await _send(
         method: HttpMethod.get,
@@ -560,15 +558,15 @@ class _Api {
           viewId,
           'sorts',
         ],
-        serializer: (final res, final data) =>
+        serializer: (res, data) =>
             NcSortList.fromJson(data, model.fromJsonT<model.NcSort>),
       );
 
   // TODO: Use send2
   Future<model.Result<EmptyResult>> dbTableSortCreate({
-    required final String viewId,
-    required final String fkColumnId,
-    required final SortDirectionTypes direction,
+    required String viewId,
+    required String fkColumnId,
+    required SortDirectionTypes direction,
   }) async =>
       await _send(
         method: HttpMethod.post,
@@ -581,11 +579,11 @@ class _Api {
           'fk_column_id': fkColumnId,
           'direction': direction.value,
         }),
-        serializer: (final data, final res) => emptyResult,
+        serializer: (data, res) => emptyResult,
       );
 
   Future<Result<EmptyResult>> dbTableSortDelete({
-    required final String sortId,
+    required String sortId,
   }) async =>
       await _send(
         method: HttpMethod.delete,
@@ -593,13 +591,13 @@ class _Api {
           '/api/v1/db/meta/sorts',
           sortId,
         ],
-        serializer: (final res, final data) => emptyResult,
+        serializer: (res, data) => emptyResult,
       );
 
   Future<Result<EmptyResult>> dbTableSortUpdate({
-    required final String sortId,
-    required final String fkColumnId,
-    required final SortDirectionTypes direction,
+    required String sortId,
+    required String fkColumnId,
+    required SortDirectionTypes direction,
   }) async =>
       _send(
         method: HttpMethod.patch,
@@ -611,13 +609,13 @@ class _Api {
           'fk_column_id': fkColumnId,
           'direction': direction.value,
         }),
-        serializer: (final res, final data) => emptyResult,
+        serializer: (res, data) => emptyResult,
       );
 
   Future<Result<EmptyResult>> dbTableColumnCreate({
-    required final String tableId,
-    required final String title,
-    required final UITypes uidt,
+    required String tableId,
+    required String title,
+    required UITypes uidt,
   }) async =>
       await _send(
         method: HttpMethod.post,
@@ -631,14 +629,14 @@ class _Api {
           'column_name': title,
           'uidt': uidt.value.toString(),
         }),
-        serializer: (final res, final data) => emptyResult,
+        serializer: (res, data) => emptyResult,
       );
 
   // TODO: Fix. "msg" might cause a crash.
   Future<model.Result<String>> dbTableRowNestedAdd({
-    required final NcTableColumn column,
-    required final String rowId,
-    required final String refRowId,
+    required NcTableColumn column,
+    required String rowId,
+    required String refRowId,
   }) async =>
       await _send(
         method: HttpMethod.post,
@@ -653,15 +651,15 @@ class _Api {
           refRowId,
         ],
         expectedStatusCode: [200],
-        serializer: (final res, final data) => data['msg'].toString(),
+        serializer: (res, data) => data['msg'].toString(),
       );
 
   // TODO: Fix. "msg" might cause a crash.
   Future<model.Result<String>> dbTableRowNestedRemove({
-    final org = _defaultOrg,
-    required final NcTableColumn column,
-    required final String rowId,
-    required final String refRowId,
+    org = _defaultOrg,
+    required NcTableColumn column,
+    required String rowId,
+    required String refRowId,
   }) async =>
       await _send(
         method: HttpMethod.delete,
@@ -676,12 +674,12 @@ class _Api {
           refRowId,
         ],
         expectedStatusCode: [200],
-        serializer: (final res, final data) => data['msg'].toString(),
+        serializer: (res, data) => data['msg'].toString(),
       );
 
   Future<http.MultipartFile> _createMultipartFile(
-    final NcFile file,
-    final String field,
+    NcFile file,
+    String field,
   ) async {
     switch (file) {
       case NcPlatformFile(platformFile: final platformFile):
@@ -704,7 +702,7 @@ class _Api {
     }
   }
 
-  bool _checkFileValid(final NcFile file) {
+  bool _checkFileValid(NcFile file) {
     if (file is NcPlatformFile) {
       final NcPlatformFile(:platformFile) = file;
       if (platformFile.bytes == null || platformFile.path == null) {
@@ -715,7 +713,7 @@ class _Api {
   }
 
   Future<List<model.NcAttachedFile>> dbStorageUpload(
-    final List<NcFile> files,
+    List<NcFile> files,
   ) async {
     const path = '/api/v1/db/storage/upload';
     final uri = _baseUri.replace(path: path);
@@ -726,7 +724,7 @@ class _Api {
       'Content-type': 'multipart/form-data',
     });
 
-    files.asMap().forEach((final index, final file) async {
+    files.asMap().forEach((index, file) async {
       if (!_checkFileValid(file)) {
         return;
       }
@@ -739,7 +737,7 @@ class _Api {
     final data = _decode(res, expectedStatusCode: [200]);
     return data
         .map<NcAttachedFile>(
-          (final e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
+          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
         )
         .toList();
   }

@@ -10,7 +10,7 @@ import 'package:nocodb/routes.dart';
 class SignInPage extends HookConsumerWidget {
   const SignInPage({super.key});
 
-  Widget? _getConnectivityIcon(final bool? connectivity) {
+  Widget? _getConnectivityIcon(bool? connectivity) {
     if (connectivity == null) {
       return null;
     } else if (connectivity) {
@@ -33,7 +33,7 @@ class SignInPage extends HookConsumerWidget {
     }
   }
 
-  Widget _buildDialog(final BuildContext context, final WidgetRef ref) {
+  Widget _buildDialog(BuildContext context, WidgetRef ref) {
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
     final apiUrlController = useTextEditingController();
@@ -95,17 +95,15 @@ class SignInPage extends HookConsumerWidget {
               ),
               TextField(
                 key: const ValueKey('endpoint'),
-                onChanged: (final value) {
+                onChanged: (value) {
                   EasyDebounce.debounce(
                     'api_endpoint',
                     const Duration(seconds: 1),
                     () async {
-                      await api
-                          .version(apiUrlController.text)
-                          .then((final result) {
+                      await api.version(apiUrlController.text).then((result) {
                         connectivity.value = true;
                       }).onError(
-                        (final error, final stackTrace) {
+                        (error, stackTrace) {
                           notifyError(context, error, stackTrace);
                           connectivity.value = false;
                         },
@@ -127,7 +125,7 @@ class SignInPage extends HookConsumerWidget {
                 children: [
                   Checkbox(
                     value: rememberMe.value,
-                    onChanged: (final _) {
+                    onChanged: (_) {
                       rememberMe.value = !rememberMe.value;
                     },
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -150,10 +148,10 @@ class SignInPage extends HookConsumerWidget {
               emailController.text,
               passwordController.text,
             )
-                .then((final authToken) async {
+                .then((authToken) async {
               await settings.setApiBaseUrl(apiUrlController.text);
               await authToken.when(
-                ok: (final token) async {
+                ok: (token) async {
                   if (rememberMe.value) {
                     await settings.setEmail(emailController.text);
                     await settings.setRememberMe(rememberMe.value);
@@ -165,13 +163,12 @@ class SignInPage extends HookConsumerWidget {
                     const ProjectListRoute().go(context);
                   }
                 },
-                ng: (final error, final stackTrace) {
+                ng: (error, stackTrace) {
                   notifyError(context, error, stackTrace);
                 },
               );
             }).onError(
-              (final error, final stackTrace) =>
-                  notifyError(context, error, stackTrace),
+              (error, stackTrace) => notifyError(context, error, stackTrace),
             );
           },
         ),
@@ -180,7 +177,7 @@ class SignInPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => Scaffold(
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
         appBar: AppBar(
           title: const Text('NocoDB'),
         ),

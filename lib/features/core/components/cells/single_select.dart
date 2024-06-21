@@ -12,7 +12,7 @@ class SingleSelect extends HookConsumerWidget {
   final String? value;
   final NcTableColumn column;
 
-  Widget _buildChip(final String? label) {
+  Widget _buildChip(String? label) {
     if (label == null) {
       return Container();
     }
@@ -25,7 +25,7 @@ class SingleSelect extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => ListView(
+  Widget build(BuildContext context, WidgetRef ref) => ListView(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         children: [_buildChip(value)],

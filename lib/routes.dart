@@ -38,28 +38,26 @@ part 'routes.g.dart';
 class HomeRoute extends GoRouteData {
   const HomeRoute();
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
-      const SignInPage();
+  Widget build(BuildContext context, GoRouterState state) => const SignInPage();
 }
 
 class ProjectListRoute extends GoRouteData {
   const ProjectListRoute();
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
+  Widget build(BuildContext context, GoRouterState state) =>
       const ProjectListPage();
 }
 
 class SheetRoute extends GoRouteData {
   const SheetRoute();
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
-      const SheetPage();
+  Widget build(BuildContext context, GoRouterState state) => const SheetPage();
 }
 
 class SheetSelectorRoute extends GoRouteData {
   const SheetSelectorRoute();
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
+  Widget build(BuildContext context, GoRouterState state) =>
       const SheetSelectorPage();
 }
 
@@ -68,10 +66,9 @@ class RowEditorRoute extends GoRouteData {
   final String? id;
 
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
-      ProviderScope(
+  Widget build(BuildContext context, GoRouterState state) => ProviderScope(
         overrides: [
-          formProvider.overrideWith((final ref) => {}),
+          formProvider.overrideWith((ref) => {}),
         ],
         child: RowEditor(rowId_: id),
       );
@@ -80,8 +77,7 @@ class RowEditorRoute extends GoRouteData {
 class DebugRoute extends GoRouteData {
   const DebugRoute();
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
-      const DebugPage();
+  Widget build(BuildContext context, GoRouterState state) => const DebugPage();
 }
 
 class LinkRecordRoute extends GoRouteData {
@@ -92,8 +88,7 @@ class LinkRecordRoute extends GoRouteData {
   final String columnId;
   final String rowId;
   @override
-  Widget build(final BuildContext context, final GoRouterState state) =>
-      LinkRecordPage(
+  Widget build(BuildContext context, GoRouterState state) => LinkRecordPage(
         columnId: columnId,
         rowId: rowId,
       );

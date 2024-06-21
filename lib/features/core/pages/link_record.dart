@@ -25,7 +25,7 @@ class _Card extends HookConsumerWidget {
   final NcTable relation;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => Card(
+  Widget build(BuildContext context, WidgetRef ref) => Card(
         child: ListTile(
           title: Text(pv.toString()),
           subtitle: Text('PrimaryKey: $refRowId'),
@@ -36,11 +36,10 @@ class _Card extends HookConsumerWidget {
                       .notifier,
                 )
                 .link(refRowId: refRowId)
-                .then((final msg) {
+                .then((msg) {
               notifySuccess(context, message: msg);
             }).onError(
-              (final error, final stackTrace) =>
-                  notifyError(context, error, stackTrace),
+              (error, stackTrace) => notifyError(context, error, stackTrace),
             );
           },
         ),
@@ -59,17 +58,17 @@ class LinkRecordPage extends HookConsumerWidget {
   static const debug = true;
 
   _build({
-    required final PrimaryRecordList list,
-    required final NcTable relation,
-    required final NcTableColumn column,
-    required final WidgetRef ref,
+    required PrimaryRecordList list,
+    required NcTable relation,
+    required NcTableColumn column,
+    required WidgetRef ref,
   }) {
     final (records, pageInfo) = list;
     final context = useContext();
 
     final children = records
         .map(
-          (final record) {
+          (record) {
             final (key, value) = record;
 
             return _Card(
@@ -96,7 +95,7 @@ class LinkRecordPage extends HookConsumerWidget {
                   .notifier,
             )
             .load()
-            .then((final _) {
+            .then((_) {
           Future.delayed(
             const Duration(milliseconds: 500),
             () {
@@ -114,10 +113,10 @@ class LinkRecordPage extends HookConsumerWidget {
   }
 
   Scaffold _buildScaffold({
-    required final Widget body,
-    required final WidgetRef ref,
-    required final NcTable relation,
-    required final NcTableColumn column,
+    required Widget body,
+    required WidgetRef ref,
+    required NcTable relation,
+    required NcTableColumn column,
   }) {
     final context = useContext();
     return Scaffold(
@@ -127,7 +126,7 @@ class LinkRecordPage extends HookConsumerWidget {
           IconButton(
             onPressed: () async => showDialog(
               context: context,
-              builder: (final _) => LinkRecordSearchDialog(
+              builder: (_) => LinkRecordSearchDialog(
                 column: column,
                 pvName: relation.pvName!,
               ),
@@ -141,7 +140,7 @@ class LinkRecordPage extends HookConsumerWidget {
   }
 
   Scaffold _buildEmptyScaffold({
-    required final Widget body,
+    required Widget body,
   }) =>
       Scaffold(
         appBar: AppBar(
@@ -151,7 +150,7 @@ class LinkRecordPage extends HookConsumerWidget {
       );
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tables = ref.watch(tablesProvider);
     if (tables == null) {
       return _buildEmptyScaffold(
@@ -185,7 +184,7 @@ class LinkRecordPage extends HookConsumerWidget {
           ),
         )
         .when(
-          data: (final list) {
+          data: (list) {
             if (list.$1.isEmpty) {
               return const Center(child: Text('No record to link.'));
             }
@@ -196,7 +195,7 @@ class LinkRecordPage extends HookConsumerWidget {
               ref: ref,
             );
           },
-          error: (final error, final stackTrace) => Center(
+          error: (error, stackTrace) => Center(
             child: Text('$error\n$stackTrace'),
           ),
           loading: () => const Center(child: CircularProgressIndicator()),

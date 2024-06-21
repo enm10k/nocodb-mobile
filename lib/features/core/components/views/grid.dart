@@ -30,18 +30,18 @@ class Grid extends HookConsumerWidget {
   static const _blankDataCell = DataCell(SizedBox());
 
   List<DataCell> _buildDataCellList(
-    final Map<String, dynamic> row,
-    final List<model.NcTableColumn> columns,
-    final model.NcTables tableMeta,
-    final WidgetRef ref,
-    final int blankLength,
+    Map<String, dynamic> row,
+    List<model.NcTableColumn> columns,
+    model.NcTables tableMeta,
+    WidgetRef ref,
+    int blankLength,
   ) {
     // TODO: Some child tables don't have a primary key.
     // TODO: Stop changing the type of primary key.
     final context = useContext();
 
     final pkId = tableMeta.table.getPkFromRow(row).toString();
-    final cells = columns.map((final column) {
+    final cells = columns.map((column) {
       final value = row[column.title];
 
       return Cell(
@@ -55,12 +55,12 @@ class Grid extends HookConsumerWidget {
 
     return cells
       ..addAll(
-        List.generate(blankLength, (final index) => _blankDataCell),
+        List.generate(blankLength, (index) => _blankDataCell),
       );
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
       return const CircularProgressIndicator();
@@ -72,7 +72,7 @@ class Grid extends HookConsumerWidget {
     final columns = ref.watch(fieldsProvider(view)).valueOrNull?.toList() ?? [];
     logger
       ..info('view: ${view.title} has ${columns.length} columns(s).')
-      ..info('columns: ${columns.map((final e) => e.title).toList()}');
+      ..info('columns: ${columns.map((e) => e.title).toList()}');
 
     final dataRow = ref.watch(dataRowsProvider).valueOrNull;
     logger.info('pageInfo: ${dataRow?.pageInfo}');
@@ -90,7 +90,7 @@ class Grid extends HookConsumerWidget {
       );
     }
 
-    final dataColumns = columns.map((final c) {
+    final dataColumns = columns.map((c) {
       final type = [UITypes.links, UITypes.linkToAnotherRecord].contains(c.uidt)
           ? c.relationType.value
           : c.uidt.value.capitalize();
@@ -104,9 +104,9 @@ class Grid extends HookConsumerWidget {
     }).toList();
 
     final tableWidth = dataColumns
-        .map((final c) => c.fixedWidth)
+        .map((c) => c.fixedWidth)
         .whereNotNull()
-        .reduce((final a, final b) => a + b);
+        .reduce((a, b) => a + b);
 
     final w = PlatformDispatcher.instance.views.first;
     final size = w.physicalSize / w.devicePixelRatio;
@@ -123,7 +123,7 @@ class Grid extends HookConsumerWidget {
     }
 
     final dataRows = rows.map(
-      (final row) => DataRow2(
+      (row) => DataRow2(
         cells: _buildDataCellList(
           row,
           columns,
@@ -135,13 +135,13 @@ class Grid extends HookConsumerWidget {
     );
 
     dataColumns.addAll(
-      List.generate(blankLength, (final i) => _blankDataColumn),
+      List.generate(blankLength, (i) => _blankDataColumn),
     );
 
     final adjustedMinWidth = dataColumns
-        .map((final c) => c.fixedWidth)
+        .map((c) => c.fixedWidth)
         .whereNotNull()
-        .reduce((final a, final b) => a + b);
+        .reduce((a, b) => a + b);
 
     final table = DataTable2(
       checkboxHorizontalMargin: 0,
@@ -179,7 +179,7 @@ class Grid extends HookConsumerWidget {
             return;
           }
           await ref.read(dataRowsProvider.notifier).loadNextPage().then(
-                (final _) => Future.delayed(
+                (_) => Future.delayed(
                   const Duration(milliseconds: 500),
                   () => context.loaderOverlay.hide(),
                 ),

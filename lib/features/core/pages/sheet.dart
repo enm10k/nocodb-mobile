@@ -17,7 +17,7 @@ class BottomAppBarButton extends HookConsumerWidget {
   final Function() onPressed;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => IconButton(
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
         icon: Icon(
           iconData,
           color: Colors.white,
@@ -30,7 +30,7 @@ class BottomAppBarButton extends HookConsumerWidget {
 class SheetPage extends HookConsumerWidget {
   const SheetPage({super.key});
 
-  Widget _buildBottomAppBar(final WidgetRef ref) {
+  Widget _buildBottomAppBar(WidgetRef ref) {
     final context = useContext();
     return BottomAppBar(
       height: 48,
@@ -62,7 +62,7 @@ class SheetPage extends HookConsumerWidget {
               iconData: Icons.search,
               onPressed: () async => showDialog(
                 context: context,
-                builder: (final _) => const SheetSearchDialog(),
+                builder: (_) => const SheetSearchDialog(),
               ),
             ),
           ],
@@ -72,7 +72,7 @@ class SheetPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final project = ref.watch(projectProvider);
     if (project == null) {
       return const CircularProgressIndicator();

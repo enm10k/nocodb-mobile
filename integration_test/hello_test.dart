@@ -12,9 +12,9 @@ const NC_PASS = String.fromEnvironment('NC_PASS');
 
 // https://github.com/flutter/flutter/issues/88765#issuecomment-1113140289
 Future<void> waitFor(
-  final WidgetTester tester,
-  final Finder finder, {
-  final Duration timeout = const Duration(seconds: 20),
+  WidgetTester tester,
+  Finder finder, {
+  Duration timeout = const Duration(seconds: 20),
 }) async {
   final end = DateTime.now().add(timeout);
 
@@ -32,7 +32,7 @@ void main() {
   HttpOverrides.global = null;
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('sign in', (final WidgetTester tester) async {
+  testWidgets('sign in', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: App(),

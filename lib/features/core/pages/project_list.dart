@@ -12,7 +12,7 @@ const _divider = Divider(height: 1);
 class ProjectListPage extends HookConsumerWidget {
   const ProjectListPage({super.key});
 
-  Widget _buildScaffold(final Widget body) {
+  Widget _buildScaffold(Widget body) {
     final context = useContext();
     return Scaffold(
       appBar: AppBar(
@@ -20,7 +20,7 @@ class ProjectListPage extends HookConsumerWidget {
         actions: [
           PopupMenuButton(
             icon: const Icon(Icons.account_circle),
-            itemBuilder: (final context) => <PopupMenuEntry>[
+            itemBuilder: (context) => <PopupMenuEntry>[
               PopupMenuItem(
                 child: const ListTile(
                   title: Text('Logout'),
@@ -28,7 +28,7 @@ class ProjectListPage extends HookConsumerWidget {
                 onTap: () async {
                   await settings
                       .clear()
-                      .then((final value) => const HomeRoute().push(context));
+                      .then((value) => const HomeRoute().push(context));
                 },
               ),
             ],
@@ -46,13 +46,13 @@ class ProjectListPage extends HookConsumerWidget {
     );
   }
 
-  Widget _build(final List<NcProject> projects, final WidgetRef ref) {
+  Widget _build(List<NcProject> projects, WidgetRef ref) {
     final context = useContext();
     final content = Flexible(
       child: ListView.separated(
         shrinkWrap: true,
         itemCount: projects.length,
-        itemBuilder: (final context, final index) {
+        itemBuilder: (context, index) {
           final project = projects[index];
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
@@ -65,7 +65,7 @@ class ProjectListPage extends HookConsumerWidget {
             ),
           );
         },
-        separatorBuilder: (final context, final index) => _divider,
+        separatorBuilder: (context, index) => _divider,
       ),
     );
 
@@ -80,7 +80,7 @@ class ProjectListPage extends HookConsumerWidget {
             onTap: () async {
               await showDialog(
                 context: context,
-                builder: (final _) => const NewProjectDialog(),
+                builder: (_) => const NewProjectDialog(),
               );
             },
           ),
@@ -91,12 +91,10 @@ class ProjectListPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      _buildScaffold(
+  Widget build(BuildContext context, WidgetRef ref) => _buildScaffold(
         ref.watch(projectListProvider).when(
-              data: (final data) => _build(data.list, ref),
-              error: (final error, final stacktrace) =>
-                  Text('$error\n$stacktrace'),
+              data: (data) => _build(data.list, ref),
+              error: (error, stacktrace) => Text('$error\n$stacktrace'),
               loading: () => const Center(child: CircularProgressIndicator()),
             ),
       );

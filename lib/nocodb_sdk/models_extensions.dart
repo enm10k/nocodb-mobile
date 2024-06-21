@@ -4,28 +4,26 @@ extension NcTablesEx on NcTables {
   List<NcView> get views => table.views;
   List<NcTableColumn> get columns => table.columns;
 
-  NcTable? getRelation(final String relatedTableId) =>
-      relationMap[relatedTableId];
+  NcTable? getRelation(String relatedTableId) => relationMap[relatedTableId];
 }
 
 extension NcRowListEx on NcRowList {
   List<NcTableColumn> toTableColumns(
-    final Iterable<NcTableColumn> columns,
+    Iterable<NcTableColumn> columns,
   ) {
     final titles = list.firstOrNull?.keys ?? [];
     final columnsByTitle = Map.fromIterables(
-      columns.map((final c) => c.title),
+      columns.map((c) => c.title),
       columns,
     );
-    return titles.map((final t) => columnsByTitle[t]).whereNotNull().toList();
+    return titles.map((t) => columnsByTitle[t]).whereNotNull().toList();
   }
 }
 
 extension NcColOptionsEx on NcColOptions {
-  Color? getOptionColor(final String title) {
-    final colorCode = options
-        ?.firstWhereOrNull((final option) => option.title == title)
-        ?.color;
+  Color? getOptionColor(String title) {
+    final colorCode =
+        options?.firstWhereOrNull((option) => option.title == title)?.color;
 
     if (colorCode == null) {
       return null;
@@ -42,9 +40,9 @@ extension NcTableColumnEx on NcTableColumn {
   String? get type => colOptions?.type;
 
   RelationTypes get relationType =>
-      RelationTypes.values.map((final e) => e.value).contains(type)
+      RelationTypes.values.map((e) => e.value).contains(type)
           ? RelationTypes.values
-              .firstWhere((final relationType) => relationType.value == type)
+              .firstWhere((relationType) => relationType.value == type)
           : RelationTypes.unknown;
 
   String? get fkRelatedModelId => colOptions?.fkRelatedModelId;
@@ -61,8 +59,8 @@ extension NcTableColumnEx on NcTableColumn {
   bool get isCount => uidt == UITypes.count;
 
   String? getRelationDescription({
-    required final String modelTitle,
-    required final String relatedModelTitle,
+    required String modelTitle,
+    required String relatedModelTitle,
   }) {
     switch (relationType) {
       case RelationTypes.hasMany:
@@ -76,8 +74,8 @@ extension NcTableColumnEx on NcTableColumn {
     }
   }
 
-  NcViewColumn? toViewColumn(final List<NcViewColumn> viewColumns) =>
-      viewColumns.firstWhereOrNull((final vc) => vc.fkColumnId == id);
+  NcViewColumn? toViewColumn(List<NcViewColumn> viewColumns) =>
+      viewColumns.firstWhereOrNull((vc) => vc.fkColumnId == id);
 
   // ref: https://github.com/nocodb/nocodb/blob/fecc12a33ecee23d532b0981523dd6cb52671480/packages/nocodb-sdk/src/lib/helperFunctions.ts#L14-L21
   bool get isSystem =>
@@ -92,38 +90,36 @@ extension NcTableColumnEx on NcTableColumn {
 }
 
 extension NcTableEx on NcTable {
-  NcTableColumn? getParentColumn(final String id) =>
-      columns.firstWhereOrNull((final column) => column.fkChildColumnId == id);
+  NcTableColumn? getParentColumn(String id) =>
+      columns.firstWhereOrNull((column) => column.fkChildColumnId == id);
 
   NcTableColumn? get pvColumn {
-    final pvColumns = columns.where((final element) => element.pv);
+    final pvColumns = columns.where((element) => element.pv);
     assert(pvColumns.length == 1);
     return pvColumns.firstOrNull;
   }
 
   String? get pvName => pvColumn?.title;
 
-  dynamic getPvFromRow(final Map<String, dynamic> row) => row[pvColumn?.title];
+  dynamic getPvFromRow(Map<String, dynamic> row) => row[pvColumn?.title];
 
   List<String> get pkNames =>
-      columns.where((final c) => c.pk).map((final c) => c.title).toList();
+      columns.where((c) => c.pk).map((c) => c.title).toList();
 
   String? get pkName => pkNames.firstOrNull;
 
-  List<String> get foreignKeys => columns
-      .map((final column) => column.fkRelatedModelId)
-      .whereNotNull()
-      .toList();
+  List<String> get foreignKeys =>
+      columns.map((column) => column.fkRelatedModelId).whereNotNull().toList();
 
-  List<String> getPksFromRow(final Map<String, dynamic> row) => pkNames
-      .map((final title) => row[title])
+  List<String> getPksFromRow(Map<String, dynamic> row) => pkNames
+      .map((title) => row[title])
       .whereNotNull()
-      .map((final v) => v.toString())
+      .map((v) => v.toString())
       .toList();
 
   String? getRefRowIdFromRow({
-    required final NcTableColumn column,
-    required final Map<String, dynamic> row,
+    required NcTableColumn column,
+    required Map<String, dynamic> row,
   }) {
     final pks = getPksFromRow(row);
     logger.info(
@@ -134,36 +130,35 @@ extension NcTableEx on NcTable {
     return column.isHasMay ? pks.join('___') : pks.firstOrNull;
   }
 
-  dynamic getPkFromRow(final Map<String, dynamic> row) {
+  dynamic getPkFromRow(Map<String, dynamic> row) {
     final pk = getPksFromRow(row).firstOrNull;
     assert(pk != null, 'getPkFromRow failed');
     return pk;
   }
 
   List<NcTableColumn> get requiredColumns =>
-      columns.where((final column) => column.rqd).toList();
+      columns.where((column) => column.rqd).toList();
 
-  bool isReadyToSave(final List<String> keys) {
+  bool isReadyToSave(List<String> keys) {
     // TODO: The condition for excluding columns needs improvement.
-    if (requiredColumns.where((final c) => c.ai != true).isEmpty) {
+    if (requiredColumns.where((c) => c.ai != true).isEmpty) {
       return true;
     }
 
     return requiredColumns
-        .where((final c) => c.cdf == null)
-        .every((final column) => keys.contains(column.title));
+        .where((c) => c.cdf == null)
+        .every((column) => keys.contains(column.title));
   }
 }
 
 extension NcViewColumnEx on NcViewColumn {
-  NcTableColumn? toTableColumn(final List<NcTableColumn> tableColumns) =>
-      tableColumns.firstWhereOrNull((final c) => c.id == fkColumnId);
+  NcTableColumn? toTableColumn(List<NcTableColumn> tableColumns) =>
+      tableColumns.firstWhereOrNull((c) => c.id == fkColumnId);
 }
 
 extension NcViewColumnListEx on List<NcViewColumn> {
-  List<NcViewColumn> getColumnsToShow(final NcTable table, final NcView view) =>
-      where(
-        (final column) {
+  List<NcViewColumn> getColumnsToShow(NcTable table, NcView view) => where(
+        (column) {
           final tableColumn = column.toTableColumn(table.columns);
           final system = tableColumn?.isSystem ?? false;
 
@@ -181,5 +176,5 @@ extension NcAttachedFileEx on NcAttachedFile {
   String get id => signedPath;
   bool get isImage => mimetype.startsWith('image');
 
-  String signedUrl(final Uri host) => host.replace(path: signedPath).toString();
+  String signedUrl(Uri host) => host.replace(path: signedPath).toString();
 }

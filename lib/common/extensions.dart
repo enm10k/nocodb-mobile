@@ -16,7 +16,7 @@ extension StringExtension on String {
 
 extension JsonListExtension on Iterable<Map<String, dynamic>> {
   Map<String, dynamic> flatten() => reduce(
-        (final a, final b) {
+        (a, b) {
           a.addAll(b);
           return a;
         },

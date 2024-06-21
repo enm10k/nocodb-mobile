@@ -13,7 +13,7 @@ class AttachmentFileCard extends HookConsumerWidget {
   final PopupMenu? popupMenu;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final anchor = popupMenu != null ? GlobalKey() : null;
     final child = Padding(
       padding: const EdgeInsets.all(8),

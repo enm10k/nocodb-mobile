@@ -13,8 +13,8 @@ class MultiSelect extends HookConsumerWidget {
   final NcTableColumn column;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    final children = values.map((final value) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final children = values.map((value) {
       // TODO: Improve performance
       final color = column.colOptions?.getOptionColor(value);
       return Chip(

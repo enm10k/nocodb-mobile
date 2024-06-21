@@ -14,18 +14,18 @@ class SheetSelectorPage extends HookConsumerWidget {
     BuildContext,
     int,
   ) _viewBuilder({
-    required final List<NcSlimTable> tables,
-    required final WidgetRef ref,
+    required List<NcSlimTable> tables,
+    required WidgetRef ref,
   }) =>
-      (final context, final index) {
+      (context, index) {
         final viewId = ref.watch(viewProvider)?.id;
         final table = tables[index];
         return ref.watch(viewListProvider(table.id)).when(
-              data: (final views) => ListView.separated(
-                separatorBuilder: (final context, final index) => const Divider(
+              data: (views) => ListView.separated(
+                separatorBuilder: (context, index) => const Divider(
                   height: 2,
                 ),
-                itemBuilder: (final context, final index) {
+                itemBuilder: (context, index) {
                   final view = views.list[index];
                   return ListTile(
                     title: Text(view.title),
@@ -39,7 +39,7 @@ class SheetSelectorPage extends HookConsumerWidget {
                 },
                 itemCount: views.list.length,
               ),
-              error: (final error, final stackTrace) {
+              error: (error, stackTrace) {
                 notifyError(context, error, stackTrace);
                 return const SizedBox();
               },
@@ -48,21 +48,21 @@ class SheetSelectorPage extends HookConsumerWidget {
       };
 
   Widget _buildDrawer({
-    required final List<NcSlimTable> tables,
-    required final String tableId,
-    required final PageController controller,
+    required List<NcSlimTable> tables,
+    required String tableId,
+    required PageController controller,
   }) {
     final context = useContext();
     return Drawer(
       child: ListView(
         children: tables
             .map(
-              (final table) => ListTile(
+              (table) => ListTile(
                 title: Text(table.title),
                 selected: table.id == tableId,
                 onTap: () {
                   final index =
-                      tables.map((final t) => t.id).toList().indexOf(table.id);
+                      tables.map((t) => t.id).toList().indexOf(table.id);
                   controller.jumpToPage(index);
                   Navigator.pop(context);
                 },
@@ -74,13 +74,13 @@ class SheetSelectorPage extends HookConsumerWidget {
   }
 
   DefaultTabController _build({
-    required final List<NcSlimTable> tables,
-    required final WidgetRef ref,
-    required final NcProject project,
+    required List<NcSlimTable> tables,
+    required WidgetRef ref,
+    required NcProject project,
   }) {
     final tableId = ref.watch(tableProvider)?.id ?? '';
     final initialIndex =
-        tables.map((final table) => table.id).toList().indexOf(tableId);
+        tables.map((table) => table.id).toList().indexOf(tableId);
     logger
       ..info('tableId: $tableId')
       ..info('initialIndex: $initialIndex');
@@ -108,32 +108,31 @@ class SheetSelectorPage extends HookConsumerWidget {
           ),
           title: Text(project.title),
           bottom: TabBar(
-            onTap: (final index) {
+            onTap: (index) {
               logger.info('TabBar.onTap: $index');
               pageController.jumpToPage(index);
             },
             controller: tabController,
             isScrollable: true,
-            tabs: tables.map((final table) => Tab(text: table.title)).toList(),
+            tabs: tables.map((table) => Tab(text: table.title)).toList(),
           ),
         ),
         body: PageView.builder(
-          onPageChanged: (final index) async {
+          onPageChanged: (index) async {
             logger.info('PageView.onPageChanged: $index');
             tabController.animateTo(index);
 
             final table = tables[index];
-            await api.dbTableRead(tableId: table.id).then((final result) {
+            await api.dbTableRead(tableId: table.id).then((result) {
               result.when(
-                ok: (final table) {
+                ok: (table) {
                   ref.watch(viewProvider.notifier).set(table.views.first);
                 },
-                ng: (final error, final stackTrace) =>
+                ng: (error, stackTrace) =>
                     notifyError(context, error, stackTrace),
               );
             }).onError(
-              (final error, final stackTrace) =>
-                  notifyError(context, error, stackTrace),
+              (error, stackTrace) => notifyError(context, error, stackTrace),
             );
           },
           controller: pageController,
@@ -143,7 +142,7 @@ class SheetSelectorPage extends HookConsumerWidget {
           ),
         ),
         floatingActionButton: Builder(
-          builder: (final context) => FloatingActionButton(
+          builder: (context) => FloatingActionButton(
             onPressed: () => Scaffold.of(context).openDrawer(),
             child: const Icon(Icons.list),
           ),
@@ -159,18 +158,18 @@ class SheetSelectorPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final project = ref.watch(projectProvider);
     if (project == null) {
       return const SizedBox();
     }
     return ref.watch(tableListProvider(project.id)).when(
-          data: (final list) => _build(
+          data: (list) => _build(
             tables: list.list,
             ref: ref,
             project: project,
           ),
-          error: (final error, final stackTrace) {
+          error: (error, stackTrace) {
             notifyError(context, error, stackTrace);
             return const SizedBox();
           },

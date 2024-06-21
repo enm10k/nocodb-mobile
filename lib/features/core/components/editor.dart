@@ -30,14 +30,14 @@ class Editor extends HookConsumerWidget {
 
   bool get isNew => rowId == null;
 
-  Widget _build(final WidgetRef ref) {
+  Widget _build(WidgetRef ref) {
     final context = useContext();
 
     logger.info(
       'column: ${column.title}, rqd: ${column.rqd}, rowId: $rowId, value: $value',
     );
 
-    onUpdateWrapper(final NcRow row) async {
+    onUpdateWrapper(NcRow row) async {
       await upsert(context, ref, rowId, row);
     }
 
@@ -153,5 +153,5 @@ class Editor extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => _build(ref);
+  Widget build(BuildContext context, WidgetRef ref) => _build(ref);
 }

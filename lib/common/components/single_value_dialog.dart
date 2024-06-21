@@ -14,7 +14,7 @@ class SingleValueDialog extends HookConsumerWidget {
   final List<Widget> actions;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textEditController = useTextEditingController(text: '');
 
     return AlertDialog(

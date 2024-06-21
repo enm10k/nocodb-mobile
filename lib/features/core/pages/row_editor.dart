@@ -11,13 +11,13 @@ import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
 import 'package:nocodb/routes.dart';
 
-bool isEditable(final model.NcTableColumn column, final bool isNew) =>
+bool isEditable(model.NcTableColumn column, bool isNew) =>
     !((!isNew && column.pk) || column.ai);
 
 Widget _buildTitle({
-  required final model.NcTables tables,
-  required final model.NcTableColumn column,
-  required final String? rowId,
+  required model.NcTables tables,
+  required model.NcTableColumn column,
+  required String? rowId,
 }) {
   final context = useContext();
   final required = column.rqd ? '(required)' : '';
@@ -46,7 +46,7 @@ Widget _buildTitle({
               if (rowId == null) {
                 await showDialog(
                   context: context,
-                  builder: (final _) => const AlertDialog(
+                  builder: (_) => const AlertDialog(
                     title: Text('Record Link Error'),
                     content: Text(
                       'Please enter other fields to save the record before linking.',
@@ -71,22 +71,22 @@ class RowEditor extends HookConsumerWidget {
   final String? rowId_;
 
   int _getViewColumnOrder(
-    final NcTableColumn tableColumn,
-    final List<NcViewColumn> viewColumns,
+    NcTableColumn tableColumn,
+    List<NcViewColumn> viewColumns,
   ) =>
       tableColumn.toViewColumn(viewColumns)?.order ?? 0;
 
   List<Widget> _buildForm({
-    required final model.NcView view,
-    required final model.NcTables tables,
-    required final WidgetRef ref,
-    required final BuildContext context,
-    required final String? rowId,
+    required model.NcView view,
+    required model.NcTables tables,
+    required WidgetRef ref,
+    required BuildContext context,
+    required String? rowId,
   }) {
     final rows = ref.watch(dataRowsProvider).valueOrNull?.list ?? [];
     final table = ref.watch(tableProvider);
     final rowData = rows.firstWhereOrNull(
-          (final row) => table?.getPkFromRow(row) == rowId,
+          (row) => table?.getPkFromRow(row) == rowId,
         ) ??
         {};
 
@@ -97,23 +97,23 @@ class RowEditor extends HookConsumerWidget {
     }
     // assert(tables.table.columns.length == viewColumns.length);
 
-    final filtered = tables.table.columns.where((final c) => !c.isSystem);
+    final filtered = tables.table.columns.where((c) => !c.isSystem);
 
     // The required columns should be displayed at the top.
-    final rqds = filtered.where((final c) => c.rqd).toList()
+    final rqds = filtered.where((c) => c.rqd).toList()
       ..sort(
-        (final a, final b) => _getViewColumnOrder(a, viewColumns).compareTo(
+        (a, b) => _getViewColumnOrder(a, viewColumns).compareTo(
           _getViewColumnOrder(b, viewColumns),
         ),
       );
 
-    final optionals = filtered.where((final c) => !c.rqd).toList()
+    final optionals = filtered.where((c) => !c.rqd).toList()
       ..sort(
-        (final a, final b) => _getViewColumnOrder(a, viewColumns)
+        (a, b) => _getViewColumnOrder(a, viewColumns)
             .compareTo(_getViewColumnOrder(b, viewColumns)),
       );
 
-    return [...rqds, ...optionals].map((final c) {
+    return [...rqds, ...optionals].map((c) {
       final initialValue = rowData[c.title];
 
       return Column(
@@ -142,16 +142,16 @@ class RowEditor extends HookConsumerWidget {
   }
 
   Widget _buildDeleteButton({
-    required final NcView view,
-    required final BuildContext context,
-    required final WidgetRef ref,
-    required final ValueNotifier<String?> rowId,
+    required NcView view,
+    required BuildContext context,
+    required WidgetRef ref,
+    required ValueNotifier<String?> rowId,
   }) =>
       IconButton(
         onPressed: () async {
           await showDialog(
             context: context,
-            builder: (final context) => AlertDialog(
+            builder: (context) => AlertDialog(
               title: const Text('Delete'),
               content: const Text(
                 'Are you sure want to delete this record?',
@@ -168,11 +168,11 @@ class RowEditor extends HookConsumerWidget {
                     await ref
                         .watch(dataRowsProvider.notifier)
                         .deleteRow(rowId: rowId.value!)
-                        .then((final _) {
+                        .then((_) {
                       int count = 0;
-                      Navigator.popUntil(context, (final _) => 2 <= count++);
+                      Navigator.popUntil(context, (_) => 2 <= count++);
                     }).onError(
-                      (final error, final stackTrace) => notifyError(
+                      (error, stackTrace) => notifyError(
                         context,
                         error,
                         stackTrace,
@@ -191,7 +191,7 @@ class RowEditor extends HookConsumerWidget {
       );
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(viewProvider);
     final tables = ref.watch(tablesProvider);
     if (view == null || tables == null) {
@@ -201,14 +201,14 @@ class RowEditor extends HookConsumerWidget {
     final rowId = useState<String?>(rowId_);
 
     ref
-      ..listen(newIdProvider, (final previous, final next) async {
+      ..listen(newIdProvider, (previous, next) async {
         if (previous == null && next != null) {
           rowId.value = next;
 
           ref.read(newIdProvider.notifier).state = null;
         }
       })
-      ..listen(formProvider, (final previous, final next) async {
+      ..listen(formProvider, (previous, next) async {
         if (next.isEmpty) {
           return;
         }
@@ -218,16 +218,12 @@ class RowEditor extends HookConsumerWidget {
 
         if (isReadyToSave) {
           // TODO: This should be passed to Editor as a callback of onUpdate,
-          await ref
-              .read(dataRowsProvider.notifier)
-              .createRow(next)
-              .then((final row) {
+          await ref.read(dataRowsProvider.notifier).createRow(next).then((row) {
             notifySuccess(context, message: 'Saved');
             final pk = tables.table.getPkFromRow(row);
             rowId.value = pk;
           }).onError(
-            (final error, final stackTrace) =>
-                notifyError(context, error, stackTrace),
+            (error, stackTrace) => notifyError(context, error, stackTrace),
           );
         }
       });

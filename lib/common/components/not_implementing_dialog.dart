@@ -7,8 +7,7 @@ class NotImplementedDialog extends HookConsumerWidget {
   });
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      const AlertDialog(
+  Widget build(BuildContext context, WidgetRef ref) => const AlertDialog(
         title: Text('Not implemented'),
         content: Text('...'),
       );

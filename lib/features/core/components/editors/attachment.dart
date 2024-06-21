@@ -19,12 +19,12 @@ class AttachmentEditor extends HookConsumerWidget {
   final model.NcTableColumn column;
   final FnOnUpdate onUpdate;
 
-  Widget buildEmpty({final text = '-'}) => Container(
+  Widget buildEmpty({text = '-'}) => Container(
         height: 80,
       );
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final files = ref.watch(attachmentsProvider(rowId, column.title));
 
     return GestureDetector(
@@ -32,8 +32,7 @@ class AttachmentEditor extends HookConsumerWidget {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (final context) =>
-                AttachmentEditorPage(rowId, column.title),
+            builder: (context) => AttachmentEditorPage(rowId, column.title),
           ),
         );
       },
@@ -48,7 +47,7 @@ class AttachmentEditor extends HookConsumerWidget {
           padding: const EdgeInsets.all(8),
           children: files
               .map<Widget>(
-                (final file) => file.isImage
+                (file) => file.isImage
                     ? AttachmentImageCard(file)
                     : AttachmentFileCard(file),
               )

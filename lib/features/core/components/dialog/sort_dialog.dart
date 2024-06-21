@@ -8,16 +8,16 @@ import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 Future<void> refresh({
-  required final Future<void> future,
-  required final WidgetRef ref,
-  required final BuildContext context,
-  required final NcView view,
+  required Future<void> future,
+  required WidgetRef ref,
+  required BuildContext context,
+  required NcView view,
 }) async {
-  await future.then((final _) {
+  await future.then((_) {
     ref.invalidate(dataRowsProvider);
     notifySuccess(context, message: 'Updated.');
   }).onError(
-    (final error, final stackTrace) => notifyError(context, error, stackTrace),
+    (error, stackTrace) => notifyError(context, error, stackTrace),
   );
 }
 
@@ -36,7 +36,7 @@ class SortOptionItem extends HookConsumerWidget {
   final List<NcTableColumn> tableColumns;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     assert(key != null, 'key must be specified for $runtimeType');
 
     final isNew = sort == null;
@@ -47,11 +47,10 @@ class SortOptionItem extends HookConsumerWidget {
 
     final columnItems = tableColumns
         .where(
-          (final tableColumn) =>
-              !(tableColumn.isManyToMany || tableColumn.isHasMay),
+          (tableColumn) => !(tableColumn.isManyToMany || tableColumn.isHasMay),
         )
         .map(
-          (final tableColumn) => DropdownMenuItem(
+          (tableColumn) => DropdownMenuItem(
             value: tableColumn.id,
             child: Text(
               tableColumn.title,
@@ -91,7 +90,7 @@ class SortOptionItem extends HookConsumerWidget {
             value: fkColumnId.value,
             isExpanded: true,
             items: columnItems,
-            onChanged: (final newFkColumnId) async {
+            onChanged: (newFkColumnId) async {
               if (newFkColumnId == null) {
                 return;
               }
@@ -143,7 +142,7 @@ class SortOptionItem extends HookConsumerWidget {
                 child: Text('DESC'),
               ),
             ],
-            onChanged: (final newDirection) async {
+            onChanged: (newDirection) async {
               final newFkColumnId = fkColumnId.value;
               if (newDirection == null || newFkColumnId == null) {
                 return;
@@ -180,7 +179,7 @@ class SortDialogContent extends HookConsumerWidget {
   final NcTable table;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final sortList = ref.watch(sortListProvider(view.id));
     if (sortList.hasError) {
       logger
@@ -200,12 +199,12 @@ class SortDialogContent extends HookConsumerWidget {
       () {
         children.value = sorts
             .map(
-              (final sort) => SortOptionItem(
+              (sort) => SortOptionItem(
                 key: UniqueKey(),
                 view: view,
                 tableColumns: tableColumns,
                 sort: sort,
-                onRemoved: (final key) async {
+                onRemoved: (key) async {
                   final future = ref
                       .watch(sortListProvider(view.id).notifier)
                       .delete(sort.id);
@@ -220,8 +219,7 @@ class SortDialogContent extends HookConsumerWidget {
             )
             .toList()
           ..sort(
-            (final a, final b) =>
-                (a.sort?.order ?? 0).compareTo(b.sort?.order ?? 0),
+            (a, b) => (a.sort?.order ?? 0).compareTo(b.sort?.order ?? 0),
           );
         return null;
       },
@@ -244,9 +242,9 @@ class SortDialogContent extends HookConsumerWidget {
                     key: UniqueKey(),
                     view: view,
                     tableColumns: tableColumns,
-                    onRemoved: (final key) {
+                    onRemoved: (key) {
                       children.value = [...children.value]
-                        ..removeWhere((final element) => element.key == key);
+                        ..removeWhere((element) => element.key == key);
                     },
                   ),
                 ];
@@ -270,7 +268,7 @@ class SortDialog extends HookConsumerWidget {
   final NcTable table;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => AlertDialog(
+  Widget build(BuildContext context, WidgetRef ref) => AlertDialog(
         title: const Text('Sort'),
         content: SortDialogContent(view: view, table: table),
       );

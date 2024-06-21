@@ -10,16 +10,16 @@ final firstDate = DateTime(0);
 final lastDate = DateTime(2200);
 
 Future<void> pickDate(
-  final BuildContext context,
-  final DateTime initialDate,
-  final Function(DateTime pickedDateTime) onUpdate,
+  BuildContext context,
+  DateTime initialDate,
+  Function(DateTime pickedDateTime) onUpdate,
 ) async {
   await showDatePicker(
     context: context,
     initialDate: initialDate.toLocal(),
     firstDate: firstDate,
     lastDate: lastDate,
-  ).then((final pickedDateTime) {
+  ).then((pickedDateTime) {
     if (pickedDateTime == null) {
       return;
     }
@@ -32,18 +32,18 @@ Future<void> pickDate(
 }
 
 Future<void> pickTime(
-  final BuildContext context,
-  final TimeOfDay initialTime,
-  final Function(TimeOfDay pickedTime) onUpdate,
+  BuildContext context,
+  TimeOfDay initialTime,
+  Function(TimeOfDay pickedTime) onUpdate,
 ) async {
   await showTimePicker(
     context: context,
     initialTime: initialTime,
-    builder: (final context, final child) => MediaQuery(
+    builder: (context, child) => MediaQuery(
       data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
       child: child!,
     ),
-  ).then((final pickedTime) {
+  ).then((pickedTime) {
     if (pickedTime == null) {
       return;
     }
@@ -53,15 +53,15 @@ Future<void> pickTime(
 }
 
 Future<void> pickDateTime(
-  final BuildContext context,
-  final DateTime initialDateTime,
-  final Function(DateTime) onUpdate, {
-  final TextEditingController? controller,
+  BuildContext context,
+  DateTime initialDateTime,
+  Function(DateTime) onUpdate, {
+  TextEditingController? controller,
 }) async {
   final initialTime = NocoTime.fromDateTime(initialDateTime).getLocalTime();
 
-  await pickDate(context, initialDateTime, (final pickedDate) async {
-    await pickTime(context, initialTime, (final pickedTime) {
+  await pickDate(context, initialDateTime, (pickedDate) async {
+    await pickTime(context, initialTime, (pickedTime) {
       final pickedDateTime = DateTime(
         pickedDate.year,
         pickedDate.month,
@@ -80,7 +80,7 @@ enum DateTimeType {
   time,
   unknown;
 
-  factory DateTimeType.fromUITypes(final UITypes type) {
+  factory DateTimeType.fromUITypes(UITypes type) {
     switch (type) {
       case UITypes.dateTime:
         return DateTimeType.datetime;
@@ -109,7 +109,7 @@ class DateTimeEditor extends HookConsumerWidget {
   final DateTimeType type;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final controller =
         useTextEditingController(text: initialValue?.toString() ?? '');
     return TextFormField(
@@ -125,7 +125,7 @@ class DateTimeEditor extends HookConsumerWidget {
                     NocoDateTime.getInitialValue(initialValue).dt;
 
                 await pickDateTime(context, initialDateTime,
-                    (final pickedDateTime) async {
+                    (pickedDateTime) async {
                   final v = NocoDate.fromDateTime(pickedDateTime);
                   await onUpdate({column.title: v.toApiValue()});
                   controller.text = v.toString();
@@ -133,7 +133,7 @@ class DateTimeEditor extends HookConsumerWidget {
               case DateTimeType.date:
                 final initialDate = NocoDate.getInitialValue(initialValue).dt;
 
-                await pickDate(context, initialDate, (final pickedDate) async {
+                await pickDate(context, initialDate, (pickedDate) async {
                   final v = NocoDate.fromDateTime(pickedDate);
                   await onUpdate({column.title: v.toApiValue()});
                   controller.text = v.toString();
@@ -143,7 +143,7 @@ class DateTimeEditor extends HookConsumerWidget {
                   NocoTime.getInitialValue(initialValue).dt,
                 );
 
-                await pickTime(context, initialTime, (final pickedTime) async {
+                await pickTime(context, initialTime, (pickedTime) async {
                   final v = NocoTime.fromLocalTime(pickedTime);
 
                   // TODO: improve error handling

@@ -3,10 +3,9 @@ import 'package:intl/intl.dart';
 
 class NocoDateTime {
   NocoDateTime(this.dt);
-  factory NocoDateTime.fromString(final String s) =>
-      NocoDateTime(DateTime.parse(s));
+  factory NocoDateTime.fromString(String s) => NocoDateTime(DateTime.parse(s));
 
-  factory NocoDateTime.getInitialValue(final String? s) =>
+  factory NocoDateTime.getInitialValue(String? s) =>
       s == null ? NocoDateTime(DateTime.now()) : NocoDateTime.fromString(s);
   DateTime dt;
 
@@ -19,8 +18,8 @@ class NocoDateTime {
 
 class NocoDate {
   NocoDate._(this.dt);
-  factory NocoDate.fromDateTime(final DateTime dt) => NocoDate._(dt);
-  factory NocoDate.fromString(final String s) {
+  factory NocoDate.fromDateTime(DateTime dt) => NocoDate._(dt);
+  factory NocoDate.fromString(String s) {
     final sp = s.split('-');
     final year = int.parse(sp[0]);
     final month = int.parse(sp[1]);
@@ -28,7 +27,7 @@ class NocoDate {
     return NocoDate._(DateTime(year, month, day, 1, 1, 1));
   }
 
-  factory NocoDate.getInitialValue(final String? s) => s == null
+  factory NocoDate.getInitialValue(String? s) => s == null
       ? NocoDate.fromDateTime(DateTime.now())
       : NocoDate.fromString(s);
   DateTime dt;
@@ -44,7 +43,7 @@ class NocoDate {
 class NocoTime {
   NocoTime._(this.dt);
 
-  factory NocoTime.getInitialValue(final String? s) {
+  factory NocoTime.getInitialValue(String? s) {
     if (s == null) {
       final now = DateTime.now();
       return NocoTime.fromDateTime(now);
@@ -52,16 +51,16 @@ class NocoTime {
     return NocoTime.fromLocalTimeString(s);
   }
 
-  factory NocoTime.fromDateTime(final DateTime dt) => NocoTime._(dt.toLocal());
+  factory NocoTime.fromDateTime(DateTime dt) => NocoTime._(dt.toLocal());
 
-  factory NocoTime.fromLocalTime(final TimeOfDay t) => NocoTime._(
+  factory NocoTime.fromLocalTime(TimeOfDay t) => NocoTime._(
         _dt(
           t.hour,
           t.minute,
         ),
       );
 
-  factory NocoTime.fromLocalTimeString(final String s) {
+  factory NocoTime.fromLocalTimeString(String s) {
     final sp = s.split(':');
 
     assert(sp.length == 2 || sp.length == 3, 'invalid format: $s');
@@ -72,7 +71,7 @@ class NocoTime {
   }
   DateTime dt;
 
-  static DateTime _dt(final int hour, final int minute) =>
+  static DateTime _dt(int hour, int minute) =>
       DateTime(1999, 1, 1, hour, minute);
 
   TimeOfDay getLocalTime() {

@@ -8,25 +8,25 @@ import 'package:nocodb/nocodb_sdk/models.dart';
 // Currently, this provider is used to notify the RowEditor when a new row is created in the AttachmentEditorPage.
 // In the future, it might be used on other screens as well.
 final newIdProvider = StateProvider<String?>(
-  (final ref) => null,
+  (ref) => null,
 );
 
 final formProvider = StateProvider<Map<String, dynamic>>(
-  (final ref) => throw UnimplementedError(),
+  (ref) => throw UnimplementedError(),
 );
 
 Future<void> upsert(
-  final BuildContext context,
-  final WidgetRef ref,
-  final String? rowId,
-  final NcRow row, {
+  BuildContext context,
+  WidgetRef ref,
+  String? rowId,
+  NcRow row, {
   // In an independent page other than RowEditor, you need to set `updateForm` to false.
-  final bool updateForm = true,
-  final void Function(NcRow)? onCreateCallback,
-  final void Function(NcRow)? onUpdateCallback,
-  final void Function(Object?, StackTrace)? onErrorCallback,
+  bool updateForm = true,
+  void Function(NcRow)? onCreateCallback,
+  void Function(NcRow)? onUpdateCallback,
+  void Function(Object?, StackTrace)? onErrorCallback,
 }) async {
-  onError(final e, final s) => onErrorCallback != null
+  onError(e, s) => onErrorCallback != null
       ? onErrorCallback(e, s)
       : notifyError(context, e, s);
 
@@ -36,7 +36,7 @@ Future<void> upsert(
     await dataRowsNotifier
         .updateRow(rowId: rowId, data: row)
         .then(
-          (final row) => onUpdateCallback != null
+          (row) => onUpdateCallback != null
               ? onUpdateCallback.call(row)
               : notifySuccess(context, message: 'Updated'),
         )
@@ -58,7 +58,7 @@ Future<void> upsert(
       .read(dataRowsProvider.notifier)
       .createRow(row)
       .then(
-        (final row) => onCreateCallback != null
+        (row) => onCreateCallback != null
             ? onCreateCallback.call(row)
             : notifySuccess(context, message: 'Saved.'),
       )

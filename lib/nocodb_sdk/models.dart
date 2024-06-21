@@ -14,23 +14,22 @@ part 'models_extensions.dart';
 
 @freezed
 abstract class Result<T> with _$Result<T> {
-  const factory Result.ok(final T value) = Ok<T>;
+  const factory Result.ok(T value) = Ok<T>;
 
-  const factory Result.ng(final Object error, final StackTrace? stackTrace) =
-      Ng<T>;
+  const factory Result.ng(Object error, StackTrace? stackTrace) = Ng<T>;
 }
 
 @freezed
 abstract class HttpFn with _$HttpFn {
   const factory HttpFn.get(
-    final Future<Response> Function(
+    Future<Response> Function(
       Uri url, {
       Map<String, String>? headers,
     }) value,
   ) = HttpFnGet;
 
   const factory HttpFn.others(
-    final Future<Response> Function(
+    Future<Response> Function(
       Uri url, {
       Map<String, String>? headers,
       Object? body,
@@ -42,13 +41,13 @@ abstract class HttpFn with _$HttpFn {
 @Freezed(genericArgumentFactories: true)
 class NcList<T> with _$NcList<T> {
   const factory NcList({
-    required final List<T> list,
-    required final NcPageInfo? pageInfo,
+    required List<T> list,
+    required NcPageInfo? pageInfo,
   }) = _NcList<T>;
 
   factory NcList.fromJson(
-    final Map<String, dynamic> json,
-    final T Function(Object?) fromJsonT,
+    Map<String, dynamic> json,
+    T Function(Object?) fromJsonT,
   ) =>
       _$NcListFromJson(json, fromJsonT);
 }
@@ -57,10 +56,10 @@ class NcList<T> with _$NcList<T> {
 class NcTables with _$NcTables {
   @JsonSerializable()
   const factory NcTables({
-    required final NcTable table,
-    @Default({}) final Map<String, NcTable> relationMap,
+    required NcTable table,
+    @Default({}) Map<String, NcTable> relationMap,
   }) = _NcTables;
-  factory NcTables.fromJson(final Map<String, dynamic> json) =>
+  factory NcTables.fromJson(Map<String, dynamic> json) =>
       _$NcTablesFromJson(json);
 }
 
@@ -68,38 +67,37 @@ class NcTables with _$NcTables {
 class NcUser with _$NcUser {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcUser({
-    required final String id,
-    required final String email,
-    required final Map<String, bool?> roles,
-    final bool? emailVerifier,
-    final String? firstname,
-    final String? lastname,
+    required String id,
+    required String email,
+    required Map<String, bool?> roles,
+    bool? emailVerifier,
+    String? firstname,
+    String? lastname,
   }) = _NcUser;
-  factory NcUser.fromJson(final Map<String, dynamic> json) =>
-      _$NcUserFromJson(json);
+  factory NcUser.fromJson(Map<String, dynamic> json) => _$NcUserFromJson(json);
 }
 
 @freezed
 class NcProject with _$NcProject {
   const factory NcProject({
-    required final String id,
-    required final String title,
+    required String id,
+    required String title,
   }) = _NcProject;
-  factory NcProject.fromJson(final Map<String, dynamic> json) =>
+  factory NcProject.fromJson(Map<String, dynamic> json) =>
       _$NcProjectFromJson(json);
 }
 
 @freezed
 class NcPageInfo with _$NcPageInfo {
   const factory NcPageInfo({
-    required final int totalRows,
-    required final int page,
-    required final int pageSize,
-    required final bool isFirstPage,
-    required final bool isLastPage,
+    required int totalRows,
+    required int page,
+    required int pageSize,
+    required bool isFirstPage,
+    required bool isLastPage,
   }) = _NcPageInfo;
 
-  factory NcPageInfo.fromJson(final Map<String, dynamic> json) =>
+  factory NcPageInfo.fromJson(Map<String, dynamic> json) =>
       _$NcPageInfoFromJson(json);
 }
 
@@ -107,19 +105,17 @@ class NcPageInfo with _$NcPageInfo {
 class NcSort with _$NcSort {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcSort({
-    required final String id,
-    required final String fkViewId,
-    required final String fkColumnId,
-    @JsonKey(fromJson: _toSortTypes)
-    required final SortDirectionTypes direction,
-    required final int order,
+    required String id,
+    required String fkViewId,
+    required String fkColumnId,
+    @JsonKey(fromJson: _toSortTypes) required SortDirectionTypes direction,
+    required int order,
   }) = _NcSort;
-  factory NcSort.fromJson(final Map<String, dynamic> json) =>
-      _$NcSortFromJson(json);
+  factory NcSort.fromJson(Map<String, dynamic> json) => _$NcSortFromJson(json);
 }
 
 typedef NcRow = Map<String, dynamic>;
-T fromJsonT<T>(final Object? obj) {
+T fromJsonT<T>(Object? obj) {
   final json = obj as Map<String, dynamic>;
 
   if (T == NcRow) {
@@ -141,21 +137,21 @@ typedef NcRowList = NcList<Map<String, dynamic>>;
 class NcSlimTable with _$NcSlimTable {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcSlimTable({
-    required final String id,
-    required final String baseId,
-    required final String tableName,
-    required final String title,
-    required final String type,
+    required String id,
+    required String baseId,
+    required String tableName,
+    required String title,
+    required String type,
   }) = _NcSlimTable;
-  factory NcSlimTable.fromJson(final Map<String, dynamic> json) =>
+  factory NcSlimTable.fromJson(Map<String, dynamic> json) =>
       _$NcSlimTableFromJson(json);
 }
 
 @freezed
 class NcSimpleTableList with _$NcSimpleTableList {
-  const factory NcSimpleTableList({required final List<NcSlimTable> list}) =
+  const factory NcSimpleTableList({required List<NcSlimTable> list}) =
       _NcSimpleTableList;
-  factory NcSimpleTableList.fromJson(final Map<String, dynamic> json) =>
+  factory NcSimpleTableList.fromJson(Map<String, dynamic> json) =>
       _$NcSimpleTableListFromJson(json);
 }
 
@@ -163,26 +159,25 @@ class NcSimpleTableList with _$NcSimpleTableList {
 class NcView with _$NcView {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcView({
-    required final String id,
-    required final String fkModelId,
-    @JsonKey(fromJson: _toViewTypes) required final ViewTypes type,
-    @JsonKey(fromJson: _toBool) @Default(false) final bool showSystemFields,
-    required final String baseId,
-    required final String title,
+    required String id,
+    required String fkModelId,
+    @JsonKey(fromJson: _toViewTypes) required ViewTypes type,
+    @JsonKey(fromJson: _toBool) @Default(false) bool showSystemFields,
+    required String baseId,
+    required String title,
   }) = _NcView;
-  factory NcView.fromJson(final Map<String, dynamic> json) =>
-      _$NcViewFromJson(json);
+  factory NcView.fromJson(Map<String, dynamic> json) => _$NcViewFromJson(json);
 }
 
 @freezed
 class ViewList with _$ViewList {
-  const factory ViewList({required final List<NcView> list}) = _ViewList;
+  const factory ViewList({required List<NcView> list}) = _ViewList;
 
-  factory ViewList.fromJson(final Map<String, dynamic> json) =>
+  factory ViewList.fromJson(Map<String, dynamic> json) =>
       _$ViewListFromJson(json);
 }
 
-UITypes _toUITypes(final dynamic v) {
+UITypes _toUITypes(dynamic v) {
   if (v is String) {
     for (final ut in UITypes.values) {
       if (ut.value == v) {
@@ -199,24 +194,24 @@ const _maxInt = 4294967296;
 class NcTableColumn with _$NcTableColumn {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcTableColumn({
-    required final String id,
-    required final String baseId,
-    required final String fkModelId,
-    required final String title,
-    final String? columnName,
-    @Default(_maxInt) final int order,
-    @JsonKey(name: 'colOptions') final NcColOptions? colOptions,
-    @JsonKey(fromJson: _toBool) @Default(false) final bool pk,
-    @JsonKey(fromJson: _toBool) @Default(false) final bool pv,
-    @JsonKey(fromJson: _toUITypes) required final UITypes uidt,
-    @JsonKey(fromJson: _toBool) @Default(false) final bool system,
-    @JsonKey(fromJson: _toBool) required final bool ai, // auto increment
-    @JsonKey(fromJson: _toBool) required final bool rqd, // required
-    final String? cdf,
-    final Map<String, dynamic>? meta,
+    required String id,
+    required String baseId,
+    required String fkModelId,
+    required String title,
+    String? columnName,
+    @Default(_maxInt) int order,
+    @JsonKey(name: 'colOptions') NcColOptions? colOptions,
+    @JsonKey(fromJson: _toBool) @Default(false) bool pk,
+    @JsonKey(fromJson: _toBool) @Default(false) bool pv,
+    @JsonKey(fromJson: _toUITypes) required UITypes uidt,
+    @JsonKey(fromJson: _toBool) @Default(false) bool system,
+    @JsonKey(fromJson: _toBool) required bool ai, // auto increment
+    @JsonKey(fromJson: _toBool) required bool rqd, // required
+    String? cdf,
+    Map<String, dynamic>? meta,
   }) = _NcTableColumn;
 
-  factory NcTableColumn.fromJson(final Map<String, dynamic> json) =>
+  factory NcTableColumn.fromJson(Map<String, dynamic> json) =>
       _$NcTableColumnFromJson(json);
 }
 
@@ -224,13 +219,13 @@ class NcTableColumn with _$NcTableColumn {
 class NcOption with _$NcOption {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcOption({
-    required final String color,
-    required final String fkColumnId,
-    required final int order,
-    required final String title,
+    required String color,
+    required String fkColumnId,
+    required int order,
+    required String title,
   }) = _NcOption;
 
-  factory NcOption.fromJson(final Map<String, dynamic> json) =>
+  factory NcOption.fromJson(Map<String, dynamic> json) =>
       _$NcOptionFromJson(json);
 }
 
@@ -238,18 +233,18 @@ class NcOption with _$NcOption {
 class NcColOptions with _$NcColOptions {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcColOptions({
-    final String? type,
-    final String? fkRelatedModelId,
-    final String? fkChildColumnId,
-    final String? fkParentColumnId,
-    final List<NcOption>? options,
+    String? type,
+    String? fkRelatedModelId,
+    String? fkChildColumnId,
+    String? fkParentColumnId,
+    List<NcOption>? options,
   }) = _NcColOptions;
 
-  factory NcColOptions.fromJson(final Map<String, dynamic> json) =>
+  factory NcColOptions.fromJson(Map<String, dynamic> json) =>
       _$NcColOptionsFromJson(json);
 }
 
-bool _toBool(final dynamic v) {
+bool _toBool(dynamic v) {
   if (v == null) {
     return false;
   }
@@ -259,7 +254,7 @@ bool _toBool(final dynamic v) {
   return v == 1;
 }
 
-ViewTypes _toViewTypes(final dynamic v) {
+ViewTypes _toViewTypes(dynamic v) {
   if (v is int) {
     for (final vt in ViewTypes.values) {
       if (vt.value == v) {
@@ -274,16 +269,16 @@ ViewTypes _toViewTypes(final dynamic v) {
 class NcTable with _$NcTable {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcTable({
-    required final String id,
-    required final String baseId,
-    required final String title,
-    required final List<NcTableColumn> columns,
+    required String id,
+    required String baseId,
+    required String title,
+    required List<NcTableColumn> columns,
     @JsonKey(name: 'columnsById')
-    required final Map<String, NcTableColumn> columnsById,
-    required final List<NcView> views,
+    required Map<String, NcTableColumn> columnsById,
+    required List<NcView> views,
   }) = _NcTable;
 
-  factory NcTable.fromJson(final Map<String, dynamic> json) =>
+  factory NcTable.fromJson(Map<String, dynamic> json) =>
       _$NcTableFromJson(json);
 }
 
@@ -291,20 +286,20 @@ class NcTable with _$NcTable {
 class NcViewColumn with _$NcViewColumn {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory NcViewColumn({
-    required final String id,
-    required final String baseId,
-    required final String fkViewId,
-    required final String fkColumnId,
-    required final String width,
-    @Default(_maxInt) final int order,
-    @JsonKey(fromJson: _toBool) required final bool show,
+    required String id,
+    required String baseId,
+    required String fkViewId,
+    required String fkColumnId,
+    required String width,
+    @Default(_maxInt) int order,
+    @JsonKey(fromJson: _toBool) required bool show,
   }) = _NcViewColumn;
 
-  factory NcViewColumn.fromJson(final Map<String, dynamic> json) =>
+  factory NcViewColumn.fromJson(Map<String, dynamic> json) =>
       _$NcViewColumnFromJson(json);
 }
 
-SortDirectionTypes _toSortTypes(final dynamic v) {
+SortDirectionTypes _toSortTypes(dynamic v) {
   if (v is String) {
     for (final vt in SortDirectionTypes.values) {
       if (vt.value == v) {
@@ -318,12 +313,12 @@ SortDirectionTypes _toSortTypes(final dynamic v) {
 @freezed
 class NcAttachedFile with _$NcAttachedFile {
   const factory NcAttachedFile({
-    required final String path,
-    required final String title,
-    required final String mimetype,
-    required final String signedPath,
+    required String path,
+    required String title,
+    required String mimetype,
+    required String signedPath,
   }) = _NcAttachedFile;
 
-  factory NcAttachedFile.fromJson(final Map<String, dynamic> json) =>
+  factory NcAttachedFile.fromJson(Map<String, dynamic> json) =>
       _$NcAttachedFileFromJson(json);
 }

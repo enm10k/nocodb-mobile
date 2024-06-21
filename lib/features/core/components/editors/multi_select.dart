@@ -16,19 +16,19 @@ class MultiSelectEditor extends HookConsumerWidget {
   final List<String> initialValue;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final options = column.colOptions?.options;
     assert(options != null);
     if (options == null) {
       return Container();
     }
-    final titles = options.map((final option) => option.title);
+    final titles = options.map((option) => option.title);
 
     final values = useState<List<String>>(
       initialValue.where(titles.contains).toList(),
     );
     final children = options.map(
-      (final option) {
+      (option) {
         final color = column.colOptions?.getOptionColor(option.title);
 
         return Container(
@@ -39,19 +39,19 @@ class MultiSelectEditor extends HookConsumerWidget {
           child: FilterChip(
             label: Text(option.title),
             selected: values.value.contains(option.title),
-            onSelected: (final selected) {
+            onSelected: (selected) {
               if (selected == true) {
                 // add
                 values.value = [...values.value, option.title];
               } else {
                 // delete
                 values.value = values.value
-                    .where((final element) => element != option.title)
+                    .where((element) => element != option.title)
                     .toList();
               }
 
               final options = values.value
-                  .where((final element) => element != 'null')
+                  .where((element) => element != 'null')
                   .toList()
                 ..sort();
               onUpdate?.call({

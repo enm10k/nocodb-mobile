@@ -9,7 +9,7 @@ class CheckBox extends HookConsumerWidget {
   final bool value;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => Checkbox(
+  Widget build(BuildContext context, WidgetRef ref) => Checkbox(
         value: value == true,
         onChanged: null,
       );

@@ -12,7 +12,7 @@ class FileRenameDialog extends HookConsumerWidget {
   final NcAttachedFile file;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final controller = useTextEditingController(text: file.title);
     return AlertDialog(
       title: const Text('Rename'),

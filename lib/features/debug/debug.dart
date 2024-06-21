@@ -10,13 +10,13 @@ part 'debug.g.dart';
 typedef Record = (List<int>, List<int>);
 
 final patternsProvider = StateProvider<Record>(
-  (final ref) => ([1, 2, 3], [4, 5, 6]),
+  (ref) => ([1, 2, 3], [4, 5, 6]),
 );
 
 @freezed
 class Union with _$Union {
-  factory Union.first(final int value) = _UnionFirst;
-  factory Union.second(final double value) = _UnionSecond;
+  factory Union.first(int value) = _UnionFirst;
+  factory Union.second(double value) = _UnionSecond;
 }
 
 @Riverpod()
@@ -24,7 +24,7 @@ class Patterns2 extends _$Patterns2 {
   @override
   Record build() => ([7, 8, 9], [10, 11, 12]);
 
-  update(final Record record) {
+  update(Record record) {
     state = record;
   }
 }
@@ -32,19 +32,19 @@ class Patterns2 extends _$Patterns2 {
 class DebugPage extends HookConsumerWidget {
   const DebugPage({super.key});
 
-  _test(final WidgetRef ref) {
+  _test(WidgetRef ref) {
     // ignore_for_file: unnecessary_cast
     final (a, b) = ref.read(patternsProvider) as Record;
     ref.read(patternsProvider.notifier).state = (a..shuffle(), b..shuffle());
   }
 
-  _test2(final WidgetRef ref) {
+  _test2(WidgetRef ref) {
     final (a, b) = ref.read(patterns2Provider) as Record;
     ref.read(patterns2Provider.notifier).update((a..shuffle(), b..shuffle()));
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // test union
     final Union n1 = Union.first(1);
     final Union n2 = Union.second(4.5);

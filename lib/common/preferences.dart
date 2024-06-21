@@ -19,7 +19,7 @@ class Preferences {
   }
 
   Future<T?> get<T>({
-    required final String key,
+    required String key,
   }) async {
     dynamic v;
     switch (T) {
@@ -49,14 +49,14 @@ class Preferences {
   }
 
   Future<String?> getSecure({
-    required final String key,
+    required String key,
   }) async =>
       await _secureStorage.read(key: key);
 
   Future<void> set({
-    required final String key,
-    required final dynamic value,
-    final bool secure = false,
+    required String key,
+    required dynamic value,
+    bool secure = false,
   }) async {
     if (value == null) {
       return;

@@ -31,7 +31,7 @@ class ModalEditorWrapper extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => Padding(
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
         padding:
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Column(

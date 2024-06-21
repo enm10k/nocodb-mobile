@@ -8,8 +8,8 @@ const _successDuration = Duration(seconds: 1);
 const _errorDuration = Duration(seconds: 3);
 
 notifySuccess(
-  final BuildContext context, {
-  required final String message,
+  BuildContext context, {
+  required String message,
 }) async {
   await context.showSuccessBar(
     position: FlashPosition.top,
@@ -20,9 +20,9 @@ notifySuccess(
 
 // TODO: Change to dialog?
 notifyError(
-  final BuildContext context,
-  final dynamic error,
-  final StackTrace? stackTrace,
+  BuildContext context,
+  dynamic error,
+  StackTrace? stackTrace,
 ) async {
   logger.warning(error);
   if (stackTrace != null) {

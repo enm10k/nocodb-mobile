@@ -30,19 +30,19 @@ class ExFab extends HookConsumerWidget {
   final String columnTitle;
 
   Future<void> uploadFile(
-    final BuildContext context,
-    final WidgetRef ref,
-    final FileUploadType type,
+    BuildContext context,
+    WidgetRef ref,
+    FileUploadType type,
   ) async {
     try {
       final notifier = attachmentsProvider(rowId.value, columnTitle).notifier;
-      Future<void> onUpdateWrapper(final NcRow row) async => upsert(
+      Future<void> onUpdateWrapper(NcRow row) async => upsert(
             context,
             ref,
             rowId.value,
             row,
             updateForm: false,
-            onCreateCallback: (final row) {
+            onCreateCallback: (row) {
               final table = ref.read(tableProvider);
               final pk = table?.getPkFromRow(row);
               if (pk! == null) {
@@ -101,8 +101,7 @@ class ExFab extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      ExpandableFab(
+  Widget build(BuildContext context, WidgetRef ref) => ExpandableFab(
         type: ExpandableFabType.fan,
         distance: 100,
         key: fabState,
@@ -188,9 +187,9 @@ class AttachmentEditorPage extends HookConsumerWidget {
   // There is a possibility that the file upload will continue even after the screen is closed,
   // and there is a concern that the lifetime of onUpdate might expire when the file upload is complete.
   Future<void> downloadFile(
-    final BuildContext context,
-    final WidgetRef ref,
-    final NcAttachedFile file,
+    BuildContext context,
+    WidgetRef ref,
+    NcAttachedFile file,
   ) async {
     final downloadDir = await getFileDownloadDirectory();
     logger.info('downloadDir: $downloadDir');
@@ -211,10 +210,10 @@ class AttachmentEditorPage extends HookConsumerWidget {
       // TODO: Ask permission to notify file download.
       openFileFromNotification: true,
       saveInPublicStorage: true,
-    ).then((final value) {
+    ).then((value) {
       logger.info('Download started: $value');
       notifySuccess(context, message: 'Download started.');
-    }).onError((final e, final s) {
+    }).onError((e, s) {
       logger
         ..severe(e)
         ..severe(s);
@@ -241,7 +240,7 @@ class AttachmentEditorPage extends HookConsumerWidget {
     }
   }
 
-  List<MenuItemProvider> buildPopupMenuItems(final String id) => [
+  List<MenuItemProvider> buildPopupMenuItems(String id) => [
         MenuItem(
           title: kDownload.name.capitalize(),
           image: const Icon(
@@ -278,13 +277,13 @@ class AttachmentEditorPage extends HookConsumerWidget {
       ];
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final rowId_ = useState(rowId);
     final provider = attachmentsProvider(rowId_.value, columnTitle);
     final notifier = provider.notifier;
     final files = ref.watch(provider);
 
-    Future<void> onUpdateWrapper(final NcRow row) async =>
+    Future<void> onUpdateWrapper(NcRow row) async =>
         upsert(context, ref, rowId_.value, row, updateForm: false);
     return Scaffold(
       appBar: AppBar(
@@ -296,11 +295,11 @@ class AttachmentEditorPage extends HookConsumerWidget {
         crossAxisCount: 3,
         padding: const EdgeInsets.all(8),
         children: files.map(
-          (final file) {
+          (file) {
             // TODO: Implement a file details screen instead of using PopupMenu.
             final popupMenu = PopupMenu(
               items: buildPopupMenuItems(file.id),
-              onClickMenu: (final item) async {
+              onClickMenu: (item) async {
                 try {
                   final userInfo = item.menuUserInfo as PopupMenuUserInfo;
 
@@ -310,8 +309,8 @@ class AttachmentEditorPage extends HookConsumerWidget {
                     case kRename:
                       await showDialog<String>(
                         context: context,
-                        builder: (final _) => FileRenameDialog(file),
-                      ).then((final value) async {
+                        builder: (_) => FileRenameDialog(file),
+                      ).then((value) async {
                         if (value == null) {
                           return;
                         }

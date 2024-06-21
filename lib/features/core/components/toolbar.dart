@@ -21,7 +21,7 @@ class _FunctionButton extends HookConsumerWidget {
   final Function()? onTap;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) => InkWell(
+  Widget build(BuildContext context, WidgetRef ref) => InkWell(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(
@@ -51,8 +51,8 @@ class ProjectToolbar extends HookConsumerWidget {
   final NcProject project;
 
   Widget _buildToolbar(
-    final WidgetRef ref,
-    final ValueNotifier<bool> isExpanded,
+    WidgetRef ref,
+    ValueNotifier<bool> isExpanded,
   ) {
     final table = ref.watch(tableProvider);
     final view = ref.watch(viewProvider);
@@ -98,7 +98,7 @@ class ProjectToolbar extends HookConsumerWidget {
     );
   }
 
-  Widget _buildFunctionToolbar(final WidgetRef ref) {
+  Widget _buildFunctionToolbar(WidgetRef ref) {
     final context = useContext();
     return Row(
       children: [
@@ -108,7 +108,7 @@ class ProjectToolbar extends HookConsumerWidget {
           onTap: () async {
             await showDialog(
               context: context,
-              builder: (final _) => const FieldsDialog(),
+              builder: (_) => const FieldsDialog(),
             );
           },
         ),
@@ -118,7 +118,7 @@ class ProjectToolbar extends HookConsumerWidget {
           onTap: () async {
             await showDialog(
               context: context,
-              builder: (final _) => const NotImplementedDialog(),
+              builder: (_) => const NotImplementedDialog(),
             );
           },
         ),
@@ -128,7 +128,7 @@ class ProjectToolbar extends HookConsumerWidget {
           onTap: () async {
             await showDialog(
               context: context,
-              builder: (final _) {
+              builder: (_) {
                 final view = ref.watch(viewProvider);
                 final table = ref.watch(tableProvider);
                 if (view == null || table == null) {
@@ -144,7 +144,7 @@ class ProjectToolbar extends HookConsumerWidget {
   }
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = useState(false);
     return Material(
       elevation: 6,

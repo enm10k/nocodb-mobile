@@ -4,7 +4,7 @@ import 'package:simple_logger/simple_logger.dart';
 const debugLogLevel = Level.FINER;
 
 final logger = SimpleLogger()
-  ..formatter = ((final info) => '[${info.level}] '
+  ..formatter = ((info) => '[${info.level}] '
       // '${DateFormat('HH:mm:ss.SSS').format(info.time)} '
       // '[${info.callerFrame ?? 'caller info not available'}] '
       '[${info.callerFrame?.library ?? '-'}:${info.callerFrame?.line}] '
@@ -13,7 +13,7 @@ final logger = SimpleLogger()
     kReleaseMode ? Level.OFF : debugLogLevel,
     includeCallerInfo: true,
   )
-  ..onLogged = (final log, final info) {
+  ..onLogged = (log, info) {
     // if (info.level >= Level.SEVERE) {
     //   throw AssertionError('Stopped by logger');
     // }
