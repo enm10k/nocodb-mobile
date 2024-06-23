@@ -1,4 +1,5 @@
-import 'package:easy_debounce/easy_debounce.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -10,169 +11,165 @@ import 'package:nocodb/routes.dart';
 class SignInPage extends HookConsumerWidget {
   const SignInPage({super.key});
 
-  Widget? _getConnectivityIcon(bool? connectivity) {
-    if (connectivity == null) {
-      return null;
-    } else if (connectivity) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 16),
-        child: Icon(
-          Icons.check_circle,
-          size: 20,
-          // color: Colors.greenAccent,
-        ),
-      );
-    } else {
-      return const Padding(
-        padding: EdgeInsets.only(top: 16),
-        child: Icon(
-          Icons.warning,
-          size: 20,
-        ),
-      );
-    }
-  }
-
-  Widget _buildDialog(BuildContext context, WidgetRef ref) {
-    final emailController = useTextEditingController();
+  _build1(BuildContext context, WidgetRef ref) {
+    final hostController = useTextEditingController();
+    final usernameController = useTextEditingController();
     final passwordController = useTextEditingController();
-    final apiUrlController = useTextEditingController();
+    final apiTokenController = useTextEditingController();
 
     final showPassword = useState(false);
-    final connectivity = useState<bool?>(null);
-    final rememberMe = useState(false);
+    final showApiToken = useState(false);
+
+    final rememberMe = useState(true);
+
+    // Disable username and password field when API token is entered.
+    final useApiToken = useState(false);
 
     useEffect(
       () {
-        // ignore: discarded_futures
+        // ignore_for_file: discarded_futures
         () async {
-          emailController.text = await settings.email ?? '';
-          apiUrlController.text = await settings.apiBaseUrl ?? '';
-          rememberMe.value = await settings.rememberMe;
+          final s = await settings.get();
+          if (s == null) {
+            return;
+          }
+          rememberMe.value = true;
+          hostController.text = s.host;
+          if (!kIsWeb && Platform.isAndroid) {
+            hostController.text = 'http://10.0.2.2:8080';
+          }
+
+          if (s.username != null) {
+            usernameController.text = s.username!;
+          }
         }();
         return null;
       },
       [],
     );
 
-    return AlertDialog(
-      title: const Text('SIGN IN'),
-      content: IntrinsicHeight(
-        child: AutofillGroup(
-          child: Column(
-            children: [
-              TextField(
-                key: const ValueKey('email'),
-                autofillHints: const [
-                  AutofillHints.email,
-                  AutofillHints.username,
-                ],
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: AutofillGroup(
+        child: Column(
+          children: [
+            TextField(
+              autofillHints: const [
+                AutofillHints.url,
+              ],
+              controller: hostController,
+              decoration: const InputDecoration(
+                labelText: 'Host',
               ),
-              TextField(
-                key: const ValueKey('password'),
-                autofillHints: const [
-                  AutofillHints.password,
-                ],
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      showPassword.value
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      showPassword.value = !showPassword.value;
-                    },
+            ),
+            Container(height: 16),
+            TextField(
+              enabled: !useApiToken.value,
+              autofillHints: const [
+                AutofillHints.email,
+                AutofillHints.username,
+              ],
+              controller: usernameController,
+              decoration: const InputDecoration(
+                labelText: 'Username',
+              ),
+            ),
+            TextField(
+              enabled: !useApiToken.value,
+              autofillHints: const [
+                AutofillHints.password,
+              ],
+              controller: passwordController,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    showPassword.value
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                   ),
+                  onPressed: () {
+                    showPassword.value = !showPassword.value;
+                  },
                 ),
-                obscureText: !showPassword.value,
               ),
-              TextField(
-                key: const ValueKey('endpoint'),
-                onChanged: (value) {
-                  EasyDebounce.debounce(
-                    'api_endpoint',
-                    const Duration(seconds: 1),
-                    () async {
-                      await api.version(apiUrlController.text).then((result) {
-                        connectivity.value = true;
-                      }).onError(
-                        (error, stackTrace) {
-                          notifyError(context, error, stackTrace);
-                          connectivity.value = false;
-                        },
-                      );
+              obscureText: !showPassword.value,
+            ),
+            Container(height: 16),
+            const Text('OR'),
+            TextField(
+              controller: apiTokenController,
+              decoration: InputDecoration(
+                labelText: 'API token',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    showApiToken.value
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    showApiToken.value = !showApiToken.value;
+                  },
+                ),
+              ),
+              obscureText: !showApiToken.value,
+              onChanged: (value) {
+                if (useApiToken.value != value.isNotEmpty) {
+                  useApiToken.value = value.isNotEmpty;
+                }
+              },
+            ),
+            Container(height: 16),
+            Row(
+              children: [
+                Checkbox(
+                  value: rememberMe.value,
+                  onChanged: (value) {
+                    rememberMe.value = value!;
+                  },
+                ),
+                const Text('Remember Me'),
+              ],
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Token? token;
+                if (useApiToken.value) {
+                  token = ApiToken(apiTokenController.text);
+                } else {
+                  api.init(hostController.text);
+                  (await api.authSignin(
+                    usernameController.text,
+                    passwordController.text,
+                  ))
+                      .when(
+                    ok: (value) {
+                      token = AuthToken(value);
+                    },
+                    ng: (Object error, StackTrace? stackTrace) {
+                      notifyError(context, error, stackTrace);
                     },
                   );
-                },
-                autofillHints: const [
-                  AutofillHints.url,
-                ],
-                controller: apiUrlController,
-                decoration: InputDecoration(
-                  labelText: 'API Endpoint',
-                  suffixIcon: _getConnectivityIcon(connectivity.value),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Checkbox(
-                    value: rememberMe.value,
-                    onChanged: (_) {
-                      rememberMe.value = !rememberMe.value;
-                    },
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  const Text('Remember Me'),
-                ],
-              ),
-            ],
-          ),
+                }
+                if (token == null) {
+                  return;
+                }
+                api.init(hostController.text, token: token);
+
+                if (rememberMe.value) {
+                  await settings.save(host: hostController.text, token: token!);
+                }
+
+                if (!context.mounted) {
+                  return;
+                }
+                const ProjectListRoute().go(context);
+              },
+              child: const Text('Sign In'),
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          key: const ValueKey('sign_in_button'),
-          child: const Text('SIGN IN'),
-          onPressed: () async {
-            api.init(apiUrlController.text);
-            await api
-                .authSignin(
-              emailController.text,
-              passwordController.text,
-            )
-                .then((authToken) async {
-              await settings.setApiBaseUrl(apiUrlController.text);
-              await authToken.when(
-                ok: (token) async {
-                  if (rememberMe.value) {
-                    await settings.setEmail(emailController.text);
-                    await settings.setRememberMe(rememberMe.value);
-                    await settings.setAuthToken(token);
-                  } else {
-                    await settings.clear();
-                  }
-                  if (context.mounted) {
-                    const ProjectListRoute().go(context);
-                  }
-                },
-                ng: (error, stackTrace) {
-                  notifyError(context, error, stackTrace);
-                },
-              );
-            }).onError(
-              (error, stackTrace) => notifyError(context, error, stackTrace),
-            );
-          },
-        ),
-      ],
     );
   }
 
@@ -181,9 +178,6 @@ class SignInPage extends HookConsumerWidget {
         appBar: AppBar(
           title: const Text('NocoDB'),
         ),
-        body: Center(
-          // TODO: Stop using dialog?
-          child: _buildDialog(context, ref),
-        ),
+        body: _build1(context, ref),
       );
 }

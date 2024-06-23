@@ -13,6 +13,18 @@ import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 const _defaultOrg = 'noco';
 
+sealed class Token {}
+
+class AuthToken extends Token {
+  AuthToken(this.authToken);
+  final String authToken;
+}
+
+class ApiToken extends Token {
+  ApiToken(this.apiToken);
+  final String apiToken;
+}
+
 sealed class NcFile {}
 
 class NcPlatformFile extends NcFile {
@@ -81,12 +93,20 @@ class _Api {
   late Uri _baseUri;
   Uri get uri => _baseUri;
 
-  init(String url, {String? authToken}) {
+  init(String url, {Token? token}) {
     _baseUri = Uri.parse(url);
-    if (authToken != null) {
-      _client.addHeaders({'xc-auth': authToken});
-    } else {
-      _client.removeHeader('xc-auth');
+
+    if (token == null) {
+      return;
+    }
+    switch (token) {
+      case AuthToken(authToken: final authToken):
+        _client.addHeaders({'xc-auth': authToken});
+      case ApiToken(apiToken: final apiToken):
+        _client.addHeaders({'xc-token': apiToken});
+      default:
+        _client.removeHeader('xc-auth');
+        _client.removeHeader('xc-token');
     }
   }
 

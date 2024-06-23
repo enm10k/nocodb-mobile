@@ -62,41 +62,23 @@ FutureOr<String?> redirect(
       logger.fine('loaded settings from storage.');
     }
 
-    final rememberMe = await settings.rememberMe;
-    if (!rememberMe) {
-      return null;
-    }
-
-    final apiBaseUrl = await settings.apiBaseUrl;
-    final authToken = await settings.authToken;
-
-    logger.config('apiBaseUrl: $apiBaseUrl');
-    if (authToken == null || apiBaseUrl == null) {
+    final s = await settings.get();
+    if (s == null) {
+      await settings.clear();
       return const HomeRoute().location;
-    } else if (state.path == null || state.path == const HomeRoute().location) {
-      if (!rememberMe) {
-        await settings.clear();
+    }
+    final Settings(:host, :token) = s;
+
+    logger
+      ..config('host: $host')
+      ..config('state.path: ${state.uri.toString()}');
+    if (state.uri.toString() == const HomeRoute().location) {
+      if (token is AuthToken && !isAuthTokenAlive(token.authToken)) {
+        logger.info('authToken is expired.');
         return const HomeRoute().location;
       }
-
-      final isAlive = isAuthTokenAlive(authToken);
-      logger.info(
-        'authToken: ${isAlive ? 'alive' : 'expired'}',
-      );
-
-      if (isAlive) {
-        api.init(apiBaseUrl, authToken: authToken);
-        return const ProjectListRoute().location;
-        // final result = await api.authUserMe();
-        // return result.when(
-        //   ok: (final ok) {
-        //     api.init(apiBaseUrl, authToken: authToken);
-        //     return const ProjectListRoute().location;
-        //   },
-        //   ng: (final error, final stackTrace) =>
-        //       notifyError(context, error, stackTrace),
-        // );
-      }
+      api.init(host, token: token);
+      return const ProjectListRoute().location;
     }
   } catch (e, s) {
     logger
