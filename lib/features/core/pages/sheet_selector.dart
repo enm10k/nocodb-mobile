@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../common/flash_wrapper.dart';
-import '../../../common/logger.dart';
-import '../../../nocodb_sdk/client.dart';
-import '../../../nocodb_sdk/models.dart';
-import '../providers/providers.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class SheetSelectorPage extends HookConsumerWidget {
   const SheetSelectorPage({super.key});
@@ -17,39 +16,36 @@ class SheetSelectorPage extends HookConsumerWidget {
   ) _viewBuilder({
     required List<NcSlimTable> tables,
     required WidgetRef ref,
-  }) {
-    return (context, index) {
-      final viewId = ref.watch(viewProvider)?.id;
-      final table = tables[index];
-      return ref.watch(viewListProvider(table.id)).when(
-            data: (views) => ListView.separated(
-              separatorBuilder: (context, index) {
-                return const Divider(
+  }) =>
+      (context, index) {
+        final viewId = ref.watch(viewProvider)?.id;
+        final table = tables[index];
+        return ref.watch(viewListProvider(table.id)).when(
+              data: (views) => ListView.separated(
+                separatorBuilder: (context, index) => const Divider(
                   height: 2,
-                );
+                ),
+                itemBuilder: (context, index) {
+                  final view = views.list[index];
+                  return ListTile(
+                    title: Text(view.title),
+                    subtitle: Text('type: ${view.type.name}'),
+                    selected: view.id == viewId,
+                    onTap: () {
+                      ref.read(viewProvider.notifier).set(view);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+                itemCount: views.list.length,
+              ),
+              error: (error, stackTrace) {
+                notifyError(context, error, stackTrace);
+                return const SizedBox();
               },
-              itemBuilder: (context, index) {
-                final view = views.list[index];
-                return ListTile(
-                  title: Text(view.title),
-                  subtitle: Text('type: ${view.type.name}'),
-                  selected: view.id == viewId,
-                  onTap: () {
-                    ref.read(viewProvider.notifier).set(view);
-                    Navigator.pop(context);
-                  },
-                );
-              },
-              itemCount: views.list.length,
-            ),
-            error: (error, stackTrace) {
-              notifyError(context, error, stackTrace);
-              return const SizedBox();
-            },
-            loading: () => const CircularProgressIndicator(),
-          );
-    };
-  }
+              loading: () => const CircularProgressIndicator(),
+            );
+      };
 
   Widget _buildDrawer({
     required List<NcSlimTable> tables,
@@ -85,8 +81,9 @@ class SheetSelectorPage extends HookConsumerWidget {
     final tableId = ref.watch(tableProvider)?.id ?? '';
     final initialIndex =
         tables.map((table) => table.id).toList().indexOf(tableId);
-    logger.info('tableId: $tableId');
-    logger.info('initialIndex: $initialIndex');
+    logger
+      ..info('tableId: $tableId')
+      ..info('initialIndex: $initialIndex');
 
     final tabController = useTabController(
       initialLength: tables.length,
@@ -121,13 +118,19 @@ class SheetSelectorPage extends HookConsumerWidget {
           ),
         ),
         body: PageView.builder(
-          onPageChanged: (index) {
+          onPageChanged: (index) async {
             logger.info('PageView.onPageChanged: $index');
             tabController.animateTo(index);
 
             final table = tables[index];
-            api.dbTableRead(tableId: table.id).then((table) {
-              ref.watch(viewProvider.notifier).set(table.views.first);
+            await api.dbTableRead(tableId: table.id).then((result) {
+              result.when(
+                ok: (table) {
+                  ref.watch(viewProvider.notifier).set(table.views.first);
+                },
+                ng: (error, stackTrace) =>
+                    notifyError(context, error, stackTrace),
+              );
             }).onError(
               (error, stackTrace) => notifyError(context, error, stackTrace),
             );

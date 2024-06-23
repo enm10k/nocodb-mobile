@@ -3,20 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:loader_overlay/loader_overlay.dart';
-
-import '../../../common/components/scroll_detector.dart';
-import '../../../common/flash_wrapper.dart';
-import '../../../common/logger.dart';
-import '../../../nocodb_sdk/models.dart';
-import '../components/dialog/search_dialog.dart';
-import '../providers/providers.dart';
+import 'package:nocodb/common/components/scroll_detector.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/components/dialog/search_dialog.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class _Card extends HookConsumerWidget {
-  final String refRowId;
-  final dynamic pv;
-  final String rowId;
-  final NcTableColumn column;
-  final NcTable relation;
   const _Card({
     required this.refRowId,
     required this.pv,
@@ -24,38 +18,42 @@ class _Card extends HookConsumerWidget {
     required this.column,
     required this.relation,
   });
+  final String refRowId;
+  final dynamic pv;
+  final String rowId;
+  final NcTableColumn column;
+  final NcTable relation;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      child: ListTile(
-        title: Text(pv.toString()),
-        subtitle: Text('PrimaryKey: $refRowId'),
-        onTap: () {
-          ref
-              .watch(
-                rowNestedProvider(rowId, column, relation, excluded: true)
-                    .notifier,
-              )
-              .link(refRowId: refRowId)
-              .then((msg) => notifySuccess(context, message: msg))
-              .onError(
-                (error, stackTrace) => notifyError(context, error, stackTrace),
-              );
-        },
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => Card(
+        child: ListTile(
+          title: Text(pv.toString()),
+          subtitle: Text('PrimaryKey: $refRowId'),
+          onTap: () async {
+            await ref
+                .read(
+                  rowNestedProvider(rowId, column, relation, excluded: true)
+                      .notifier,
+                )
+                .link(refRowId: refRowId)
+                .then((msg) {
+              notifySuccess(context, message: msg);
+            }).onError(
+              (error, stackTrace) => notifyError(context, error, stackTrace),
+            );
+          },
+        ),
+      );
 }
 
 class LinkRecordPage extends HookConsumerWidget {
-  final String columnId;
-  final String rowId;
   const LinkRecordPage({
     super.key,
     required this.columnId,
     required this.rowId,
   });
+  final String columnId;
+  final String rowId;
 
   static const debug = true;
 
@@ -91,8 +89,8 @@ class LinkRecordPage extends HookConsumerWidget {
           return;
         }
         context.loaderOverlay.show();
-        ref
-            .watch(
+        await ref
+            .read(
               rowNestedProvider(rowId, column, relation, excluded: true)
                   .notifier,
             )
@@ -126,7 +124,7 @@ class LinkRecordPage extends HookConsumerWidget {
         title: const Text('Link record'),
         actions: [
           IconButton(
-            onPressed: () => showDialog(
+            onPressed: () async => showDialog(
               context: context,
               builder: (_) => LinkRecordSearchDialog(
                 column: column,
@@ -143,14 +141,13 @@ class LinkRecordPage extends HookConsumerWidget {
 
   Scaffold _buildEmptyScaffold({
     required Widget body,
-  }) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Link record'),
-      ),
-      body: body,
-    );
-  }
+  }) =>
+      Scaffold(
+        appBar: AppBar(
+          title: const Text('Link record'),
+        ),
+        body: body,
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

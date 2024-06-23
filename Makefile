@@ -1,39 +1,39 @@
-fix:
-	dart fix --apply lib
+run_integration_test rit:
+	flutter run --dart-define-from-file=integration_test/.env -t integration_test/hello_test.dart
 
 fmt:
-	dart format lib
+	dart fix --apply lib
+	dart fix --apply integration_test
+	dart format lib integration_test
 
-build-runner-watch watch:
-	# flutter pub run build_runner build -d -v
+gen:
 	flutter pub run build_runner watch -d -v
+
+clean:
+	find . | grep -e 'freezed\.dart' -e '\.g\.dart' | xargs -I {} rm {}
 
 apk:
 	flutter build apk
 	open build/app/outputs/flutter-apk
 
-setup-nocodb:
+setup_nocodb:
 	./scripts/setup-nocodb-with-pg-sakila-db.sh
 
-show-NC_DB:
+show_nc_db:
 	grep NC_DB _nocodb/docker-compose/pg/docker-compose.yml | awk '{print $$2}'
 
-enable-db-log:
+enable_db_log:
 	cd _nocodb/docker-compose/pg && docker-compose exec root_db bash -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "ALTER SYSTEM SET log_statement = '\''all'\'';"'
 	cd _nocodb/docker-compose/pg && docker-compose exec root_db bash -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT pg_reload_conf();"'
 
-tail-db-log:
+tail_db_log:
 	cd _nocodb/docker-compose/pg && docker-compose logs -f root_db
 
-
-remove-generated-files:
-	find . | grep -e 'freezed\.dart' -e '\.g\.dart' | xargs -I {} rm {}
-
-# open-swagger-definition:
+# open_swagger_definition:
 # 	code nocodb/scripts/sdk/swagger.json
 
 cloc:
 	cloc . --vcs=git --include-ext=dart,yaml lib
 
-run-web:
+run_web:
 	CHROME_EXECUTABLE="./scripts/google-chrome-unsafe.sh"  flutter run -d chrome

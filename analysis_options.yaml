@@ -11,23 +11,41 @@ include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
-    - avoid_print
+    - always_use_package_imports
+    - avoid_dynamic_calls
+    - avoid_relative_lib_imports
     # - always_declare_return_types
     # - avoid_types_on_closure_parameters
+    - cascade_invocations
+    - combinators_ordering
+    - constant_identifier_names
+    - directives_ordering
+    - discarded_futures
+    - empty_statements
     # - omit_local_variable_types
+    - no_wildcard_variable_uses
     - prefer_adjacent_string_concatenation
     - prefer_conditional_assignment
     - prefer_contains
-    - prefer_relative_imports
+    - prefer_expression_function_bodies
+    - avoid_final_parameters # prefer_final_parameters
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - prefer_if_elements_to_conditional_expressions
     - prefer_single_quotes
     - require_trailing_commas
+    - sort_constructors_first
+    - sort_unnamed_constructors_first
+    - unawaited_futures
+    - unnecessary_breaks
+    # - unnecessary_lambdas
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
 analyzer:
-  enable-experiment:
-    - records
-    - patterns
+  # enable-experiment:
+  #   - records
+  #   - patterns
   exclude:
     - "**/*.freezed.dart"
     - "**/*.g.dart"

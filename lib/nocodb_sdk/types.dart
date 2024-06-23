@@ -2,17 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class NocoDateTime {
-  DateTime dt;
   NocoDateTime(this.dt);
-  factory NocoDateTime.fromString(String s) {
-    return NocoDateTime(DateTime.parse(s));
-  }
+  factory NocoDateTime.fromString(String s) => NocoDateTime(DateTime.parse(s));
 
-  factory NocoDateTime.getInitialValue(String? s) {
-    return s == null
-        ? NocoDateTime(DateTime.now())
-        : NocoDateTime.fromString(s);
-  }
+  factory NocoDateTime.getInitialValue(String? s) =>
+      s == null ? NocoDateTime(DateTime.now()) : NocoDateTime.fromString(s);
+  DateTime dt;
 
   String toApiValue() => dt.toUtc().toString();
 
@@ -22,8 +17,6 @@ class NocoDateTime {
 }
 
 class NocoDate {
-  DateTime dt;
-
   NocoDate._(this.dt);
   factory NocoDate.fromDateTime(DateTime dt) => NocoDate._(dt);
   factory NocoDate.fromString(String s) {
@@ -34,11 +27,10 @@ class NocoDate {
     return NocoDate._(DateTime(year, month, day, 1, 1, 1));
   }
 
-  factory NocoDate.getInitialValue(String? s) {
-    return s == null
-        ? NocoDate.fromDateTime(DateTime.now())
-        : NocoDate.fromString(s);
-  }
+  factory NocoDate.getInitialValue(String? s) => s == null
+      ? NocoDate.fromDateTime(DateTime.now())
+      : NocoDate.fromString(s);
+  DateTime dt;
 
   static final DateFormat _format = DateFormat('yyyy-MM-dd');
 
@@ -49,12 +41,7 @@ class NocoDate {
 }
 
 class NocoTime {
-  DateTime dt;
-
   NocoTime._(this.dt);
-
-  static DateTime _dt(int hour, int minute) =>
-      DateTime(1999, 1, 1, hour, minute);
 
   factory NocoTime.getInitialValue(String? s) {
     if (s == null) {
@@ -64,18 +51,14 @@ class NocoTime {
     return NocoTime.fromLocalTimeString(s);
   }
 
-  factory NocoTime.fromDateTime(DateTime dt) {
-    return NocoTime._(dt.toLocal());
-  }
+  factory NocoTime.fromDateTime(DateTime dt) => NocoTime._(dt.toLocal());
 
-  factory NocoTime.fromLocalTime(TimeOfDay t) {
-    return NocoTime._(
-      _dt(
-        t.hour,
-        t.minute,
-      ),
-    );
-  }
+  factory NocoTime.fromLocalTime(TimeOfDay t) => NocoTime._(
+        _dt(
+          t.hour,
+          t.minute,
+        ),
+      );
 
   factory NocoTime.fromLocalTimeString(String s) {
     final sp = s.split(':');
@@ -86,6 +69,10 @@ class NocoTime {
     final minute = int.parse(sp[1]);
     return NocoTime._(_dt(hour, minute));
   }
+  DateTime dt;
+
+  static DateTime _dt(int hour, int minute) =>
+      DateTime(1999, 1, 1, hour, minute);
 
   TimeOfDay getLocalTime() {
     final local = dt.toLocal();

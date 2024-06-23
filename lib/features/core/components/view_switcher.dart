@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/features/core/components/views/grid.dart';
-import '/features/core/providers/providers.dart';
-import '/nocodb_sdk/symbols.dart';
-import '../../../common/extensions.dart';
+import 'package:nocodb/common/extensions.dart';
+import 'package:nocodb/features/core/components/views/grid.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class ViewSwitcher extends HookConsumerWidget {
   const ViewSwitcher({super.key});

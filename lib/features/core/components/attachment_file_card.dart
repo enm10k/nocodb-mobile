@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:popup_menu/popup_menu.dart';
 
-import '../../../nocodb_sdk/models.dart';
-
 class AttachmentFileCard extends HookConsumerWidget {
-  final NcAttachedFile _file;
-  final PopupMenu? popupMenu;
   const AttachmentFileCard(
     this._file, {
     this.popupMenu,
     super.key,
   });
+  final NcAttachedFile _file;
+  final PopupMenu? popupMenu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

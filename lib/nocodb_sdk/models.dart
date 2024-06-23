@@ -1,14 +1,56 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:http/http.dart';
 
-import '../common/logger.dart';
-import 'symbols.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 part 'models.freezed.dart';
 part 'models.g.dart';
 part 'models_extensions.dart';
+
+@freezed
+abstract class Result<T> with _$Result<T> {
+  const factory Result.ok(T value) = Ok<T>;
+
+  const factory Result.ng(Object error, StackTrace? stackTrace) = Ng<T>;
+}
+
+@freezed
+abstract class HttpFn with _$HttpFn {
+  const factory HttpFn.get(
+    Future<Response> Function(
+      Uri url, {
+      Map<String, String>? headers,
+    }) value,
+  ) = HttpFnGet;
+
+  const factory HttpFn.others(
+    Future<Response> Function(
+      Uri url, {
+      Map<String, String>? headers,
+      Object? body,
+      Encoding? encoding,
+    }) value,
+  ) = HttpFnOthers;
+}
+
+@Freezed(genericArgumentFactories: true)
+class NcList<T> with _$NcList<T> {
+  const factory NcList({
+    required List<T> list,
+    required NcPageInfo? pageInfo,
+  }) = _NcList<T>;
+
+  factory NcList.fromJson(
+    Map<String, dynamic> json,
+    T Function(Object?) fromJsonT,
+  ) =>
+      _$NcListFromJson(json, fromJsonT);
+}
 
 @freezed
 class NcTables with _$NcTables {
@@ -37,8 +79,10 @@ class NcUser with _$NcUser {
 
 @freezed
 class NcProject with _$NcProject {
-  const factory NcProject({required String id, required String title}) =
-      _NcProject;
+  const factory NcProject({
+    required String id,
+    required String title,
+  }) = _NcProject;
   factory NcProject.fromJson(Map<String, dynamic> json) =>
       _$NcProjectFromJson(json);
 }
@@ -58,14 +102,36 @@ class NcPageInfo with _$NcPageInfo {
 }
 
 @freezed
-class NcProjectList with _$NcProjectList {
-  const factory NcProjectList({
-    required List<NcProject> list,
-    required NcPageInfo pageInfo,
-  }) = _NcProjectList;
-  factory NcProjectList.fromJson(Map<String, dynamic> json) =>
-      _$NcProjectListFromJson(json);
+class NcSort with _$NcSort {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory NcSort({
+    required String id,
+    required String fkViewId,
+    required String fkColumnId,
+    @JsonKey(fromJson: _toSortTypes) required SortDirectionTypes direction,
+    required int order,
+  }) = _NcSort;
+  factory NcSort.fromJson(Map<String, dynamic> json) => _$NcSortFromJson(json);
 }
+
+typedef NcRow = Map<String, dynamic>;
+T fromJsonT<T>(Object? obj) {
+  final json = obj as Map<String, dynamic>;
+
+  if (T == NcRow) {
+    return json as T;
+  } else if (T == NcProject) {
+    return NcProject.fromJson(json) as T;
+  } else if (T == NcSort) {
+    return NcSort.fromJson(json) as T;
+  } else {
+    throw Exception('Unsupported type');
+  }
+}
+
+typedef NcProjectList = NcList<NcProject>;
+typedef NcSortList = NcList<NcSort>;
+typedef NcRowList = NcList<Map<String, dynamic>>;
 
 @freezed
 class NcSlimTable with _$NcSlimTable {
@@ -233,17 +299,6 @@ class NcViewColumn with _$NcViewColumn {
       _$NcViewColumnFromJson(json);
 }
 
-@freezed
-class NcRowList with _$NcRowList {
-  const factory NcRowList({
-    NcPageInfo? pageInfo,
-    required List<Map<String, dynamic>> list,
-  }) = _NcRowList;
-
-  factory NcRowList.fromJson(Map<String, dynamic> json) =>
-      _$NcRowListFromJson(json);
-}
-
 SortDirectionTypes _toSortTypes(dynamic v) {
   if (v is String) {
     for (final vt in SortDirectionTypes.values) {
@@ -253,30 +308,6 @@ SortDirectionTypes _toSortTypes(dynamic v) {
     }
   }
   return SortDirectionTypes.unknown;
-}
-
-@freezed
-class NcSort with _$NcSort {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory NcSort({
-    required String id,
-    required String fkViewId,
-    required String fkColumnId,
-    @JsonKey(fromJson: _toSortTypes) required SortDirectionTypes direction,
-    required int order,
-  }) = _NcSort;
-  factory NcSort.fromJson(Map<String, dynamic> json) => _$NcSortFromJson(json);
-}
-
-@freezed
-class NcSortList with _$NcSortList {
-  const factory NcSortList({
-    NcPageInfo? pageInfo,
-    required List<NcSort> list,
-  }) = _NcSortList;
-
-  factory NcSortList.fromJson(Map<String, dynamic> json) =>
-      _$NcSortListFromJson(json);
 }
 
 @freezed

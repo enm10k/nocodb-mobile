@@ -48,6 +48,14 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        // NOTE: Set multiDexEnabled to fix the following error
+        //
+        // ERROR:D8: Cannot fit requested classes in a single dex file (# methods: 81117 > 65536)
+        // com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives:
+        // The number of method references in a .dex file cannot exceed 64K.
+        // Learn how to resolve this issue at https://developer.android.com/tools/building/multidex.html
+        multiDexEnabled true
     }
 
     buildTypes {

@@ -1,28 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/features/core/providers/providers.dart';
-import '/nocodb_sdk/client.dart';
-import '/nocodb_sdk/models.dart' as model;
-import '../../../../common/components/not_implementing_dialog.dart';
-import '../../../../common/flash_wrapper.dart';
-import '../../../../common/logger.dart';
+import 'package:nocodb/common/components/not_implementing_dialog.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
 
 model.NcTableColumn getTableColumn(
   model.NcViewColumn viewColumn,
   List<model.NcTableColumn> tableColumns,
-) {
-  return tableColumns
-          .where((tableColumn) => tableColumn.id == viewColumn.fkColumnId)
-          .firstOrNull ??
-      tableColumns.first;
-}
+) =>
+    tableColumns
+        .where((tableColumn) => tableColumn.id == viewColumn.fkColumnId)
+        .firstOrNull ??
+    tableColumns.first;
 
 class FieldsDialog extends HookConsumerWidget {
-  static const debug = true;
   const FieldsDialog({
     super.key,
   });
+  static const debug = true;
 
   _debugViewColumns(
     List<model.NcViewColumn> viewColumns,
@@ -55,9 +53,8 @@ class FieldsDialog extends HookConsumerWidget {
       final tableColumn = getTableColumn(viewColumn, table.columns);
 
       return view.showSystemFields ? true : !tableColumn.isSystem;
-    }).toList();
-
-    filteredViewColumns.sort((a, b) => a.order.compareTo(b.order));
+    }).toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
 
     final List<Widget> children = filteredViewColumns.map(
       (viewColumn) {
@@ -67,9 +64,9 @@ class FieldsDialog extends HookConsumerWidget {
           key: Key(viewColumn.id),
           title: Text(column.title),
           value: viewColumn.show,
-          onChanged: (value) {
+          onChanged: (value) async {
             if (column.pv) {
-              showDialog(
+              await showDialog(
                 context: context,
                 builder: (_) => AlertDialog(
                   title: Text('${column.title} is display value'),
@@ -86,7 +83,7 @@ class FieldsDialog extends HookConsumerWidget {
               );
             }
             // TODO: The following logic should be integrated to provider.
-            api
+            await api
                 .dbViewColumnUpdateShow(
                   column: viewColumn,
                   show: value == true,
@@ -137,10 +134,10 @@ class FieldsDialog extends HookConsumerWidget {
                   }
 
                   // TODO: The following logic should be integrated to provider.
-                  newViewColumns.asMap().forEach((index, viewColumn) {
+                  newViewColumns.asMap().forEach((index, viewColumn) async {
                     final newOrder = index + 1;
                     if (viewColumn.order != newOrder) {
-                      api.dbViewColumnUpdateOrder(
+                      await api.dbViewColumnUpdateOrder(
                         column: viewColumn,
                         order: newOrder,
                       );
@@ -157,16 +154,14 @@ class FieldsDialog extends HookConsumerWidget {
           ),
           InkWell(
             onTap: () {
-              ref
-                  .watch(viewProvider.notifier)
-                  .showSystemFields(view.showSystemFields);
+              ref.read(viewProvider.notifier).showSystemFields();
             },
             child: Row(
               children: [
                 Checkbox(
                   value: view.showSystemFields,
                   onChanged: (value) {
-                    ref.watch(viewProvider.notifier).showSystemFields(value!);
+                    ref.read(viewProvider.notifier).showSystemFields();
                   },
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -182,8 +177,8 @@ class FieldsDialog extends HookConsumerWidget {
           Row(
             children: [
               TextButton(
-                onPressed: () {
-                  showDialog(
+                onPressed: () async {
+                  await showDialog(
                     context: context,
                     builder: (_) => const NotImplementedDialog(),
                   );
@@ -191,8 +186,8 @@ class FieldsDialog extends HookConsumerWidget {
                 child: const Text('Show all'),
               ),
               TextButton(
-                onPressed: () {
-                  showDialog(
+                onPressed: () async {
+                  await showDialog(
                     context: context,
                     builder: (_) => const NotImplementedDialog(),
                   );

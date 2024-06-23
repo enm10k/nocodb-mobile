@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/features/core/components/view_switcher.dart';
-import '/features/core/providers/providers.dart';
-import '../../../routes.dart';
-import '../components/dialog/search_dialog.dart';
-import '../components/toolbar.dart';
+import 'package:nocodb/features/core/components/dialog/search_dialog.dart';
+import 'package:nocodb/features/core/components/toolbar.dart';
+import 'package:nocodb/features/core/components/view_switcher.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/routes.dart';
 
 class BottomAppBarButton extends HookConsumerWidget {
-  final IconData iconData;
-  final Function() onPressed;
   const BottomAppBarButton({
     super.key,
     required this.iconData,
     required this.onPressed,
   });
+  final IconData iconData;
+  final Function() onPressed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return IconButton(
-      icon: Icon(
-        iconData,
-        color: Colors.white,
-        size: 28,
-      ),
-      onPressed: onPressed,
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
+        icon: Icon(
+          iconData,
+          color: Colors.white,
+          size: 28,
+        ),
+        onPressed: onPressed,
+      );
 }
 
 class SheetPage extends HookConsumerWidget {
@@ -47,23 +44,23 @@ class SheetPage extends HookConsumerWidget {
           children: <Widget>[
             BottomAppBarButton(
               iconData: Icons.menu,
-              onPressed: () => const SheetSelectorRoute().push(context),
+              onPressed: () async => const SheetSelectorRoute().push(context),
             ),
             BottomAppBarButton(
               iconData: Icons.add_circle_outline,
-              onPressed: () {
+              onPressed: () async {
                 final table = ref.watch(tableProvider);
                 final view = ref.watch(viewProvider);
                 if (table == null || view == null) {
                   return;
                 }
 
-                const RowEditorRoute().push(context);
+                await const RowEditorRoute().push(context);
               },
             ),
             BottomAppBarButton(
               iconData: Icons.search,
-              onPressed: () => showDialog(
+              onPressed: () async => showDialog(
                 context: context,
                 builder: (_) => const SheetSearchDialog(),
               ),

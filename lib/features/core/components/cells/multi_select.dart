@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../../nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class MultiSelect extends HookConsumerWidget {
-  final List<String> values;
-  final NcTableColumn column;
-
   const MultiSelect(
     this.values, {
     super.key,
     required this.column,
   });
+  final List<String> values;
+  final NcTableColumn column;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

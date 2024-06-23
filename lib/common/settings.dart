@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-import 'preferences.dart';
+import 'package:nocodb/common/preferences.dart';
 
 final settings = Settings();
 

@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '/features/core/providers/providers.dart';
-import '/nocodb_sdk/models.dart' as model;
-import '../../../../nocodb_sdk/symbols.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class _SearchDialog extends HookConsumerWidget {
-  final List<Widget> children;
-  final void Function(String query) onSearch;
-  final void Function() onReset;
-  final String initialValue;
   const _SearchDialog({
     required this.children,
     required this.onSearch,
     required this.onReset,
     required this.initialValue,
   });
+  final List<Widget> children;
+  final void Function(String query) onSearch;
+  final void Function() onReset;
+  final String initialValue;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -162,13 +162,13 @@ class SheetSearchDialog extends HookConsumerWidget {
 }
 
 class LinkRecordSearchDialog extends HookConsumerWidget {
-  final model.NcTableColumn column;
-  final String pvName;
   const LinkRecordSearchDialog({
     super.key,
     required this.column,
     required this.pvName,
   });
+  final model.NcTableColumn column;
+  final String pvName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

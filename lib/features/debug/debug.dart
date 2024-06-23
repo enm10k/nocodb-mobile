@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:nocodb/common/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import '../../common/logger.dart';
 
 part 'debug.freezed.dart';
 part 'debug.g.dart';
@@ -23,9 +22,7 @@ class Union with _$Union {
 @Riverpod()
 class Patterns2 extends _$Patterns2 {
   @override
-  Record build() {
-    return ([7, 8, 9], [10, 11, 12]);
-  }
+  Record build() => ([7, 8, 9], [10, 11, 12]);
 
   update(Record record) {
     state = record;
@@ -49,8 +46,8 @@ class DebugPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // test union
-    Union n1 = Union.first(1);
-    Union n2 = Union.second(4.5);
+    final Union n1 = Union.first(1);
+    final Union n2 = Union.second(4.5);
     logger.info('$n1: $n1 ${n1.runtimeType}, n2: $n2 ${n2.runtimeType}');
 
     final (a, b) = ref.watch(patternsProvider);

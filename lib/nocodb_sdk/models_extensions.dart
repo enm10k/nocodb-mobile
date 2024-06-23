@@ -1,11 +1,22 @@
 part of 'models.dart';
 
-extension NctablesEx on NcTables {
+extension NcTablesEx on NcTables {
   List<NcView> get views => table.views;
   List<NcTableColumn> get columns => table.columns;
 
-  NcTable? getRelation(String relatedTableId) {
-    return relationMap[relatedTableId];
+  NcTable? getRelation(String relatedTableId) => relationMap[relatedTableId];
+}
+
+extension NcRowListEx on NcRowList {
+  List<NcTableColumn> toTableColumns(
+    Iterable<NcTableColumn> columns,
+  ) {
+    final titles = list.firstOrNull?.keys ?? [];
+    final columnsByTitle = Map.fromIterables(
+      columns.map((c) => c.title),
+      columns,
+    );
+    return titles.map((t) => columnsByTitle[t]).whereNotNull().toList();
   }
 }
 
@@ -79,9 +90,8 @@ extension NcTableColumnEx on NcTableColumn {
 }
 
 extension NcTableEx on NcTable {
-  NcTableColumn? getParentColumn(String id) {
-    return columns.firstWhereOrNull((column) => column.fkChildColumnId == id);
-  }
+  NcTableColumn? getParentColumn(String id) =>
+      columns.firstWhereOrNull((column) => column.fkChildColumnId == id);
 
   NcTableColumn? get pvColumn {
     final pvColumns = columns.where((element) => element.pv);
@@ -120,8 +130,11 @@ extension NcTableEx on NcTable {
     return column.isHasMay ? pks.join('___') : pks.firstOrNull;
   }
 
-  dynamic getPkFromRow(Map<String, dynamic> row) =>
-      getPksFromRow(row).firstOrNull;
+  dynamic getPkFromRow(Map<String, dynamic> row) {
+    final pk = getPksFromRow(row).firstOrNull;
+    assert(pk != null, 'getPkFromRow failed');
+    return pk;
+  }
 
   List<NcTableColumn> get requiredColumns =>
       columns.where((column) => column.rqd).toList();
@@ -144,20 +157,18 @@ extension NcViewColumnEx on NcViewColumn {
 }
 
 extension NcViewColumnListEx on List<NcViewColumn> {
-  List<NcViewColumn> getColumnsToShow(NcTable table, NcView view) {
-    return where(
-      (column) {
-        final tableColumn = column.toTableColumn(table.columns);
-        final system = tableColumn?.isSystem ?? false;
+  List<NcViewColumn> getColumnsToShow(NcTable table, NcView view) => where(
+        (column) {
+          final tableColumn = column.toTableColumn(table.columns);
+          final system = tableColumn?.isSystem ?? false;
 
-        if (!view.showSystemFields && system == true) {
-          return false;
-        }
+          if (!view.showSystemFields && system == true) {
+            return false;
+          }
 
-        return column.show;
-      },
-    ).toList();
-  }
+          return column.show;
+        },
+      ).toList();
 }
 
 extension NcAttachedFileEx on NcAttachedFile {
@@ -165,7 +176,5 @@ extension NcAttachedFileEx on NcAttachedFile {
   String get id => signedPath;
   bool get isImage => mimetype.startsWith('image');
 
-  String signedUrl(Uri host) {
-    return host.replace(path: signedPath).toString();
-  }
+  String signedUrl(Uri host) => host.replace(path: signedPath).toString();
 }

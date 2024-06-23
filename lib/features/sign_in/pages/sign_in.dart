@@ -2,11 +2,10 @@ import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/nocodb_sdk/client.dart';
-import '../../../common/flash_wrapper.dart';
-import '../../../common/settings.dart';
-import '../../../routes.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/settings.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/routes.dart';
 
 class SignInPage extends HookConsumerWidget {
   const SignInPage({super.key});
@@ -45,6 +44,7 @@ class SignInPage extends HookConsumerWidget {
 
     useEffect(
       () {
+        // ignore: discarded_futures
         () async {
           emailController.text = await settings.email ?? '';
           apiUrlController.text = await settings.apiBaseUrl ?? '';
@@ -62,6 +62,7 @@ class SignInPage extends HookConsumerWidget {
           child: Column(
             children: [
               TextField(
+                key: const ValueKey('email'),
                 autofillHints: const [
                   AutofillHints.email,
                   AutofillHints.username,
@@ -72,6 +73,7 @@ class SignInPage extends HookConsumerWidget {
                 ),
               ),
               TextField(
+                key: const ValueKey('password'),
                 autofillHints: const [
                   AutofillHints.password,
                 ],
@@ -92,12 +94,13 @@ class SignInPage extends HookConsumerWidget {
                 obscureText: !showPassword.value,
               ),
               TextField(
+                key: const ValueKey('endpoint'),
                 onChanged: (value) {
                   EasyDebounce.debounce(
-                    'sign_in_password',
+                    'api_endpoint',
                     const Duration(seconds: 1),
-                    () {
-                      api.version(apiUrlController.text).then((result) {
+                    () async {
+                      await api.version(apiUrlController.text).then((result) {
                         connectivity.value = true;
                       }).onError(
                         (error, stackTrace) {
@@ -136,24 +139,34 @@ class SignInPage extends HookConsumerWidget {
       ),
       actions: [
         TextButton(
+          key: const ValueKey('sign_in_button'),
           child: const Text('SIGN IN'),
-          onPressed: () {
+          onPressed: () async {
             api.init(apiUrlController.text);
-            api
+            await api
                 .authSignin(
               emailController.text,
               passwordController.text,
             )
-                .then((authToken) {
-              if (rememberMe.value) {
-                settings.setEmail(emailController.text);
-                settings.setRememberMe(rememberMe.value);
-              }
-
-              // TODO: Need to rewrite Settings class. The following values should not be saved to the storage when rememberMe is false.
-              settings.setApiBaseUrl(apiUrlController.text);
-              settings.setAuthToken(authToken);
-              const ProjectListRoute().go(context);
+                .then((authToken) async {
+              await settings.setApiBaseUrl(apiUrlController.text);
+              await authToken.when(
+                ok: (token) async {
+                  if (rememberMe.value) {
+                    await settings.setEmail(emailController.text);
+                    await settings.setRememberMe(rememberMe.value);
+                    await settings.setAuthToken(token);
+                  } else {
+                    await settings.clear();
+                  }
+                  if (context.mounted) {
+                    const ProjectListRoute().go(context);
+                  }
+                },
+                ng: (error, stackTrace) {
+                  notifyError(context, error, stackTrace);
+                },
+              );
             }).onError(
               (error, stackTrace) => notifyError(context, error, stackTrace),
             );
@@ -164,15 +177,13 @@ class SignInPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NocoDB'),
-      ),
-      body: Center(
-        // TODO: Stop using dialog?
-        child: _buildDialog(context, ref),
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+        appBar: AppBar(
+          title: const Text('NocoDB'),
+        ),
+        body: Center(
+          // TODO: Stop using dialog?
+          child: _buildDialog(context, ref),
+        ),
+      );
 }

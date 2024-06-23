@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:loader_overlay/loader_overlay.dart';
-
-import '/features/core/providers/providers.dart';
-import '/nocodb_sdk/models.dart' as model;
-import '/nocodb_sdk/symbols.dart';
-import '../../../../common/components/scroll_detector.dart';
-import '../../../../common/extensions.dart';
-import '../../../../common/logger.dart';
-import '../cell.dart';
+import 'package:nocodb/common/components/scroll_detector.dart';
+import 'package:nocodb/common/extensions.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/components/cell.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class Grid extends HookConsumerWidget {
   const Grid({
@@ -70,10 +70,12 @@ class Grid extends HookConsumerWidget {
     final view = ref.watch(viewProvider)!;
 
     final columns = ref.watch(fieldsProvider(view)).valueOrNull?.toList() ?? [];
-    logger.info('view: ${view.title} has ${columns.length} columns(s).');
-    logger.info('columns: ${columns.map((e) => e.title).toList()}');
+    logger
+      ..info('view: ${view.title} has ${columns.length} columns(s).')
+      ..info('columns: ${columns.map((e) => e.title).toList()}');
 
-    final dataRow = ref.watch(dataRowsProvider(view)).valueOrNull;
+    final dataRow = ref.watch(dataRowsProvider).valueOrNull;
+    logger.info('pageInfo: ${dataRow?.pageInfo}');
     final rows = dataRow?.list ?? [];
 
     if (columns.isEmpty) {
@@ -169,12 +171,31 @@ class Grid extends HookConsumerWidget {
       onEnd: () async {
         context.loaderOverlay.show();
 
-        await ref.read(dataRowsProvider(view).notifier).loadNextPage().then(
-              (_) => Future.delayed(
-                const Duration(milliseconds: 500),
-                () => context.loaderOverlay.hide(),
-              ),
-            );
+        try {
+          if (ref.read(dataRowsProvider).valueOrNull?.pageInfo?.isLastPage ==
+              true) {
+            notifySuccess(context, message: 'This is the end of the table.');
+            context.loaderOverlay.hide();
+            return;
+          }
+          await ref.read(dataRowsProvider.notifier).loadNextPage().then(
+                (_) => Future.delayed(
+                  const Duration(milliseconds: 500),
+                  () => context.loaderOverlay.hide(),
+                ),
+              );
+        } catch (e, s) {
+          logger
+            ..shout(e)
+            ..shout(s);
+          if (context.mounted) {
+            notifyError(context, e, s);
+          }
+        } finally {
+          if (context.mounted) {
+            context.loaderOverlay.hide();
+          }
+        }
       },
     );
   }

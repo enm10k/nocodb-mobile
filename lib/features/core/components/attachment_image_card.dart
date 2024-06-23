@@ -1,19 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:popup_menu/popup_menu.dart';
 
-import '../../../nocodb_sdk/client.dart';
-import '../../../nocodb_sdk/models.dart';
-
 class AttachmentImageCard extends HookConsumerWidget {
-  final NcAttachedFile _file;
-  final PopupMenu? popupMenu;
   const AttachmentImageCard(
     this._file, {
     this.popupMenu,
     super.key,
   });
+  final NcAttachedFile _file;
+  final PopupMenu? popupMenu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

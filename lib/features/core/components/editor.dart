@@ -2,83 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../nocodb_sdk/models.dart';
-import '/nocodb_sdk/models.dart' as model;
-import '../../../common/flash_wrapper.dart';
-import '../../../common/logger.dart';
-import '../../../nocodb_sdk/symbols.dart';
-import '../pages/row_editor.dart';
-import '../providers/providers.dart';
-import 'editors/attachment.dart';
-import 'editors/checkbox.dart';
-import 'editors/datetime.dart';
-import 'editors/link_to_another_record.dart';
-import 'editors/link_to_another_record_bt.dart';
-import 'editors/multi_select.dart';
-import 'editors/single_select.dart';
-import 'editors/text_editor.dart';
+import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/components/editors/attachment.dart';
+import 'package:nocodb/features/core/components/editors/checkbox.dart';
+import 'package:nocodb/features/core/components/editors/datetime.dart';
+import 'package:nocodb/features/core/components/editors/link_to_another_record.dart';
+import 'package:nocodb/features/core/components/editors/link_to_another_record_bt.dart';
+import 'package:nocodb/features/core/components/editors/multi_select.dart';
+import 'package:nocodb/features/core/components/editors/single_select.dart';
+import 'package:nocodb/features/core/components/editors/text_editor.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/utils.dart';
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class Editor extends HookConsumerWidget {
-  final String? rowId;
-  final model.NcTableColumn column;
-  final dynamic value;
-
   const Editor({
     super.key,
     this.rowId,
     required this.column,
     required this.value,
   });
+  final String? rowId;
+  final model.NcTableColumn column;
+  final dynamic value;
 
   bool get isNew => rowId == null;
 
   Widget _build(WidgetRef ref) {
     final context = useContext();
-    final view = ref.watch(viewProvider)!;
-    final isMounted = useIsMounted();
 
     logger.info(
       'column: ${column.title}, rqd: ${column.rqd}, rowId: $rowId, value: $value',
     );
 
-    final onUpdate = isNew
-        ? (Map<String, dynamic> data) {
-            final form = ref.watch(formProvider);
-            final newForm = {...form, ...data};
-            logger.info('form updated: $newForm');
-            ref.watch(formProvider.notifier).state = newForm;
-          }
-        : (data) {
-            ref
-                .read(dataRowsProvider(view).notifier)
-                .updateRow(
-                  rowId: rowId!,
-                  data: data,
-                )
-                .then(
-              (_) {
-                if (isMounted()) {
-                  notifySuccess(context, message: 'Updated.');
-                }
-              },
-            ).onError(
-              (error, stackTrace) => notifyError(context, error, stackTrace),
-            );
-          };
+    onUpdateWrapper(NcRow row) async {
+      await upsert(context, ref, rowId, row);
+    }
 
     switch (column.uidt) {
       case UITypes.checkbox:
         return CheckboxEditor(
           column: column,
           initialValue: value == true,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       case UITypes.singleSelect:
         return SingleSelectEditor(
           column: column,
           initialValue: value,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       case UITypes.multiSelect:
         final List<String> initialValue =
@@ -86,12 +60,12 @@ class Editor extends HookConsumerWidget {
         return MultiSelectEditor(
           column: column,
           initialValue: initialValue..sort(),
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
         );
       case UITypes.number:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
           maxLines: null,
@@ -103,7 +77,7 @@ class Editor extends HookConsumerWidget {
       case UITypes.decimal:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
           maxLines: null,
@@ -116,12 +90,13 @@ class Editor extends HookConsumerWidget {
       case UITypes.longText:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
           maxLines: null,
           keyboardType: TextInputType.multiline,
         );
+      case UITypes.links:
       case UITypes.linkToAnotherRecord:
         final tables = ref.watch(tablesProvider);
         final relation = tables?.relationMap[column.fkRelatedModelId];
@@ -147,31 +122,30 @@ class Editor extends HookConsumerWidget {
       case UITypes.time:
         return DateTimeEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           type: DateTimeType.fromUITypes(column.uidt),
         );
       case UITypes.attachment:
-        return ProviderScope(
-          overrides: [
-            attachmentEditorProvider.overrideWith((ref) {
-              return (value ?? [])
-                  .map<NcAttachedFile>(
-                    (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
-                  )
-                  .toList();
-            }),
-          ],
-          child: AttachmentEditor(
-            rowId: rowId,
-            column: column,
-            onUpdate: onUpdate,
-          ),
+        // return ProviderScope(
+        //   overrides: [
+        //     formProvider.overrideWith((final ref) => {}),
+        //   ],
+        //   child: AttachmentEditor(
+        //     rowId: rowId,
+        //     column: column,
+        //     onUpdate: onUpdateWrapper,
+        //   ),
+        // );
+        return AttachmentEditor(
+          rowId: rowId,
+          column: column,
+          onUpdate: onUpdateWrapper,
         );
       default:
         return TextEditor(
           column: column,
-          onUpdate: onUpdate,
+          onUpdate: onUpdateWrapper,
           initialValue: value,
           isNew: isNew,
         );
@@ -179,7 +153,5 @@ class Editor extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _build(ref);
-  }
+  Widget build(BuildContext context, WidgetRef ref) => _build(ref);
 }

@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../../nocodb_sdk/symbols.dart';
-import '/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/models.dart' as model;
+import 'package:nocodb/nocodb_sdk/symbols.dart';
 
 class MultiSelectEditor extends HookConsumerWidget {
-  final model.NcTableColumn column;
-  final FnOnUpdate? onUpdate;
-  final List<String> initialValue;
   const MultiSelectEditor({
     super.key,
     required this.column,
     this.onUpdate,
     required this.initialValue,
   });
+  final model.NcTableColumn column;
+  final FnOnUpdate? onUpdate;
+  final List<String> initialValue;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +25,7 @@ class MultiSelectEditor extends HookConsumerWidget {
     final titles = options.map((option) => option.title);
 
     final values = useState<List<String>>(
-      initialValue.where((value) => titles.contains(value)).toList(),
+      initialValue.where(titles.contains).toList(),
     );
     final children = options.map(
       (option) {
@@ -51,9 +50,10 @@ class MultiSelectEditor extends HookConsumerWidget {
                     .toList();
               }
 
-              final options =
-                  values.value.where((element) => element != 'null').toList();
-              options.sort();
+              final options = values.value
+                  .where((element) => element != 'null')
+                  .toList()
+                ..sort();
               onUpdate?.call({
                 column.title: options.join(','),
               });

@@ -1,52 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/utils.dart';
+import 'package:nocodb/features/core/components/cells/attachment.dart';
+import 'package:nocodb/features/core/components/cells/checkbox.dart';
+import 'package:nocodb/features/core/components/cells/datetime.dart';
+import 'package:nocodb/features/core/components/cells/link_to_another_record.dart';
+import 'package:nocodb/features/core/components/cells/multi_select.dart';
+import 'package:nocodb/features/core/components/cells/number.dart';
+import 'package:nocodb/features/core/components/cells/simple_text.dart';
+import 'package:nocodb/features/core/components/cells/single_select.dart';
+import 'package:nocodb/features/core/components/child_list.dart';
+import 'package:nocodb/features/core/components/editor.dart';
+import 'package:nocodb/features/core/components/editors/datetime.dart';
+import 'package:nocodb/features/core/components/modal_editor_wrapper.dart';
+import 'package:nocodb/features/core/pages/attachment_editor.dart';
+import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/utils.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
+import 'package:nocodb/nocodb_sdk/types.dart';
+import 'package:nocodb/routes.dart';
 
-import '../pages/attachment_editor.dart';
-import '/nocodb_sdk/symbols.dart';
-import '../../../common/flash_wrapper.dart';
-import '../../../nocodb_sdk/models.dart';
-import '../../../nocodb_sdk/types.dart';
-import '../../../routes.dart';
-import '../providers/providers.dart';
-import 'cells/attachment.dart';
-import 'cells/checkbox.dart';
-import 'cells/datetime.dart';
-import 'cells/link_to_another_record.dart';
-import 'cells/multi_select.dart';
-import 'cells/number.dart';
-import 'cells/simple_text.dart';
-import 'cells/single_select.dart';
-import 'child_list.dart';
-import 'editor.dart';
-import 'editors/datetime.dart';
-import 'modal_editor_wrapper.dart';
-
-void showModalEditor({
+Future<void> showModalEditor({
   required BuildContext context,
   required NcTableColumn column,
   required String rowId,
   required dynamic value,
   isMultiline = false,
-}) {
-  showModalBottomSheet(
+}) async {
+  await showModalBottomSheet(
     isScrollControlled: true,
     context: context,
-    builder: (context) {
-      return ModalEditorWrapper(
+    builder: (context) => ModalEditorWrapper(
+      rowId: rowId,
+      title: column.title,
+      content: Editor(
         rowId: rowId,
-        title: column.title,
-        content: Editor(
-          rowId: rowId,
-          column: column,
-          value: value,
-        ),
-      );
-    },
+        column: column,
+        value: value,
+      ),
+    ),
   );
 }
 
 // TODO: Fix. Assertions are duplicated.
 class Cell {
+  Cell({
+    required this.rowId,
+    required this.context,
+    required this.ref,
+    required this.column,
+    required this.value,
+  });
   final String? rowId;
   final BuildContext context;
   final WidgetRef ref;
@@ -55,87 +61,39 @@ class Cell {
 
   NcTableColumn get c => column;
 
-  Cell({
-    required this.rowId,
-    required this.context,
-    required this.ref,
-    required this.column,
-    required this.value,
-  });
-
   static const emptyCell = DataCell(SizedBox());
 
-  DataCell build() {
-    return DataCell(
-      _buildChild(),
-      onTap: _onTap(),
-    );
-  }
-
-  Function() _checkboxOnTap() {
-    final view = ref.watch(viewProvider)!;
-    return () {
-      ref
-          .watch(dataRowsProvider(view).notifier)
-          .updateRow(
-            rowId: rowId!,
-            data: {column.title: value != true},
-          )
-          .then(
-            (_) => notifySuccess(
-              context,
-              message: value == true ? 'Checked' : 'Unchecked',
-            ),
-          )
-          .onError(
-            (error, stackTrace) => notifyError(context, error, stackTrace),
-          );
-    };
-  }
-
-  void update({
-    required rowId,
-    required title,
-    required value,
-    required BuildContext context,
-    required WidgetRef ref,
-    required NcView view,
-  }) {
-    ref
-        .watch(dataRowsProvider(view).notifier)
-        .updateRow(
-          rowId: rowId,
-          data: {title: value},
-        )
-        .then(
-          (_) => notifySuccess(context, message: 'Updated'),
-        )
-        .onError(
-          (error, stackTrace) => notifyError(context, error, stackTrace),
-        );
-  }
+  DataCell build() => DataCell(
+        _buildChild(),
+        onTap: _onTap(),
+      );
 
   Function() _onTap() {
     if (rowId == null) {
       return () => notifyError(context, 'Table has no PK.', null);
     }
 
-    final view = ref.watch(viewProvider)!;
-    updateWrapper(String value) {
-      update(
-        rowId: rowId,
-        title: column.title,
-        value: value,
-        context: context,
-        ref: ref,
-        view: view,
-      );
+    updateWrapper(String value) async {
+      await upsert(context, ref, rowId!, {
+        column.title: value,
+      });
     }
 
     switch (c.uidt) {
       case UITypes.checkbox:
         assert(value is bool?);
-        return _checkboxOnTap();
+        return () async {
+          await upsert(
+            context,
+            ref,
+            rowId,
+            {column.title: value != true},
+            onUpdateCallback: (_) => notifySuccess(
+              context,
+              message: value != true ? 'Checked' : 'Unchecked',
+            ),
+          );
+        };
       case UITypes.dateTime:
       case UITypes.date:
       case UITypes.time:
@@ -145,21 +103,25 @@ class Cell {
           case DateTimeType.datetime:
             final initialDateTime = NocoDateTime.getInitialValue(value).dt;
 
-            return () {
-              pickDateTime(
+            return () async {
+              await pickDateTime(
                 context,
                 initialDateTime,
-                (pickedDateTime) {
-                  updateWrapper(NocoDateTime(pickedDateTime).toApiValue());
+                (pickedDateTime) async {
+                  await updateWrapper(
+                    NocoDateTime(pickedDateTime).toApiValue(),
+                  );
                 },
               );
             };
           case DateTimeType.date:
             final initialDate = NocoDate.getInitialValue(value).dt;
 
-            return () {
-              pickDate(context, initialDate, (pickedDate) {
-                updateWrapper(NocoDate.fromDateTime(pickedDate).toApiValue());
+            return () async {
+              await pickDate(context, initialDate, (pickedDate) async {
+                await updateWrapper(
+                  NocoDate.fromDateTime(pickedDate).toApiValue(),
+                );
               });
             };
 
@@ -167,8 +129,8 @@ class Cell {
             final initialTime =
                 TimeOfDay.fromDateTime(NocoTime.getInitialValue(value).dt);
 
-            return () {
-              pickTime(context, initialTime, (pickedTime) {
+            return () async {
+              await pickTime(context, initialTime, (pickedTime) {
                 updateWrapper(NocoTime.fromLocalTime(pickedTime).toApiValue());
               });
             };
@@ -186,10 +148,10 @@ class Cell {
         }
 
         if (column.isBelongsTo) {
-          return () =>
+          return () async =>
               LinkRecordRoute(columnId: column.id, rowId: rowId!).push(context);
         } else {
-          return () => showModalBottomSheet(
+          return () async => showModalBottomSheet(
                 isScrollControlled: true,
                 context: context,
                 builder: (context) {
@@ -204,7 +166,7 @@ class Cell {
               );
         }
       case UITypes.attachment:
-        return () => Navigator.push(
+        return () async => Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) =>
@@ -218,8 +180,8 @@ class Cell {
               value is double? ||
               value is List, // Only Attachment?
         );
-        return () {
-          showModalEditor(
+        return () async {
+          await showModalEditor(
             context: context,
             column: c,
             rowId: rowId!,
@@ -251,7 +213,7 @@ class Cell {
         assert(value is String?);
         return SingleSelect(value, column: c);
       case UITypes.multiSelect:
-        assert(value is List);
+        // assert(value is List);
         return MultiSelect(
           value is String ? value.split(',') : [],
           column: c,
@@ -267,9 +229,10 @@ class Cell {
           column: c,
         );
       case UITypes.links:
-        assert(value is int?);
-        final meta = value <= 1 ? c.singular : c.plural;
-        return SimpleText('$value $meta');
+        final number = cast<num>(value);
+        final unit = (number != null && 1 < number) ? c.plural : c.singular;
+
+        return SimpleText('$number $unit');
       case UITypes.attachment:
         return Attachment(value);
       default:
