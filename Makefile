@@ -1,7 +1,7 @@
 run_integration_test rit:
 	flutter run --dart-define-from-file=integration_test/.env -t integration_test/hello_test.dart
 
-fmt:
+fix:
 	dart fix --apply lib
 	dart fix --apply integration_test
 	dart format lib integration_test

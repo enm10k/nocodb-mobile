@@ -6,6 +6,7 @@ import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/common/preferences.dart';
 import 'package:nocodb/common/settings.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/utils.dart';
 import 'package:nocodb/routes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -49,7 +50,6 @@ bool isAuthTokenAlive(String authToken) {
   return now.isBefore(exp);
 }
 
-// FutureOr<String?> redirect(context, state) async {
 FutureOr<String?> redirect(
   BuildContext context,
   GoRouterState state,
@@ -71,14 +71,20 @@ FutureOr<String?> redirect(
 
     logger
       ..config('host: $host')
-      ..config('state.path: ${state.uri.toString()}');
+      ..config('state.uri: ${state.uri}');
     if (state.uri.toString() == const HomeRoute().location) {
       if (token is AuthToken && !isAuthTokenAlive(token.authToken)) {
         logger.info('authToken is expired.');
         return const HomeRoute().location;
       }
+
       api.init(host, token: token);
-      return const ProjectListRoute().location;
+      // TODO: Verify the validity of the credentials by calling an appropriate API.
+      if (isCloud(host)) {
+        return const CloudProjectListRoute().location;
+      } else {
+        return const ProjectListRoute().location;
+      }
     }
   } catch (e, s) {
     logger

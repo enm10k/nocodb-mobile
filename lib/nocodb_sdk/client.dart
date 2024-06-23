@@ -270,8 +270,33 @@ class _Api {
         serializer: (_, data) => model.NcUser.fromJson(data),
       );
 
-  Future<model.Result<model.NcList<model.NcProject>>> projectList() async =>
+  Future<model.Result<model.NcWorkspaceList>> workspaceList() async =>
       await _send(
+        method: HttpMethod.get,
+        path: '/api/v1/workspaces',
+        serializer: (_, data) => model.NcWorkspaceList.fromJson(
+          data,
+          model.fromJsonT<model.NcWorkspace>,
+        ),
+      );
+
+  Future<model.Result<model.NcProjectList>> baseList(
+    String workspaceId,
+  ) async =>
+      await _send(
+        method: HttpMethod.get,
+        pathSegments: [
+          '/api/v1/workspaces',
+          workspaceId,
+          'bases',
+        ],
+        serializer: (_, data) => model.NcProjectList.fromJson(
+          data,
+          model.fromJsonT<model.NcProject>,
+        ),
+      );
+
+  Future<model.Result<model.NcProjectList>> projectList() async => await _send(
         method: HttpMethod.get,
         path: '/api/v1/db/meta/projects',
         serializer: (_, data) => model.NcProjectList.fromJson(

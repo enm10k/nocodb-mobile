@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -6,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/settings.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/utils.dart';
 import 'package:nocodb/routes.dart';
 
 class SignInPage extends HookConsumerWidget {
@@ -27,7 +29,7 @@ class SignInPage extends HookConsumerWidget {
 
     useEffect(
       () {
-        // ignore_for_file: discarded_futures
+        // ignore: discarded_futures
         () async {
           final s = await settings.get();
           if (s == null) {
@@ -154,16 +156,22 @@ class SignInPage extends HookConsumerWidget {
                 if (token == null) {
                   return;
                 }
-                api.init(hostController.text, token: token);
+                final host = hostController.text;
+                api.init(host, token: token);
 
                 if (rememberMe.value) {
-                  await settings.save(host: hostController.text, token: token!);
+                  await settings.save(host: host, token: token!);
                 }
 
                 if (!context.mounted) {
                   return;
                 }
-                const ProjectListRoute().go(context);
+
+                if (isCloud(host)) {
+                  const CloudProjectListRoute().go(context);
+                } else {
+                  const ProjectListRoute().go(context);
+                }
               },
               child: const Text('Sign In'),
             ),

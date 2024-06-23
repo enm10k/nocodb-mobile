@@ -173,8 +173,8 @@ extension NcViewColumnListEx on List<NcViewColumn> {
 
 extension NcAttachedFileEx on NcAttachedFile {
   // Use signedPath as id.
-  String get id => signedPath;
+  String get id => signedUrl;
   bool get isImage => mimetype.startsWith('image');
 
-  String signedUrl(Uri host) => host.replace(path: signedPath).toString();
+  // String getFullUrl(Uri host) => host.replace(path: signedUrl).toString();
 }

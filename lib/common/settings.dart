@@ -55,13 +55,19 @@ class _Settings {
     final authToken = await prefs?.getSecure(key: _kAuthToken);
     if (authToken != null) {
       return Settings(
-          username: username, host: host, token: AuthToken(authToken));
+        username: username,
+        host: host,
+        token: AuthToken(authToken),
+      );
     }
 
     final apiToken = await prefs?.getSecure(key: _kApiToken);
     if (apiToken != null) {
       return Settings(
-          username: username, host: host, token: ApiToken(apiToken));
+        username: username,
+        host: host,
+        token: ApiToken(apiToken),
+      );
     }
     return null;
   }

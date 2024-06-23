@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nocodb/features/core/pages/cloud_project_list.dart';
 import 'package:nocodb/features/core/pages/link_record.dart';
 import 'package:nocodb/features/core/pages/project_list.dart';
 import 'package:nocodb/features/core/pages/row_editor.dart';
@@ -17,6 +18,9 @@ part 'routes.g.dart';
   routes: <TypedGoRoute<GoRouteData>>[
     TypedGoRoute<ProjectListRoute>(
       path: 'project_list',
+    ),
+    TypedGoRoute<CloudProjectListRoute>(
+      path: 'cloud_project_list',
     ),
     TypedGoRoute<SheetRoute>(
       path: 'sheet',
@@ -43,9 +47,17 @@ class HomeRoute extends GoRouteData {
 
 class ProjectListRoute extends GoRouteData {
   const ProjectListRoute();
+
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const ProjectListPage();
+}
+
+class CloudProjectListRoute extends GoRouteData {
+  const CloudProjectListRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const CloudProjectListPage();
 }
 
 class SheetRoute extends GoRouteData {

@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 
 class Attachment extends HookConsumerWidget {
@@ -15,7 +14,8 @@ class Attachment extends HookConsumerWidget {
             ? Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                 child: CachedNetworkImage(
-                  imageUrl: file.signedUrl(api.uri),
+                  // imageUrl: file.getFullUrl(api.uri),
+                  imageUrl: file.signedUrl,
                   placeholder: (context, url) =>
                       const CircularProgressIndicator(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),

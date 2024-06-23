@@ -78,8 +78,19 @@ class NcUser with _$NcUser {
 }
 
 @freezed
+class NcWorkspace with _$NcWorkspace {
+  const factory NcWorkspace({
+    required String id,
+    required String title,
+  }) = _NcWorkspace;
+  factory NcWorkspace.fromJson(Map<String, dynamic> json) =>
+      _$NcWorkspaceFromJson(json);
+}
+
+@freezed
 class NcProject with _$NcProject {
   const factory NcProject({
+    required String? baseId,
     required String id,
     required String title,
   }) = _NcProject;
@@ -120,6 +131,8 @@ T fromJsonT<T>(Object? obj) {
 
   if (T == NcRow) {
     return json as T;
+  } else if (T == NcWorkspace) {
+    return NcWorkspace.fromJson(json) as T;
   } else if (T == NcProject) {
     return NcProject.fromJson(json) as T;
   } else if (T == NcSort) {
@@ -129,6 +142,7 @@ T fromJsonT<T>(Object? obj) {
   }
 }
 
+typedef NcWorkspaceList = NcList<NcWorkspace>;
 typedef NcProjectList = NcList<NcProject>;
 typedef NcSortList = NcList<NcSort>;
 typedef NcRowList = NcList<Map<String, dynamic>>;
@@ -313,10 +327,10 @@ SortDirectionTypes _toSortTypes(dynamic v) {
 @freezed
 class NcAttachedFile with _$NcAttachedFile {
   const factory NcAttachedFile({
-    required String path,
+    required String url,
     required String title,
     required String mimetype,
-    required String signedPath,
+    required String signedUrl,
   }) = _NcAttachedFile;
 
   factory NcAttachedFile.fromJson(Map<String, dynamic> json) =>

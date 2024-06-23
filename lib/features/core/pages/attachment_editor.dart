@@ -203,7 +203,8 @@ class AttachmentEditorPage extends HookConsumerWidget {
     }
 
     await FlutterDownloader.enqueue(
-      url: file.signedUrl(api.uri),
+      // url: file.getFullUrl(api.uri),
+      url: file.signedUrl,
       fileName: file.title,
       savedDir: downloadDir,
       showNotification: true,

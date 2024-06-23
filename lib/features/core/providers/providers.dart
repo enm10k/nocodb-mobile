@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
 
+final workspaceProvider = StateProvider<NcWorkspace?>((ref) => null);
 final projectProvider = StateProvider<NcProject?>((ref) => null);
 
 final tableProvider = StateProvider<NcTable?>((ref) => null);
@@ -97,7 +98,23 @@ FutureOr<T2> _unwrap2<T1, T2>(
     );
 
 @riverpod
-Future<NcList<NcProject>> projectList(ProjectListRef ref) async =>
+Future<NcWorkspaceList> workspaceList(WorkspaceListRef ref) async =>
+    (await api.workspaceList()).when(
+      ok: (ok) {
+        if (ref.read(workspaceProvider) == null) {
+          ref.read(workspaceProvider.notifier).state = ok.list.firstOrNull;
+        }
+        return ok;
+      },
+      ng: _errorAdapter,
+    );
+
+@riverpod
+Future<NcProjectList> baseList(BaseListRef ref, workspaceId) async =>
+    _unwrap(await api.baseList(workspaceId));
+
+@riverpod
+Future<NcProjectList> projectList(ProjectListRef ref) async =>
     _unwrap(await api.projectList());
 
 @Riverpod(keepAlive: true)
