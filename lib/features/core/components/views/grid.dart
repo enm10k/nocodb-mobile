@@ -63,7 +63,7 @@ class Grid extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
-      return const CircularProgressIndicator();
+      return const Center(child: CircularProgressIndicator());
     }
 
     final tables = ref.watch(tablesProvider)!;

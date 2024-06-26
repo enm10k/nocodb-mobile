@@ -1,10 +1,8 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
+import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/common/settings.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/utils.dart';
@@ -32,13 +30,21 @@ class SignInPage extends HookConsumerWidget {
         // ignore: discarded_futures
         () async {
           final s = await settings.get();
-          if (s == null) {
-            return;
-          }
           rememberMe.value = true;
-          hostController.text = s.host;
-          if (!kIsWeb && Platform.isAndroid) {
-            hostController.text = 'http://10.0.2.2:8080';
+
+          // TODO: check if an Android emulator is being used.
+          // if (kDebugMode && Platform.isAndroid) {
+          //   hostController.text = 'http://10.0.2.2:8080';
+          // } else {
+          //   hostController.text = 'https://app.nocodb.com';
+          // }
+          hostController.text = 'https://app.nocodb.com';
+
+          if (s == null) {
+            return null;
+          }
+          if (s.host.isNotEmpty) {
+            hostController.text = s.host;
           }
 
           if (s.username != null) {
@@ -49,6 +55,64 @@ class SignInPage extends HookConsumerWidget {
       },
       [],
     );
+    final onPressed = useState<Future<Null> Function()?>(null);
+
+    isActive() =>
+        hostController.text.isNotEmpty &&
+        ((usernameController.text.isNotEmpty &&
+                passwordController.text.isNotEmpty) ||
+            apiTokenController.text.isNotEmpty);
+
+    setOnPressed() {
+      onPressed.value = isActive()
+          ? () async {
+              Token? token;
+              if (useApiToken.value) {
+                token = ApiToken(apiTokenController.text);
+              } else {
+                api.init(hostController.text);
+                (await api.authSignin(
+                  usernameController.text,
+                  passwordController.text,
+                ))
+                    .when(
+                  ok: (value) {
+                    token = AuthToken(value);
+                  },
+                  ng: (Object error, StackTrace? stackTrace) {
+                    notifyError(context, error, stackTrace);
+                  },
+                );
+              }
+              if (token == null) {
+                return;
+              }
+              final host = hostController.text;
+              api.init(host, token: token);
+
+              if (rememberMe.value) {
+                await settings.save(host: host, token: token!);
+              }
+
+              if (!context.mounted) {
+                return;
+              }
+
+              if (isCloud(host)) {
+                const CloudProjectListRoute().go(context);
+              } else {
+                const ProjectListRoute().go(context);
+              }
+            }
+          : null;
+      logger.info('onPressed: ${onPressed.value}');
+    }
+
+    // NOTE: There might be a more elegant way to implement this.
+    hostController.addListener(setOnPressed);
+    usernameController.addListener(setOnPressed);
+    passwordController.addListener(setOnPressed);
+    apiTokenController.addListener(setOnPressed);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -134,45 +198,7 @@ class SignInPage extends HookConsumerWidget {
               ],
             ),
             ElevatedButton(
-              onPressed: () async {
-                Token? token;
-                if (useApiToken.value) {
-                  token = ApiToken(apiTokenController.text);
-                } else {
-                  api.init(hostController.text);
-                  (await api.authSignin(
-                    usernameController.text,
-                    passwordController.text,
-                  ))
-                      .when(
-                    ok: (value) {
-                      token = AuthToken(value);
-                    },
-                    ng: (Object error, StackTrace? stackTrace) {
-                      notifyError(context, error, stackTrace);
-                    },
-                  );
-                }
-                if (token == null) {
-                  return;
-                }
-                final host = hostController.text;
-                api.init(host, token: token);
-
-                if (rememberMe.value) {
-                  await settings.save(host: host, token: token!);
-                }
-
-                if (!context.mounted) {
-                  return;
-                }
-
-                if (isCloud(host)) {
-                  const CloudProjectListRoute().go(context);
-                } else {
-                  const ProjectListRoute().go(context);
-                }
-              },
+              onPressed: onPressed.value,
               child: const Text('Sign In'),
             ),
           ],

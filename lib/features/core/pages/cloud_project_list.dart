@@ -22,9 +22,9 @@ class _ProjectList extends HookConsumerWidget {
         );
   }
 
-  // TODO: Pagination
   Widget _build(WidgetRef ref, NcProjectList projectList) {
     final context = useContext();
+    // TODO: Pagination
     final content = Flexible(
       child: ListView.separated(
         shrinkWrap: true,
@@ -72,16 +72,6 @@ class CloudProjectListPage extends HookConsumerWidget {
   const CloudProjectListPage({super.key});
 
   Widget _buildScaffold(
-    WidgetRef ref,
-    Widget body,
-  ) =>
-      ref.watch(workspaceListProvider).when(
-            data: (data) => _buildScaffold2(ref, body, data),
-            error: (e, s) => Center(child: Text('$e\n$s')),
-            loading: () => const Center(child: CircularProgressIndicator()),
-          );
-
-  Widget _buildScaffold2(
     WidgetRef ref,
     Widget body,
     NcList<NcWorkspace> workspaceList,
@@ -136,8 +126,10 @@ class CloudProjectListPage extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => _buildScaffold(
-        ref,
-        const _ProjectList(),
-      );
+  Widget build(BuildContext context, WidgetRef ref) =>
+      ref.watch(workspaceListProvider).when(
+            data: (data) => _buildScaffold(ref, const _ProjectList(), data),
+            error: (e, s) => Center(child: Text('$e\n$s')),
+            loading: () => const Center(child: CircularProgressIndicator()),
+          );
 }

@@ -232,14 +232,13 @@ class DataRows extends _$DataRows {
     if (!isLoaded) {
       return null;
     }
-    final table = ref.watch(tableProvider)!;
     final tables = ref.watch(tablesProvider)!;
     final view = ref.watch(viewProvider)!;
 
     // This provider should be updated every time sort is updated.
     // final _ = ref.watch(sortListProvider(view.id));
 
-    _pkName = table.pkName;
+    _pkName = tables.table.pkName;
     final searchQuery = ref.watch(searchQueryFamily(view));
     logger.info('searchQuery: $searchQuery');
 
@@ -252,7 +251,7 @@ class DataRows extends _$DataRows {
         if (result == null) {
           return null;
         }
-        return populate(result, table, tables.relationMap);
+        return populate(result, tables.table, tables.relationMap);
       },
     );
   }
