@@ -154,22 +154,36 @@ extension NcTableEx on NcTable {
 extension NcViewColumnEx on NcViewColumn {
   NcTableColumn? toTableColumn(List<NcTableColumn> tableColumns) =>
       tableColumns.firstWhereOrNull((c) => c.id == fkColumnId);
+
+  bool shouldShow(NcView view, List<NcTableColumn> tcs, {excludePv=false}) {
+    final tc = toTableColumn(tcs);
+    final system = tc?.isSystem ?? false;
+
+    if (!view.showSystemFields && system == true) {
+      return false;
+    }
+    if (excludePv && tc?.pv == true) {
+      return false;
+    }
+
+    return show;
+  }
 }
 
-extension NcViewColumnListEx on List<NcViewColumn> {
-  List<NcViewColumn> getColumnsToShow(NcTable table, NcView view) => where(
-        (column) {
-          final tableColumn = column.toTableColumn(table.columns);
-          final system = tableColumn?.isSystem ?? false;
-
-          if (!view.showSystemFields && system == true) {
-            return false;
-          }
-
-          return column.show;
-        },
-      ).toList();
-}
+// extension NcViewColumnListEx on List<NcViewColumn> {
+//   List<NcViewColumn> getColumnsToShow(NcTable table, NcView view) => where(
+//         (column) {
+//           final tableColumn = column.toTableColumn(table.columns);
+//           final system = tableColumn?.isSystem ?? false;
+//
+//           if (!view.showSystemFields && system == true) {
+//             return false;
+//           }
+//
+//           return column.show;
+//         },
+//       ).toList();
+// }
 
 extension NcAttachedFileEx on NcAttachedFile {
   // Use signedPath as id.

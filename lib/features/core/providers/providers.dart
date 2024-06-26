@@ -135,28 +135,29 @@ Future<List<NcViewColumn>> viewColumnList(
 ) async =>
     _unwrap(await api.dbViewColumnList(viewId: viewId));
 
+// NOTE: The result of fieldsProvider does not contains pv.
 @Riverpod()
 class Fields extends _$Fields {
   static const debug = false;
 
   @override
-  Future<List<NcTableColumn>> build(NcView view) async {
-    final table = ref.watch(tableProvider);
-    if (table == null) {
-      return [];
-    }
+  Future<List<NcViewColumn>> build(NcView view) async {
+    final table = ref.watch(tableProvider)!;
 
     return ref
         .watch(viewColumnListProvider(view.id).future)
-        .then((viewColumns) {
-      final fields = viewColumns.getColumnsToShow(table, view)
-        ..sort((a, b) => a.order.compareTo(b.order));
-      return fields
-          .map(
-            (columns) => columns.toTableColumn(table.columns),
-          )
-          .whereNotNull()
-          .toList();
+        .then((vcs) {
+      // final fields = vcs.where((vc) => vc.shouldShow(view, table.columns, excludePv: true)).toList()
+      //   ..sort((a, b) => a.order.compareTo(b.order));
+      // return fields
+      //     .map(
+      //       (columns) => columns.toTableColumn(table.columns),
+      //     )
+      //     .whereNotNull()
+      //     .toList();
+
+      return vcs.where((vc) => vc.shouldShow(view, table.columns, excludePv: true)).toList()
+         ..sort((a, b) => a.order.compareTo(b.order));
     });
   }
 }
