@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:popup_menu/popup_menu.dart';
 
@@ -21,7 +20,8 @@ class AttachmentImageCard extends HookConsumerWidget {
       width: 80,
       height: 80,
       child: CachedNetworkImage(
-        imageUrl: _file.signedUrl(api.uri),
+        // imageUrl: _file.getFullUrl(api.uri),
+        imageUrl: _file.signedUrl,
         placeholder: (context, url) => const Padding(
           padding: EdgeInsets.all(24),
           child: CircularProgressIndicator(),

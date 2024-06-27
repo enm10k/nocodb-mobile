@@ -6,6 +6,7 @@ import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/common/preferences.dart';
 import 'package:nocodb/common/settings.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/utils.dart';
 import 'package:nocodb/routes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -49,7 +50,6 @@ bool isAuthTokenAlive(String authToken) {
   return now.isBefore(exp);
 }
 
-// FutureOr<String?> redirect(context, state) async {
 FutureOr<String?> redirect(
   BuildContext context,
   GoRouterState state,
@@ -62,40 +62,28 @@ FutureOr<String?> redirect(
       logger.fine('loaded settings from storage.');
     }
 
-    final rememberMe = await settings.rememberMe;
-    if (!rememberMe) {
-      return null;
-    }
-
-    final apiBaseUrl = await settings.apiBaseUrl;
-    final authToken = await settings.authToken;
-
-    logger.config('apiBaseUrl: $apiBaseUrl');
-    if (authToken == null || apiBaseUrl == null) {
+    final s = await settings.get();
+    if (s == null) {
+      await settings.clear();
       return const HomeRoute().location;
-    } else if (state.path == null || state.path == const HomeRoute().location) {
-      if (!rememberMe) {
-        await settings.clear();
+    }
+    final Settings(:host, :token) = s;
+
+    logger
+      ..config('host: $host')
+      ..config('state.uri: ${state.uri}');
+    if (state.uri.toString() == const HomeRoute().location) {
+      if (token is AuthToken && !isAuthTokenAlive(token.authToken)) {
+        logger.info('authToken is expired.');
         return const HomeRoute().location;
       }
 
-      final isAlive = isAuthTokenAlive(authToken);
-      logger.info(
-        'authToken: ${isAlive ? 'alive' : 'expired'}',
-      );
-
-      if (isAlive) {
-        api.init(apiBaseUrl, authToken: authToken);
+      api.init(host, token: token);
+      // TODO: Verify the validity of the credentials by calling an appropriate API.
+      if (isCloud(host)) {
+        return const CloudProjectListRoute().location;
+      } else {
         return const ProjectListRoute().location;
-        // final result = await api.authUserMe();
-        // return result.when(
-        //   ok: (final ok) {
-        //     api.init(apiBaseUrl, authToken: authToken);
-        //     return const ProjectListRoute().location;
-        //   },
-        //   ng: (final error, final stackTrace) =>
-        //       notifyError(context, error, stackTrace),
-        // );
       }
     }
   } catch (e, s) {
