@@ -69,8 +69,13 @@ class Grid extends HookConsumerWidget {
     final tables = ref.watch(tablesProvider)!;
     final view = ref.watch(viewProvider)!;
 
-    final fields = ref.watch(fieldsProvider(view)).valueOrNull?.toList() ?? [];
-    final columns = [...tables.columns.where((tc) => tc.pv), ...(fields.map((vc) => vc.toTableColumn(tables.table.columns)).whereNotNull())];
+    final fields = ref.watch(fieldsProvider).valueOrNull?.toList() ?? [];
+    final columns = [
+      ...tables.columns.where((tc) => tc.pv),
+      ...(fields
+          .map((vc) => vc.toTableColumn(tables.table.columns))
+          .whereNotNull()),
+    ];
     logger
       ..info('view: ${view.title} has ${columns.length} columns(s).')
       ..info('columns: ${columns.map((e) => e.title).toList()}');

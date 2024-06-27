@@ -155,7 +155,7 @@ extension NcViewColumnEx on NcViewColumn {
   NcTableColumn? toTableColumn(List<NcTableColumn> tableColumns) =>
       tableColumns.firstWhereOrNull((c) => c.id == fkColumnId);
 
-  bool shouldShow(NcView view, List<NcTableColumn> tcs, {excludePv=false}) {
+  bool shouldShow(NcView view, List<NcTableColumn> tcs, {excludePv = false}) {
     final tc = toTableColumn(tcs);
     final system = tc?.isSystem ?? false;
 

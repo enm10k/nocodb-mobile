@@ -1,5 +1,5 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/components/not_implementing_dialog.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
@@ -7,6 +7,8 @@ import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
+
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class FieldsDialog extends HookConsumerWidget {
   const FieldsDialog({
@@ -30,27 +32,19 @@ class FieldsDialog extends HookConsumerWidget {
     if (!isLoaded) {
       return const CircularProgressIndicator();
     }
-    final tcs = ref.watch(tableProvider)!.columns;
     final view = ref.watch(viewProvider)!;
 
-    final viewColumns_ = ref.watch(viewColumnListProvider(view.id));
-    if (!viewColumns_.hasValue) {
-      return const SizedBox();
-    }
+    return ref.watch(fieldsProvider).when(
+          data: (data) => _build(ref, view, data),
+          error: (e, s) => notifyError(context, e, s),
+          loading: () => const Center(child: CircularProgressIndicator()),
+        );
+  }
 
-    final vcs = viewColumns_.value!
-        .whereNot((vc) => vc.toTableColumn(tcs)?.pv == true)
-        .toList();
-
-    // TODO: Move to provider
-    final filteredViewColumns = vcs.where((vc) {
-      final tc = vc.toTableColumn(tcs);
-
-      return view.showSystemFields ? true : !(tc?.isSystem == true);
-    }).toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
-
-    final List<Widget> children = filteredViewColumns.map(
+  Widget _build(WidgetRef ref, NcView view, List<NcViewColumn> vcs) {
+    final context = useContext();
+    final tcs = ref.watch(tableProvider)!.columns;
+    final List<Widget> children = vcs.map(
       (vc) {
         final tc = vc.toTableColumn(tcs);
         return CheckboxListTile(
@@ -59,21 +53,14 @@ class FieldsDialog extends HookConsumerWidget {
           title: Text(tc?.title ?? '-'),
           value: vc.show,
           onChanged: (value) async {
-            // TODO: The following logic should be integrated to provider.
-            await api
-                .dbViewColumnUpdateShow(
-                  column: vc,
-                  show: value == true,
-                )
+            await ref
+                .read(fieldsProvider.notifier)
+                .show(vc, value == true)
                 .then(
                   (_) => ref.invalidate(viewColumnListProvider),
                 )
                 .onError(
-                  (error, stackTrace) => notifyError(
-                    context,
-                    error,
-                    stackTrace,
-                  ),
+                  (e, s) => notifyError(context, e, s),
                 );
           },
         );
@@ -115,7 +102,6 @@ class FieldsDialog extends HookConsumerWidget {
                     final newOrder = index + 1;
                     logger.info(
                       '${vc.toTableColumn(tcs)?.title} from ${vc.order} to $newOrder',
-
                     );
                     if (vc.order != newOrder) {
                       logger.info(

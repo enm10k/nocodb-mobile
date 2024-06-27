@@ -141,24 +141,35 @@ class Fields extends _$Fields {
   static const debug = false;
 
   @override
-  Future<List<NcViewColumn>> build(NcView view) async {
-    final table = ref.watch(tableProvider)!;
+  Future<List<NcViewColumn>> build() async {
+    final view = ref.watch(viewProvider)!;
+    final tcs = ref.watch(tableProvider)!.columns;
+    return ref.watch(viewColumnListProvider(view.id).future).then((vcs) {
+      assert(vcs.length == tcs.length);
 
-    return ref
-        .watch(viewColumnListProvider(view.id).future)
-        .then((vcs) {
-      // final fields = vcs.where((vc) => vc.shouldShow(view, table.columns, excludePv: true)).toList()
-      //   ..sort((a, b) => a.order.compareTo(b.order));
-      // return fields
-      //     .map(
-      //       (columns) => columns.toTableColumn(table.columns),
-      //     )
-      //     .whereNotNull()
-      //     .toList();
-
-      return vcs.where((vc) => vc.shouldShow(view, table.columns, excludePv: true)).toList()
-         ..sort((a, b) => a.order.compareTo(b.order));
+      return vcs
+          .where(
+            (vc) => vc.shouldShow(view, tcs, excludePv: true),
+          )
+          .toList()
+        ..sort((a, b) => a.order.compareTo(b.order));
     });
+  }
+
+  Future<void> show(NcViewColumn vc, bool show) async {
+    await api.dbViewColumnUpdateShow(
+      column: vc,
+      show: show,
+    );
+    state = AsyncData([
+      ...(state.valueOrNull ?? []).map((vc2) {
+        if (vc.id == vc2.id) {
+          return vc2.copyWith(show: show);
+        } else {
+          return vc2;
+        }
+      }),
+    ]);
   }
 }
 
