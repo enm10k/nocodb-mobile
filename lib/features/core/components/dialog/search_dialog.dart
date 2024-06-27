@@ -6,6 +6,8 @@ import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 import 'package:nocodb/nocodb_sdk/symbols.dart';
 
+import '../../../../nocodb_sdk/models.dart';
+
 class _SearchDialog extends HookConsumerWidget {
   const _SearchDialog({
     required this.children,

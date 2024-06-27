@@ -1,0 +1,166 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:nocodb/nocodb_sdk/client.dart';
+import 'package:nocodb/nocodb_sdk/models.dart';
+import 'package:nocodb/nocodb_sdk/symbols.dart';
+
+const ncEndpoint = String.fromEnvironment('NC_ENDPOINT');
+const apiToken = String.fromEnvironment('API_TOKEN');
+
+T _rethrow<T>(Object error, StackTrace? stackTrace) {
+  if (stackTrace != null) {
+    Error.throwWithStackTrace(error, stackTrace);
+  } else {
+    throw error;
+  }
+}
+
+T _unwrap<T>(
+  Result<T> result, {
+  T Function(T)? serializer,
+}) =>
+    result.when(
+      ok: (ok) => (serializer != null ? serializer(ok) : ok),
+      ng: _rethrow,
+    );
+
+T2 _unwrap2<T1, T2>(
+  Result<T1> result, {
+  required T2 Function(T1) serializer,
+}) =>
+    result.when(
+      ok: (ok) => serializer(ok),
+      ng: _rethrow,
+    );
+
+enum DataRowsState {
+  loading,
+  uninitialized,
+  data
+}
+
+class DataRowsController extends GetxController {
+  final state = Rx<DataRowsState>(DataRowsState.uninitialized);
+
+  final project = Rx<NcProject?>(null);
+  final table = Rx<NcTable?>(null);
+  final relationTableMap = Rx<Map<String, NcTable>>({});
+  final view = Rx<NcView?>(null);
+
+  // final rows = Rx<Map<String, dynamic>>({});
+  // final pageInfo = Rx<NcPageInfo?>(null);
+  final rows = Rx<NcRowList?>(null);
+  final searchQuery = Rx<SearchQuery?>(null);
+
+  dynamic _getForeignKeyPrimaryValue({
+    required Map<String, dynamic> row,
+    required String columnId,
+    required NcTable table,
+    required Map<String, NcTable> relations,
+  }) {
+    final parentColumn = table.getParentColumn(columnId);
+    if (parentColumn == null) {
+      return;
+    }
+
+    final pkTitle = relations[parentColumn.fkRelatedModelId!]!.pkNames.first;
+
+    final value = row[parentColumn.title];
+    return value is Map ? value[pkTitle] : null;
+  }
+
+  NcRowList _populate(
+      NcRowList rowList,
+      NcTable table,
+      Map<String, NcTable> relations,
+      ) {
+    final columns = rowList.toTableColumns(table.columns);
+    return rowList.copyWith(
+      list: rowList.list
+          .map(
+            (row) => {
+          // Use columns instead of table.columns.
+          // table.columns contain unnecessary ones.
+          for (final column in columns)
+            column.title: column.uidt != UITypes.foreignKey
+                ? row[column.title]
+                : _getForeignKeyPrimaryValue(
+              columnId: column.id,
+              row: row,
+              table: table,
+              relations: relations,
+            ),
+        },
+      )
+          .toList(),
+    );
+  }
+
+  Future<void> setProject(NcProject project_) async {
+    project.value = project_;
+
+    // Set the first table when _table.value == null
+    if (table.value == null) {
+      final stable = _unwrap2(
+        await api.dbTableList(projectId: project_.id),
+        serializer: (ok) => ok.list.firstOrNull,
+      );
+      if (stable != null) {
+        final table = _unwrap(await api.dbTableRead(tableId: stable.id));
+        await setTable(table);
+      }
+    }
+    return;
+  }
+
+  Future<void> setTable(NcTable table_) async {
+    table.value = table_;
+
+    // Set the first view when _view.value == null
+    if (view.value == null) {
+      final view = _unwrap2(
+        await api.dbViewList(tableId: table_.id),
+        serializer: (ok) => ok.list.firstOrNull,
+      );
+      if (view != null) {
+        await setView(view);
+      }
+    }
+
+    // TODO: Update relationMap
+    return;
+  }
+
+  Future<void> setView(NcView view_) async {
+    view.value = view_;
+    return;
+  }
+
+  Future<void> get() async => _unwrap2(
+      await api.dbViewRowList(
+        view: view.value!,
+        where: searchQuery.value,
+      ),
+      serializer: (result) => _populate(result, table.value!, relationTableMap.value),
+    );
+
+}
+
+void main() {
+  test('Hello world', () async {
+    api.init(ncEndpoint, token: ApiToken(apiToken));
+
+    // Initialize
+    final controller = DataRowsController();
+    Get.put(controller);
+
+    final project = _unwrap2(
+      await api.projectList(),
+      serializer: (ok) => ok.list.firstOrNull,
+    )!;
+    await controller.setProject(project);
+
+    expect(controller.table.value?.title, 'Features');
+    expect(controller.view.value?.title, 'Features');
+  });
+}

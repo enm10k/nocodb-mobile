@@ -39,6 +39,7 @@ dependencies:
   flutter_expandable_fab: ^2.0.0
   mime: ^1.0.5
   http_parser: ^4.0.2
+  get: ^4.6.6
 
 dev_dependencies:
   integration_test:
@@ -51,6 +52,7 @@ dev_dependencies:
   json_serializable:
   riverpod_generator:
   go_router_builder:
+  test: ^1.24.9
 
 flutter:
   uses-material-design: true

@@ -161,6 +161,7 @@ class Fields extends _$Fields {
   }
 }
 
+/*
 class SearchQuery {
   const SearchQuery({
     required this.columnName,
@@ -174,6 +175,7 @@ class SearchQuery {
   @override
   String toString() => '($columnName,$operator,$query)';
 }
+ */
 
 final searchQueryFamily =
     StateProviderFamily<SearchQuery?, NcView>((ref, view) => null);

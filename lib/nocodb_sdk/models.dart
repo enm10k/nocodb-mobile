@@ -12,6 +12,20 @@ part 'models.freezed.dart';
 part 'models.g.dart';
 part 'models_extensions.dart';
 
+class SearchQuery {
+  const SearchQuery({
+    required this.columnName,
+    required this.operator,
+    required this.query,
+  });
+  final String columnName;
+  final String query;
+  final QueryOperator operator;
+
+  @override
+  String toString() => '($columnName,$operator,$query)';
+}
+
 @freezed
 abstract class Result<T> with _$Result<T> {
   const factory Result.ok(T value) = Ok<T>;

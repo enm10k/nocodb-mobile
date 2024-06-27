@@ -6,7 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:nocodb/common/logger.dart';
-import 'package:nocodb/features/core/providers/providers.dart';
+// import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
