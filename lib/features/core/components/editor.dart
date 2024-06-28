@@ -71,7 +71,7 @@ class Editor extends HookConsumerWidget {
           maxLines: null,
           keyboardType: TextInputType.number,
           inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
+            FilteringTextInputFormatter.allow(RegExp(r'[\-0-9]')),
           ],
         );
       case UITypes.decimal:
