@@ -126,7 +126,7 @@ class DateTimeEditor extends HookConsumerWidget {
 
                 await pickDateTime(context, initialDateTime,
                     (pickedDateTime) async {
-                  final v = NocoDate.fromDateTime(pickedDateTime);
+                  final v = NocoDateTime(pickedDateTime);
                   await onUpdate({column.title: v.toApiValue()});
                   controller.text = v.toString();
                 });
