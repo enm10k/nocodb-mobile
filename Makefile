@@ -2,11 +2,12 @@ run_integration_test rit:
 	flutter run --dart-define-from-file=integration_test/.env -t integration_test/hello_test.dart
 
 run_unit_test rut:
-	flutter run --dart-define-from-file=test/.env -t test/provider_test.dart
 	# dart test test/provider_test.dart
+	flutter run --dart-define-from-file=test/.env -t test/provider_test.dart
 
 fix:
 	dart fix --apply lib
+	dart fix --apply test
 	dart fix --apply integration_test
 	dart format lib integration_test
 

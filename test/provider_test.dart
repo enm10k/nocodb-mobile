@@ -1,9 +1,10 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/features/core/providers/utils.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:riverpod/riverpod.dart' hide ErrorListener;
-import 'package:test/test.dart';
+// import 'package:test/test.dart';
 
 // https://riverpod.dev/ja/docs/essentials/testing
 /// A testing utility which creates a [ProviderContainer] and automatically
@@ -27,11 +28,11 @@ ProviderContainer createContainer({
 }
 
 void main() {
-  // setUp(() {
+  setUp(() {
     const ncEndpoint = String.fromEnvironment('NC_ENDPOINT');
     const apiToken = String.fromEnvironment('API_TOKEN');
     api.init(ncEndpoint, token: ApiToken(apiToken));
-  // });
+  });
   test('Hello world', () async {
     final c = createContainer();
     final projectList = await unwrap(await api.projectList());
@@ -46,7 +47,5 @@ void main() {
     final view = c.read(viewProvider);
     expect(view != null, true);
     logger.info('view: ${view?.title}');
-
-
   });
 }
