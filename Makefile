@@ -1,3 +1,6 @@
+release:
+	python3 scripts/release.py
+
 run_integration_test rit:
 	flutter run --dart-define-from-file=integration_test/.env -t integration_test/hello_test.dart
 
