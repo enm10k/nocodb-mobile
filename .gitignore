@@ -50,4 +50,4 @@ app.*.map.json
 
 _nocodb
 
-integration_test/.env
+.env
