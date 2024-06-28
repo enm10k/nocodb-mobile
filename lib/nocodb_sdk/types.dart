@@ -11,7 +11,7 @@ class NocoDateTime {
 
   String toApiValue() => dt.toUtc().toString();
 
-  static final DateFormat _format = DateFormat('yyyy-MM-dd hh:mm');
+  static final DateFormat _format = DateFormat('yyyy-MM-dd HH:mm');
   @override
   String toString() => _format.format(dt.toLocal());
 }
