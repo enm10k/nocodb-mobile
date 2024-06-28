@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/settings.dart';
 import 'package:nocodb/features/core/components/dialog/new_project_dialog.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/providers/utils.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/routes.dart';
 
@@ -59,8 +60,9 @@ class ProjectListPage extends HookConsumerWidget {
             child: ListTile(
               title: Text(project.title),
               onTap: () async {
-                ref.read(projectProvider.notifier).state = project;
-                await const SheetRoute().push(context);
+                await selectProject(ref, project).then(
+                  (data) async => await const SheetRoute().push(context),
+                );
               },
             ),
           );

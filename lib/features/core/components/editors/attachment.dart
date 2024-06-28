@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/features/core/components/attachment_file_card.dart';
 import 'package:nocodb/features/core/components/attachment_image_card.dart';
 import 'package:nocodb/features/core/pages/attachment_editor.dart';
-import 'package:nocodb/features/core/providers/providers.dart';
+import 'package:nocodb/features/core/providers/attachments_provider.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';

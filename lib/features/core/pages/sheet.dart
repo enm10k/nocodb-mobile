@@ -65,6 +65,12 @@ class SheetPage extends HookConsumerWidget {
                 builder: (_) => const SheetSearchDialog(),
               ),
             ),
+            BottomAppBarButton(
+              iconData: Icons.refresh,
+              onPressed: () {
+                ref.invalidate(dataRowsProvider);
+              },
+            ),
           ],
         ),
       ),
@@ -95,9 +101,7 @@ class SheetPage extends HookConsumerWidget {
             Navigator.pop(context);
           },
         ),
-        actions: const [
-          // ReloadButton(),
-        ],
+        actions: const [],
         title: Text(project.title),
       ),
       body: Column(
