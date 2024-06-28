@@ -42,6 +42,6 @@ print(f'new tag: {new_tag}')
 
 push_command = f"git tag {new_tag} && git push origin main {new_tag}"
 if not DRY_RUN:
-  run(push_command)
+  print(run(push_command))
 else:
   print(push_command)
