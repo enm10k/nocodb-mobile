@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:loader_overlay/loader_overlay.dart';
-import 'package:nocodb/common/flash_wrapper.dart';
-import 'package:nocodb/common/logger.dart';
-import 'package:nocodb/features/core/providers/providers.dart';
-import 'package:nocodb/nocodb_sdk/client.dart';
-import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/router.dart';
 import 'package:stack_trace/stack_trace.dart';
 
@@ -37,81 +32,6 @@ void main() async {
   );
 }
 
-setUpProviderListeners(BuildContext context, WidgetRef ref) {
-  ref
-    ..listen(projectProvider, (previous, next) async {
-      logger.info('projectProvider is changed. prev: $previous, next: $next');
-      if (next == null) {
-        return;
-      }
-
-      // select first table when project is selected.
-      await () async {
-        (await api.dbTableList(projectId: next.id)).when(
-          ok: (tableList) async {
-            final tableId = tableList.list.firstOrNull?.id;
-            if (tableId == null) {
-              return;
-            }
-            (await api.dbTableRead(tableId: tableId)).when(
-              ok: (table) {
-                ref.read(tableProvider.notifier).state = table;
-              },
-              ng: (error, stackTrace) =>
-                  notifyError(context, error, stackTrace),
-            );
-          },
-          ng: (error, stackTrace) => notifyError(context, error, stackTrace),
-        );
-      }();
-    })
-    ..listen(tableProvider, (previous, next) async {
-      logger.info('tableProvider is changed. prev: $previous, next: $next');
-      if (next == null) {
-        return;
-      }
-      final table = next;
-
-      // get relations
-      await getRelations(next).then(
-        (relations) => ref.watch(tablesProvider.notifier).state = NcTables(
-          table: table,
-          relationMap: relations,
-        ),
-      );
-
-      final view = ref.watch(viewProvider);
-      // When a table is selected, update the view if necessary.
-      if (view == null || view.fkModelId != table.id) {
-        (await api.dbViewList(tableId: table.id)).when(
-          ok: (viewList) {
-            final view = viewList.list.firstOrNull;
-            if (view == null) {
-              return;
-            }
-            ref.read(viewProvider.notifier).set(view);
-          },
-          ng: (error, stackTrace) => notifyError(context, error, stackTrace),
-        );
-      }
-    })
-    ..listen(viewProvider, (previous, next) async {
-      logger.info('viewProvider is changed. prev: $previous, next: $next');
-      if (next == null) {
-        return;
-      }
-
-      // When a view is selected, update the table if necessary.
-      final tableId = ref.watch(tableProvider)?.id;
-      if (tableId != next.fkModelId) {
-        (await api.dbTableRead(tableId: next.fkModelId)).when(
-          ok: (table) => ref.read(tableProvider.notifier).state = table,
-          ng: (error, stackTrace) => notifyError(context, error, stackTrace),
-        );
-      }
-    });
-}
-
 class App extends HookConsumerWidget {
   const App({
     super.key,
@@ -119,8 +39,6 @@ class App extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    setUpProviderListeners(context, ref); // TODO: Stop using ref.listen
-    // No provider functionality is currently being used.
     final r = ref.watch(routerProvider);
 
     return GlobalLoaderOverlay(

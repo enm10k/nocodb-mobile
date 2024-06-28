@@ -10,8 +10,98 @@ part 'providers.g.dart';
 
 final workspaceProvider = StateProvider<NcWorkspace?>((ref) => null);
 final projectProvider = StateProvider<NcProject?>((ref) => null);
-
 final tableProvider = StateProvider<NcTable?>((ref) => null);
+
+Future<void> selectProject(WidgetRef ref, NcProject project) async {
+  ref.read(projectProvider.notifier).state = project;
+
+  final tableId = await _unwrap2(
+    await api.dbTableList(projectId: project.id),
+    serializer: (data) => data.list.firstOrNull?.id,
+  );
+
+  if (tableId == null) {
+    return;
+  }
+
+  final table = await _unwrap(await api.dbTableRead(tableId: tableId));
+  await selectTable(ref, table);
+}
+
+Future<void> selectTable(WidgetRef ref, NcTable table) async {
+  ref.read(tableProvider.notifier).state = table;
+
+  final relationMap = await getRelations(table);
+  ref.watch(tablesProvider.notifier).state = NcTables(
+    table: table,
+    relationMap: relationMap,
+  );
+
+  final view = await _unwrap2(
+    await api.dbViewList(tableId: table.id),
+    serializer: (data) => data.list.firstOrNull,
+  );
+  if (view == null) {
+    return;
+  }
+  await selectView(ref, view);
+}
+
+Future<void> selectView(WidgetRef ref, NcView view) async {
+  ref.read(viewProvider.notifier).set(view);
+
+  final table = ref.read(tableProvider);
+  if (table == null) {
+    return;
+  }
+  if (table.id != view.fkModelId) {
+    final newTable = await _unwrap(await api.dbTableRead(tableId: table.id));
+    await selectTable(ref, newTable);
+  }
+}
+
+// @Riverpod(keepAlive: true)
+// class Table extends _$Table {
+//   @override
+//   NcTable? build() => null;
+//
+//   void set(NcTable table) => state = table;
+//
+//   Future<NcTable?> load(NcProject project) async {
+//     final tableId = await _unwrap2(
+//       await api.dbTableList(projectId: project.id),
+//       serializer: (data) => data.list.firstOrNull?.id,
+//     );
+//
+//     if (tableId == null) {
+//       return null;
+//     }
+//
+//     final table = await _unwrap(await api.dbTableRead(tableId: tableId));
+//     state = table;
+//     return table;
+//   }
+// }
+
+// @riverpod
+// class Table extends _$Table {
+//   @override
+//   Future<NcTable?> build() async {
+//     final project = ref.watch(projectProvider);
+//     final tableId = await _unwrap2(
+//       await api.dbTableList(projectId: project.id),
+//       serializer: (data) => data.list.firstOrNull?.id,
+//     );
+//
+//     if (tableId == null) {
+//       return null;
+//     }
+//
+//     return _unwrap(await api.dbTableRead(tableId: tableId));
+//   }
+//
+//   void set(NcTable table) => state = AsyncData(table);
+// }
 
 final tablesProvider = StateProvider<NcTables?>((ref) => null);
 

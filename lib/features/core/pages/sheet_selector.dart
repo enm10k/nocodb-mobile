@@ -31,9 +31,10 @@ class SheetSelectorPage extends HookConsumerWidget {
                     title: Text(view.title),
                     subtitle: Text('type: ${view.type.name}'),
                     selected: view.id == viewId,
-                    onTap: () {
-                      ref.read(viewProvider.notifier).set(view);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      await selectView(ref, view).then(
+                        (value) => Navigator.pop(context),
+                      );
                     },
                   );
                 },
@@ -125,8 +126,8 @@ class SheetSelectorPage extends HookConsumerWidget {
             final table = tables[index];
             await api.dbTableRead(tableId: table.id).then((result) {
               result.when(
-                ok: (table) {
-                  ref.watch(viewProvider.notifier).set(table.views.first);
+                ok: (table) async {
+                  await selectTable(ref, table);
                 },
                 ng: (error, stackTrace) =>
                     notifyError(context, error, stackTrace),

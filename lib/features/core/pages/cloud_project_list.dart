@@ -36,8 +36,9 @@ class _ProjectList extends HookConsumerWidget {
             child: ListTile(
               title: Text(project.title),
               onTap: () async {
-                ref.read(projectProvider.notifier).state = project;
-                await const SheetRoute().push(context);
+                await selectProject(ref, project).then(
+                  (data) async => await const SheetRoute().push(context),
+                );
               },
             ),
           );
