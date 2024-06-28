@@ -1,9 +1,10 @@
 import 'package:collection/collection.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/providers/utils.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
+import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -11,97 +12,6 @@ part 'providers.g.dart';
 final workspaceProvider = StateProvider<NcWorkspace?>((ref) => null);
 final projectProvider = StateProvider<NcProject?>((ref) => null);
 final tableProvider = StateProvider<NcTable?>((ref) => null);
-
-Future<void> selectProject(WidgetRef ref, NcProject project) async {
-  ref.read(projectProvider.notifier).state = project;
-
-  final tableId = await _unwrap2(
-    await api.dbTableList(projectId: project.id),
-    serializer: (data) => data.list.firstOrNull?.id,
-  );
-
-  if (tableId == null) {
-    return;
-  }
-
-  final table = await _unwrap(await api.dbTableRead(tableId: tableId));
-  await selectTable(ref, table);
-}
-
-Future<void> selectTable(WidgetRef ref, NcTable table) async {
-  ref.read(tableProvider.notifier).state = table;
-
-  final relationMap = await getRelations(table);
-  ref.watch(tablesProvider.notifier).state = NcTables(
-    table: table,
-    relationMap: relationMap,
-  );
-
-  final view = await _unwrap2(
-    await api.dbViewList(tableId: table.id),
-    serializer: (data) => data.list.firstOrNull,
-  );
-  if (view == null) {
-    return;
-  }
-  await selectView(ref, view);
-}
-
-Future<void> selectView(WidgetRef ref, NcView view) async {
-  ref.read(viewProvider.notifier).set(view);
-
-  final table = ref.read(tableProvider);
-  if (table == null) {
-    return;
-  }
-  if (table.id != view.fkModelId) {
-    final newTable = await _unwrap(await api.dbTableRead(tableId: table.id));
-    await selectTable(ref, newTable);
-  }
-}
-
-// @Riverpod(keepAlive: true)
-// class Table extends _$Table {
-//   @override
-//   NcTable? build() => null;
-//
-//   void set(NcTable table) => state = table;
-//
-//   Future<NcTable?> load(NcProject project) async {
-//     final tableId = await _unwrap2(
-//       await api.dbTableList(projectId: project.id),
-//       serializer: (data) => data.list.firstOrNull?.id,
-//     );
-//
-//     if (tableId == null) {
-//       return null;
-//     }
-//
-//     final table = await _unwrap(await api.dbTableRead(tableId: tableId));
-//     state = table;
-//     return table;
-//   }
-// }
-
-// @riverpod
-// class Table extends _$Table {
-//   @override
-//   Future<NcTable?> build() async {
-//     final project = ref.watch(projectProvider);
-//     final tableId = await _unwrap2(
-//       await api.dbTableList(projectId: project.id),
-//       serializer: (data) => data.list.firstOrNull?.id,
-//     );
-//
-//     if (tableId == null) {
-//       return null;
-//     }
-//
-//     return _unwrap(await api.dbTableRead(tableId: tableId));
-//   }
-//
-//   void set(NcTable table) => state = AsyncData(table);
-// }
 
 final tablesProvider = StateProvider<NcTables?>((ref) => null);
 
@@ -122,9 +32,9 @@ Future<Map<String, NcTable>> getRelations(
 
   await Future.wait(
     table.foreignKeys.map((fk) async {
-      await _unwrap2(
+      await serialize(
         await api.dbTableRead(tableId: fk),
-        serializer: (result) {
+        fn: (result) {
           logger.info(
             'fetched relation. ${table.title}->${result.title}',
           );
@@ -145,85 +55,56 @@ class View extends _$View {
     if (state == null) {
       return;
     }
-    _unwrap2(
+    serialize(
       await api.dbViewUpdate(
         viewId: state!.id,
         data: {
           'show_system_fields': !state!.showSystemFields,
         },
       ),
-      serializer: (ok) => state = ok,
+      fn: (ok) => state = ok,
     );
   }
 
   void set(NcView view) => state = view;
 }
 
-FutureOr<T> _errorAdapter<T>(Object error, StackTrace? stackTrace) {
-  if (stackTrace != null) {
-    Error.throwWithStackTrace(error, stackTrace);
-  } else {
-    throw error;
-  }
-}
-
-// NOTE: If an error or exception occurs within a provider,
-// it will be handled as an AsyncError by the side using the provider.
-FutureOr<T> _unwrap<T>(
-  Result<T> result, {
-  T Function(T)? serializer,
-}) =>
-    result.when(
-      ok: (ok) => (serializer != null ? serializer(ok) : ok),
-      ng: _errorAdapter,
-    );
-
-FutureOr<T2> _unwrap2<T1, T2>(
-  Result<T1> result, {
-  required T2 Function(T1) serializer,
-}) =>
-    result.when(
-      ok: (ok) => serializer(ok),
-      ng: _errorAdapter,
-    );
-
 @riverpod
-Future<NcWorkspaceList> workspaceList(WorkspaceListRef ref) async =>
-    (await api.workspaceList()).when(
-      ok: (ok) {
+Future<NcWorkspaceList> workspaceList(WorkspaceListRef ref) async => serialize(
+      await api.workspaceList(),
+      fn: (ok) {
         if (ref.read(workspaceProvider) == null) {
           ref.read(workspaceProvider.notifier).state = ok.list.firstOrNull;
         }
         return ok;
       },
-      ng: _errorAdapter,
     );
 
 @riverpod
 Future<NcProjectList> baseList(BaseListRef ref, workspaceId) async =>
-    _unwrap(await api.baseList(workspaceId));
+    unwrap(await api.baseList(workspaceId));
 
 @riverpod
 Future<NcProjectList> projectList(ProjectListRef ref) async =>
-    _unwrap(await api.projectList());
+    unwrap(await api.projectList());
 
 @Riverpod(keepAlive: true)
 Future<NcSimpleTableList> tableList(
   TableListRef ref,
   String projectId,
 ) async =>
-    _unwrap(await api.dbTableList(projectId: projectId));
+    unwrap(await api.dbTableList(projectId: projectId));
 
 @Riverpod(keepAlive: true)
 Future<ViewList> viewList(ViewListRef ref, String tableId) async =>
-    _unwrap(await api.dbViewList(tableId: tableId));
+    unwrap(await api.dbViewList(tableId: tableId));
 
 @Riverpod(keepAlive: true)
 Future<List<NcViewColumn>> viewColumnList(
   ViewColumnListRef ref,
   String viewId,
 ) async =>
-    _unwrap(await api.dbViewColumnList(viewId: viewId));
+    unwrap(await api.dbViewColumnList(viewId: viewId));
 
 @Riverpod()
 class Fields extends _$Fields {
@@ -333,17 +214,12 @@ class DataRows extends _$DataRows {
     final searchQuery = ref.watch(searchQueryFamily(view));
     logger.info('searchQuery: $searchQuery');
 
-    return _unwrap(
+    return serialize(
       await api.dbViewRowList(
         view: view,
         where: searchQuery,
       ),
-      serializer: (result) {
-        if (result == null) {
-          return null;
-        }
-        return populate(result, table, tables.relationMap);
-      },
+      fn: (result) => populate(result, table, tables.relationMap),
     );
   }
 
@@ -367,14 +243,14 @@ class DataRows extends _$DataRows {
     final searchQuery = ref.read(searchQueryFamily(view));
     logger.info('searchQuery: $searchQuery');
 
-    _unwrap2(
+    serialize(
       await api.dbViewRowList(
         view: view,
         offset: pageInfo.page * pageInfo.pageSize,
         limit: pageInfo.pageSize,
         where: searchQuery,
       ),
-      serializer: (result) {
+      fn: (result) {
         state = AsyncData(
           populate(
             NcRowList(
@@ -434,13 +310,13 @@ class DataRows extends _$DataRows {
     );
     logger.info(result);
 
-    return _unwrap(
+    return serialize(
       await api.dbViewRowUpdate(
         view: view,
         rowId: rowId,
         data: data,
       ),
-      serializer: (result) {
+      fn: (result) {
         final updatedFields =
             data.keys.where((field) => result.keys.contains(field));
 
@@ -477,12 +353,12 @@ class DataRows extends _$DataRows {
 
   Future<Map<String, dynamic>> createRow(Map<String, dynamic> row) async {
     final view = ref.read(viewProvider)!;
-    return _unwrap(
+    return serialize(
       await api.dbViewRowCreate(
         view: view,
         data: row,
       ),
-      serializer: (result) {
+      fn: (result) {
         state = AsyncData(
           NcRowList(
             list: [
@@ -551,9 +427,9 @@ class RowNested extends _$RowNested {
     }
     final where = excluded ? ref.watch(rowNestedWhereProvider(column)) : null;
 
-    return _unwrap2(
+    return serialize(
       await fn(column: column, rowId: rowId, where: where),
-      serializer: (result) => (
+      fn: (result) => (
         _populate(result.list),
         result.pageInfo!,
       ),
@@ -586,7 +462,7 @@ class RowNested extends _$RowNested {
       );
     }
 
-    _unwrap2(
+    serialize(
       await fn(
         column: column,
         rowId: rowId,
@@ -594,7 +470,7 @@ class RowNested extends _$RowNested {
         limit: limit,
         where: where,
       ),
-      serializer: (result) {
+      fn: (result) {
         state = AsyncData(
           (
             [
@@ -620,13 +496,13 @@ class RowNested extends _$RowNested {
   Future<String> remove({
     required String refRowId,
   }) async =>
-      _unwrap(
+      serialize(
         await api.dbTableRowNestedRemove(
           column: column,
           rowId: rowId,
           refRowId: refRowId,
         ),
-        serializer: (result) {
+        fn: (result) {
           _invalidate();
           return result;
         },
@@ -635,107 +511,15 @@ class RowNested extends _$RowNested {
   Future<String> link({
     required refRowId,
   }) async =>
-      _unwrap(
+      serialize(
         await api.dbTableRowNestedAdd(
           column: column,
           rowId: rowId,
           refRowId: refRowId,
         ),
-        serializer: (result) {
+        fn: (result) {
           _invalidate();
           return result;
         },
       );
-}
-
-@riverpod
-class SortList extends _$SortList {
-  @override
-  FutureOr<NcSortList?> build(String viewId) async =>
-      _unwrap(await api.dbTableSortList(viewId: viewId));
-
-  Future<void> create({
-    required String fkColumnId,
-    required SortDirectionTypes direction,
-  }) async {
-    state = const AsyncLoading();
-    await api.dbTableSortCreate(
-      viewId: viewId,
-      fkColumnId: fkColumnId,
-      direction: direction,
-    );
-
-    _unwrap2(
-      await api.dbTableSortList(viewId: viewId),
-      serializer: (result) {
-        state = AsyncData(result);
-        return result;
-      },
-    );
-  }
-
-  Future<void> delete(String sortId) async {
-    state = const AsyncLoading();
-    await api.dbTableSortDelete(sortId: sortId);
-    ref.invalidateSelf();
-  }
-
-  Future<void> save({
-    required String sortId,
-    required String fkColumnId,
-    required SortDirectionTypes direction,
-  }) async {
-    await api.dbTableSortUpdate(
-      sortId: sortId,
-      fkColumnId: fkColumnId,
-      direction: direction,
-    );
-    ref.invalidateSelf();
-  }
-}
-
-@riverpod
-class Attachments extends _$Attachments {
-  @override
-  List<NcAttachedFile> build(
-    String? rowId,
-    String columnTitle,
-  ) {
-    final rows = ref.watch(dataRowsProvider).valueOrNull?.list ?? [];
-    final table = ref.watch(tableProvider);
-    final row = rows.firstWhereOrNull(
-          (row) => table?.getPkFromRow(row) == rowId,
-        ) ??
-        {};
-
-    final files = (row[columnTitle] ?? [])
-        .map<NcAttachedFile>(
-          (e) => NcAttachedFile.fromJson(e as Map<String, dynamic>),
-        )
-        .toList() as List<NcAttachedFile>;
-    return files;
-  }
-
-  upload(List<NcFile> files, FnOnUpdate onUpdate) async {
-    final newAttachedFiles = await api.dbStorageUpload(files);
-    state = [
-      ...state,
-      ...newAttachedFiles,
-    ];
-    await onUpdate({columnTitle: state});
-  }
-
-  delete(String id, FnOnUpdate onUpdate) async {
-    state = [...state].where((e) => e.id != id).toList();
-    await onUpdate({columnTitle: state});
-  }
-
-  rename(String id, String title, FnOnUpdate onUpdate) async {
-    state = [...state]
-        .map<NcAttachedFile>(
-          (e) => e.id == id ? e.copyWith(title: title) : e,
-        )
-        .toList();
-    await onUpdate({columnTitle: state});
-  }
 }

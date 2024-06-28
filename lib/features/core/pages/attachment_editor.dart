@@ -15,6 +15,7 @@ import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/components/attachment_file_card.dart';
 import 'package:nocodb/features/core/components/attachment_image_card.dart';
 import 'package:nocodb/features/core/components/dialog/file_rename_dialog.dart';
+import 'package:nocodb/features/core/providers/attachments_provider.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/features/core/utils.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';

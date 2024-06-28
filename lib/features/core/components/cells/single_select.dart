@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'package:nocodb/nocodb_sdk/models.dart';
 
 class SingleSelect extends HookConsumerWidget {
