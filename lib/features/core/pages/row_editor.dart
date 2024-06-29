@@ -71,7 +71,7 @@ class RowEditor extends HookConsumerWidget {
   });
   final String? rowId_;
 
-  int _getViewColumnOrder(
+  double _getViewColumnOrder(
     NcTableColumn tableColumn,
     List<NcViewColumn> viewColumns,
   ) =>
