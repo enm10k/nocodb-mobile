@@ -107,7 +107,7 @@ Future<void> _selectTable(ProviderReader reader, NcTable table) async {
 }
 
 Future<void> _selectView(ProviderReader reader, NcView view) async {
-  reader.read(viewProvider.notifier).set(view);
+  reader.read(viewProvider.notifier).update(view);
 
   final table = reader.read(tableProvider);
   if (table == null) {

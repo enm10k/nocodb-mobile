@@ -1,20 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/components/not_implementing_dialog.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/logger.dart';
+import 'package:nocodb/features/core/providers/fields_provider.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
-import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 
-model.NcTableColumn getTableColumn(
-  model.NcViewColumn viewColumn,
-  List<model.NcTableColumn> tableColumns,
-) =>
-    tableColumns
-        .where((tableColumn) => tableColumn.id == viewColumn.fkColumnId)
-        .firstOrNull ??
-    tableColumns.first;
+import 'package:nocodb/nocodb_sdk/models.dart';
 
 class FieldsDialog extends HookConsumerWidget {
   const FieldsDialog({
@@ -22,82 +16,39 @@ class FieldsDialog extends HookConsumerWidget {
   });
   static const debug = true;
 
-  _debugViewColumns(
-    List<model.NcViewColumn> viewColumns,
-    List<model.NcTableColumn> tableColumns,
-  ) {
-    viewColumns.asMap().forEach((index, column) {
-      final tableColumn = getTableColumn(column, tableColumns);
-      logger.info('$index ${tableColumn.title}');
-    });
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoaded = ref.watch(isLoadedProvider);
     if (!isLoaded) {
       return const CircularProgressIndicator();
     }
-    final table = ref.watch(tableProvider)!;
+    return ref.watch(fieldsProvider).when(
+          data: (data) => _build(context, ref, data),
+          error: (e, s) => Text('$e\n$s'),
+          loading: () => const Center(child: CircularProgressIndicator()),
+        );
+  }
+
+  Widget _build(BuildContext context, WidgetRef ref, List<NcViewColumn> vcs) {
     final view = ref.watch(viewProvider)!;
-
-    final viewColumns_ = ref.watch(viewColumnListProvider(view.id));
-    if (!viewColumns_.hasValue) {
-      return const SizedBox();
-    }
-
-    final viewColumns = viewColumns_.value!;
-
-    // TODO: Move to provider
-    final filteredViewColumns = viewColumns.where((viewColumn) {
-      final tableColumn = getTableColumn(viewColumn, table.columns);
-
-      return view.showSystemFields ? true : !tableColumn.isSystem;
-    }).toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
-
-    final List<Widget> children = filteredViewColumns.map(
-      (viewColumn) {
-        final column = getTableColumn(viewColumn, table.columns);
+    final table = ref.watch(tableProvider)!;
+    final List<Widget> children = vcs.map(
+      (vc) {
+        final tc = vc.toTableColumn(table.columns)!;
         return CheckboxListTile(
           controlAffinity: ListTileControlAffinity.leading,
-          key: Key(viewColumn.id),
-          title: Text(column.title),
-          value: viewColumn.show,
+          key: Key(vc.id),
+          title:
+              kDebugMode ? Text('${tc.title} (${vc.order})') : Text(tc.title),
+          value: vc.show,
           onChanged: (value) async {
-            if (column.pv) {
-              await showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: Text('${column.title} is display value'),
-                  content: const Text('You cannot hide display value.'),
-                  actions: [
-                    TextButton(
-                      child: const Text('OK'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-              );
+            try {
+              await ref.read(fieldsProvider.notifier).show(vc, value == true);
+            } catch (error, stackTrace) {
+              if (context.mounted) {
+                notifyError(context, error, stackTrace);
+              }
             }
-            // TODO: The following logic should be integrated to provider.
-            await api
-                .dbViewColumnUpdateShow(
-                  column: viewColumn,
-                  show: value == true,
-                )
-                .then(
-                  (_) => ref.invalidate(viewColumnListProvider),
-                )
-                .onError(
-                  (error, stackTrace) => notifyError(
-                    context,
-                    error,
-                    stackTrace,
-                  ),
-                );
           },
         );
       },
@@ -115,35 +66,16 @@ class FieldsDialog extends HookConsumerWidget {
               width: double.maxFinite,
               child: ReorderableListView(
                 shrinkWrap: true,
-                onReorder: (oldIndex, newIndex) {
-                  // TODO: Fix. Current behavior is slightly different from nc-gui.
-                  // https://github.com/nocodb/nocodb/blob/fbe406c51176709d1f8779d8d95405f52a869079/packages/nc-gui/components/smartsheet/toolbar/FieldsMenu.vue#L71-L85
-                  final newViewColumns = [...viewColumns];
-
-                  if (debug) {
-                    _debugViewColumns(viewColumns, table.columns);
-                  }
-                  final movingColumn = newViewColumns.removeAt(oldIndex);
-                  newViewColumns.insert(newIndex, movingColumn);
-
-                  if (debug) {
-                    logger.info(
-                      'moving ${getTableColumn(movingColumn, table.columns).title}',
-                    );
-                    _debugViewColumns(viewColumns, table.columns);
-                  }
-
-                  // TODO: The following logic should be integrated to provider.
-                  newViewColumns.asMap().forEach((index, viewColumn) async {
-                    final newOrder = index + 1;
-                    if (viewColumn.order != newOrder) {
-                      await api.dbViewColumnUpdateOrder(
-                        column: viewColumn,
-                        order: newOrder,
-                      );
+                onReorder: (oldIndex, newIndex) async {
+                  try {
+                    await ref
+                        .read(fieldsProvider.notifier)
+                        .reorder(oldIndex, newIndex);
+                  } catch (error, stackTrace) {
+                    if (context.mounted) {
+                      notifyError(context, error, stackTrace);
                     }
-                  });
-                  ref.invalidate(viewColumnListProvider);
+                  }
                 },
                 children: children,
               ),
