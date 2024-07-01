@@ -220,7 +220,7 @@ class SortDialogContent extends HookConsumerWidget {
             )
             .toList()
           ..sort(
-            (a, b) => (a.sort?.order ?? 0).compareTo(b.sort?.order ?? 0),
+            (a, b) => (a.sort?.order ?? 0.0).compareTo(b.sort?.order ?? 0.0),
           );
         return null;
       },

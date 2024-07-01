@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/features/core/components/dialog/search_dialog.dart';
 import 'package:nocodb/features/core/components/toolbar.dart';
 import 'package:nocodb/features/core/components/view_switcher.dart';
@@ -49,12 +50,6 @@ class SheetPage extends HookConsumerWidget {
             BottomAppBarButton(
               iconData: Icons.add_circle_outline,
               onPressed: () async {
-                final table = ref.watch(tableProvider);
-                final view = ref.watch(viewProvider);
-                if (table == null || view == null) {
-                  return;
-                }
-
                 await const RowEditorRoute().push(context);
               },
             ),
@@ -67,8 +62,14 @@ class SheetPage extends HookConsumerWidget {
             ),
             BottomAppBarButton(
               iconData: Icons.refresh,
-              onPressed: () {
-                ref.invalidate(dataRowsProvider);
+              onPressed: () async {
+                try {
+                  await ref.read(viewProvider.notifier).reload();
+                } catch (error, stackTrace) {
+                  if (context.mounted) {
+                    notifyError(context, error, stackTrace);
+                  }
+                }
               },
             ),
           ],

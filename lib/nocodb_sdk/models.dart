@@ -120,7 +120,7 @@ class NcSort with _$NcSort {
     required String fkViewId,
     required String fkColumnId,
     @JsonKey(fromJson: _toSortTypes) required SortDirectionTypes direction,
-    required int order,
+    required double order,
   }) = _NcSort;
   factory NcSort.fromJson(Map<String, dynamic> json) => _$NcSortFromJson(json);
 }
@@ -202,8 +202,6 @@ UITypes _toUITypes(dynamic v) {
   return UITypes.unknown;
 }
 
-const _maxInt = 4294967296;
-
 @freezed
 class NcTableColumn with _$NcTableColumn {
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -213,7 +211,7 @@ class NcTableColumn with _$NcTableColumn {
     required String fkModelId,
     required String title,
     String? columnName,
-    @Default(_maxInt) int order,
+    @Default(double.infinity) double order,
     @JsonKey(name: 'colOptions') NcColOptions? colOptions,
     @JsonKey(fromJson: _toBool) @Default(false) bool pk,
     @JsonKey(fromJson: _toBool) @Default(false) bool pv,
@@ -235,7 +233,7 @@ class NcOption with _$NcOption {
   const factory NcOption({
     required String color,
     required String fkColumnId,
-    required int order,
+    required double order,
     required String title,
   }) = _NcOption;
 
@@ -305,7 +303,7 @@ class NcViewColumn with _$NcViewColumn {
     required String fkViewId,
     required String fkColumnId,
     required String width,
-    @Default(_maxInt) int order,
+    @Default(double.infinity) double order,
     @JsonKey(fromJson: _toBool) required bool show,
   }) = _NcViewColumn;
 

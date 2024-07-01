@@ -11,6 +11,7 @@ import 'package:nocodb/common/extensions.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/components/cell.dart';
+import 'package:nocodb/features/core/providers/fields_provider.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
 import 'package:nocodb/nocodb_sdk/symbols.dart';
@@ -67,11 +68,9 @@ class Grid extends HookConsumerWidget {
     }
 
     final tables = ref.watch(tablesProvider)!;
-    final view = ref.watch(viewProvider)!;
-
-    final columns = ref.watch(fieldsProvider(view)).valueOrNull?.toList() ?? [];
+    final columns = ref.watch(gridFieldsProvider).valueOrNull?.toList() ?? [];
     logger
-      ..info('view: ${view.title} has ${columns.length} columns(s).')
+      ..info('${columns.length} columns(s).')
       ..info('columns: ${columns.map((e) => e.title).toList()}');
 
     final dataRow = ref.watch(dataRowsProvider).valueOrNull;

@@ -157,16 +157,21 @@ extension NcViewColumnEx on NcViewColumn {
 }
 
 extension NcViewColumnListEx on List<NcViewColumn> {
-  List<NcViewColumn> getColumnsToShow(NcTable table, NcView view) => where(
+  List<NcViewColumn> filter(NcTable table, NcView view,
+          {bool excludePv = false, bool ignoreShow = false}) =>
+      where(
         (column) {
-          final tableColumn = column.toTableColumn(table.columns);
-          final system = tableColumn?.isSystem ?? false;
+          final tc = column.toTableColumn(table.columns)!;
 
-          if (!view.showSystemFields && system == true) {
+          if (!view.showSystemFields && tc.isSystem) {
             return false;
           }
 
-          return column.show;
+          if (excludePv && tc.pv == true) {
+            return false;
+          }
+
+          return ignoreShow ? true : column.show;
         },
       ).toList();
 }

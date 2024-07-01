@@ -52,9 +52,6 @@ class View extends _$View {
   NcView? build() => null;
 
   void showSystemFields() async {
-    if (state == null) {
-      return;
-    }
     serialize(
       await api.dbViewUpdate(
         viewId: state!.id,
@@ -66,7 +63,20 @@ class View extends _$View {
     );
   }
 
-  void set(NcView view) => state = view;
+  void update(NcView view) => state = view;
+
+  Future<void> reload() async {
+    final table = ref.watch(tableProvider);
+    if (table == null) {
+      return;
+    }
+
+    state = await serialize(
+      await api.dbViewList(tableId: table.id),
+      fn: (ok) =>
+          ok.list.firstWhereOrNull((element) => element.id == state?.id),
+    );
+  }
 }
 
 @riverpod
@@ -98,39 +108,6 @@ Future<NcSimpleTableList> tableList(
 @Riverpod(keepAlive: true)
 Future<ViewList> viewList(ViewListRef ref, String tableId) async =>
     unwrap(await api.dbViewList(tableId: tableId));
-
-@Riverpod(keepAlive: true)
-Future<List<NcViewColumn>> viewColumnList(
-  ViewColumnListRef ref,
-  String viewId,
-) async =>
-    unwrap(await api.dbViewColumnList(viewId: viewId));
-
-@Riverpod()
-class Fields extends _$Fields {
-  static const debug = false;
-
-  @override
-  Future<List<NcTableColumn>> build(NcView view) async {
-    final table = ref.watch(tableProvider);
-    if (table == null) {
-      return [];
-    }
-
-    return ref
-        .watch(viewColumnListProvider(view.id).future)
-        .then((viewColumns) {
-      final fields = viewColumns.getColumnsToShow(table, view)
-        ..sort((a, b) => a.order.compareTo(b.order));
-      return fields
-          .map(
-            (columns) => columns.toTableColumn(table.columns),
-          )
-          .whereNotNull()
-          .toList();
-    });
-  }
-}
 
 class SearchQuery {
   const SearchQuery({

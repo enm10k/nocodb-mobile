@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/flash_wrapper.dart';
 import 'package:nocodb/features/core/components/editor.dart';
+import 'package:nocodb/features/core/providers/fields_provider.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/features/core/utils.dart';
 import 'package:nocodb/nocodb_sdk/models.dart' as model;
@@ -70,7 +71,7 @@ class RowEditor extends HookConsumerWidget {
   });
   final String? rowId_;
 
-  int _getViewColumnOrder(
+  double _getViewColumnOrder(
     NcTableColumn tableColumn,
     List<NcViewColumn> viewColumns,
   ) =>
