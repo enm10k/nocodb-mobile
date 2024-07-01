@@ -26,9 +26,3 @@ Please build it from the source code.
 
 At this point, NocoDB Mobile is tested with the latest version of NocoDB.  
 I intend to support the latest three minor versions of NocoDB as much as possible in the future.
-
-## Disclaimer
-
-This project is run by an independent developer who is not affiliated with NocoDB Inc.
-
-The trademarks such as NocoDB and Airtable mentioned in this document belong to the respective companies developing those products.
