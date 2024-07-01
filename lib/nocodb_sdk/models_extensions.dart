@@ -20,18 +20,31 @@ extension NcRowListEx on NcRowList {
   }
 }
 
+// Input: #cccccc or #ccc
+// Output: cccccc
+String _formatColorCode(String code) {
+  // #ccc -> #cccccc
+  if (code.length == 4) {
+    final (r, g, b) = (code[1], code[2], code[3]);
+    return '$r$r$g$g$b$b';
+  }
+  return code.substring(1);
+}
+
 extension NcColOptionsEx on NcColOptions {
   Color? getOptionColor(String title) {
-    final colorCode =
+    final color =
         options?.firstWhereOrNull((option) => option.title == title)?.color;
 
-    if (colorCode == null) {
+    if (color == null) {
       return null;
     }
-    assert(colorCode.length == 7); // #cfdffe
+
+    final colorCode = _formatColorCode(color);
+    assert(colorCode.length == 6, colorCode);
 
     return Color(
-      int.parse('FF${colorCode.substring(1)}', radix: 16),
+      int.parse('FF$colorCode', radix: 16),
     );
   }
 }
