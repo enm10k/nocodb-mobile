@@ -71,18 +71,16 @@ class SignInPage extends HookConsumerWidget {
                 token = ApiToken(apiTokenController.text);
               } else {
                 api.init(hostController.text);
-                (await api.authSignin(
-                  usernameController.text,
-                  passwordController.text,
-                ))
-                    .when(
-                  ok: (value) {
-                    token = AuthToken(value);
-                  },
-                  ng: (Object error, StackTrace? stackTrace) {
-                    notifyError(context, error, stackTrace);
-                  },
-                );
+                await api
+                    .authSignin(
+                      usernameController.text,
+                      passwordController.text,
+                    )
+                    .then((value) => token = AuthToken(value))
+                    .onError(
+                      (error, stackTrace) =>
+                          notifyError(context, error, stackTrace),
+                    );
               }
               if (token == null) {
                 return;

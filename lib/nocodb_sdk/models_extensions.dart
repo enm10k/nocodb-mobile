@@ -170,8 +170,12 @@ extension NcViewColumnEx on NcViewColumn {
 }
 
 extension NcViewColumnListEx on List<NcViewColumn> {
-  List<NcViewColumn> filter(NcTable table, NcView view,
-          {bool excludePv = false, bool ignoreShow = false}) =>
+  List<NcViewColumn> filter(
+    NcTable table,
+    NcView view, {
+    bool excludePv = false,
+    bool ignoreShow = false,
+  }) =>
       where(
         (column) {
           final tc = column.toTableColumn(table.columns)!;

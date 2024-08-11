@@ -1,4 +1,3 @@
-import 'package:nocodb/features/core/providers/utils.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:nocodb/nocodb_sdk/symbols.dart';
@@ -10,7 +9,7 @@ part 'sort_list_provider.g.dart';
 class SortList extends _$SortList {
   @override
   FutureOr<NcSortList?> build(String viewId) async =>
-      unwrap(await api.dbTableSortList(viewId: viewId));
+      await api.dbTableSortList(viewId: viewId);
 
   Future<void> create({
     required String fkColumnId,
@@ -23,13 +22,8 @@ class SortList extends _$SortList {
       direction: direction,
     );
 
-    serialize(
-      await api.dbTableSortList(viewId: viewId),
-      fn: (result) {
-        state = AsyncData(result);
-        return result;
-      },
-    );
+    final result = await api.dbTableSortList(viewId: viewId);
+    state = AsyncData(result);
   }
 
   Future<void> delete(String sortId) async {
