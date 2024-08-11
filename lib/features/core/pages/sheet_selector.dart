@@ -124,18 +124,9 @@ class SheetSelectorPage extends HookConsumerWidget {
             logger.info('PageView.onPageChanged: $index');
             tabController.animateTo(index);
 
-            final table = tables[index];
-            await api.dbTableRead(tableId: table.id).then((result) {
-              result.when(
-                ok: (table) async {
-                  await selectTable(ref, table);
-                },
-                ng: (error, stackTrace) =>
-                    notifyError(context, error, stackTrace),
-              );
-            }).onError(
-              (error, stackTrace) => notifyError(context, error, stackTrace),
-            );
+            final selectedTable = tables[index];
+            final table = await api.dbTableRead(tableId: selectedTable.id);
+            await selectTable(ref, table);
           },
           controller: pageController,
           itemBuilder: _viewBuilder(

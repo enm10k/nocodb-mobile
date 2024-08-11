@@ -35,8 +35,9 @@ void main() {
   });
   test('Hello world', () async {
     final c = createContainer();
-    final projectList = await unwrap(await api.projectList());
-    final project = projectList.list.firstWhere((element) => element.title == 'sakila');
+    final projectList = await api.projectList();
+    final project =
+        projectList.list.firstWhere((element) => element.title == 'sakila');
     await selectProject2(c, project);
 
     // tableProvider and viewProvider should be initialized after selectProject.

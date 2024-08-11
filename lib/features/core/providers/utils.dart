@@ -31,22 +31,6 @@ FutureOr<T> errorAdapter<T>(Object error, StackTrace? stackTrace) {
   }
 }
 
-// NOTE: If an error or exception occurs within a provider,
-// it will be handled as an AsyncError by the side using the provider.
-FutureOr<T> unwrap<T>(Result<T> result) => result.when(
-      ok: (ok) => ok,
-      ng: errorAdapter,
-    );
-
-FutureOr<T2> serialize<T1, T2>(
-  Result<T1> result, {
-  required T2 Function(T1) fn,
-}) =>
-    result.when(
-      ok: (ok) => fn(ok),
-      ng: errorAdapter,
-    );
-
 Future<void> selectProject(WidgetRef ref, NcProject project) async {
   await _selectProject(WidgetRefWrapper(ref), project);
 }
@@ -74,16 +58,14 @@ Future<void> selectView2(ProviderContainer c, NcView view) async {
 Future<void> _selectProject(ProviderReader reader, NcProject project) async {
   reader.read(projectProvider.notifier).state = project;
 
-  final tableId = await serialize(
-    await api.dbTableList(projectId: project.id),
-    fn: (data) => data.list.firstOrNull?.id,
-  );
+  final tableList = await api.dbTableList(projectId: project.id);
+  final tableId = tableList.list.firstOrNull?.id;
 
   if (tableId == null) {
     return;
   }
 
-  final table = await unwrap(await api.dbTableRead(tableId: tableId));
+  final table = await api.dbTableRead(tableId: tableId);
   await _selectTable(reader, table);
 }
 
@@ -95,11 +77,9 @@ Future<void> _selectTable(ProviderReader reader, NcTable table) async {
     table: table,
     relationMap: relationMap,
   );
+  final viewList = await api.dbViewList(tableId: table.id);
+  final view = viewList.list.firstOrNull;
 
-  final view = await serialize(
-    await api.dbViewList(tableId: table.id),
-    fn: (data) => data.list.firstOrNull,
-  );
   if (view == null) {
     return;
   }
@@ -114,7 +94,7 @@ Future<void> _selectView(ProviderReader reader, NcView view) async {
     return;
   }
   if (table.id != view.fkModelId) {
-    final newTable = await unwrap(await api.dbTableRead(tableId: table.id));
+    final newTable = await api.dbTableRead(tableId: table.id);
     await _selectTable(reader, newTable);
   }
 }

@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:nocodb/common/logger.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
-import 'package:nocodb/features/core/providers/utils.dart';
 import 'package:nocodb/nocodb_sdk/client.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -13,7 +12,7 @@ Future<List<NcViewColumn>> viewColumnList(
   ViewColumnListRef ref,
   String viewId,
 ) async =>
-    unwrap(await api.dbViewColumnList(viewId: viewId));
+    await api.dbViewColumnList(viewId: viewId);
 
 @Riverpod()
 class _FieldsBase extends _$FieldsBase {
