@@ -28,6 +28,13 @@ String _formatColorCode(String code) {
     final (r, g, b) = (code[1], code[2], code[3]);
     return '$r$r$g$g$b$b';
   }
+
+  if (code.length == 9) {
+    final a = code.substring(1, 3);
+    final rgb = code.substring(3);
+    return '$rgb$a';
+  }
+
   return code.substring(1);
 }
 
@@ -41,10 +48,10 @@ extension NcColOptionsEx on NcColOptions {
     }
 
     final colorCode = _formatColorCode(color);
-    assert(colorCode.length == 6, colorCode);
+    assert([6, 8].contains(colorCode.length), colorCode);
 
     return Color(
-      int.parse('FF$colorCode', radix: 16),
+      int.parse(colorCode.length == 8 ? colorCode : 'FF$colorCode', radix: 16),
     );
   }
 }
