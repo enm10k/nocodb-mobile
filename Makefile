@@ -28,10 +28,10 @@ setup_nocodb:
 	./scripts/setup-nocodb-with-pg-sakila-db.sh
 
 show_nc_db:
-	grep NC_DB _nocodb/docker-compose/pg/docker-compose.yml | awk '{print $$2}'
+	grep NC_DB _nocodb/docker-compose/2_pg/docker-compose.yml | awk '{print $$2}'
 
 enable_db_log:
-	cd _nocodb/docker-compose/pg && docker-compose exec root_db bash -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "ALTER SYSTEM SET log_statement = '\''all'\'';"'
+	cd _nocodb/docker-compose/2_pg && docker-compose exec root_db bash -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "ALTER SYSTEM SET log_statement = '\''all'\'';"'
 	cd _nocodb/docker-compose/pg && docker-compose exec root_db bash -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT pg_reload_conf();"'
 
 tail_db_log:
