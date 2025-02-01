@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-export NOCODB_TAG=0.207.2
+export NOCODB_TAG=0.260.2
 
 if [ ! -d "_nocodb" ]; then
   git clone https://github.com/nocodb/nocodb.git _nocodb
@@ -10,7 +10,7 @@ git fetch -p
 git checkout .
 git checkout $NOCODB_TAG
 
-cd docker-compose/pg
+cd docker-compose/2_pg
 
 # for Apple M1 chipset
 # if [ $(uname) == 'Darwin' ] && [ $(uname -m) == 'arm64' ]; then
