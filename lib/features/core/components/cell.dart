@@ -197,7 +197,6 @@ class Cell {
     // logger.info(value.runtimeType);
     switch (c.uidt) {
       case UITypes.checkbox:
-        assert(value is bool?);
         return CheckBox(value ?? false);
       case UITypes.dateTime:
       case UITypes.date:
