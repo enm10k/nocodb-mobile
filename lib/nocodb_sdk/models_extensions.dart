@@ -185,7 +185,12 @@ extension NcViewColumnListEx on List<NcViewColumn> {
   }) =>
       where(
         (column) {
-          final tc = column.toTableColumn(table.columns)!;
+          final tc = column.toTableColumn(table.columns);
+
+          if (tc == null) {
+            logger.info('table column not found: ${column.fkColumnId}');
+            return false;
+          }
 
           if (!view.showSystemFields && tc.isSystem) {
             return false;

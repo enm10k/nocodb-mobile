@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:nocodb/common/settings.dart';
-import 'package:nocodb/features/core/components/dialog/new_project_dialog.dart';
 import 'package:nocodb/features/core/providers/providers.dart';
 import 'package:nocodb/features/core/providers/utils.dart';
 import 'package:nocodb/nocodb_sdk/models.dart';
@@ -49,46 +48,24 @@ class ProjectListPage extends HookConsumerWidget {
 
   Widget _build(List<NcProject> projects, WidgetRef ref) {
     final context = useContext();
-    final content = Flexible(
-      child: ListView.separated(
-        shrinkWrap: true,
-        itemCount: projects.length,
-        itemBuilder: (context, index) {
-          final project = projects[index];
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-            child: ListTile(
-              title: Text(project.title),
-              onTap: () async {
-                await selectProject(ref, project).then(
-                  (data) async => await const SheetRoute().push(context),
-                );
-              },
-            ),
-          );
-        },
-        separatorBuilder: (context, index) => _divider,
-      ),
-    );
-
-    return Column(
-      children: [
-        content,
-        _divider,
-        Container(
+    return ListView.separated(
+      shrinkWrap: true,
+      itemCount: projects.length,
+      itemBuilder: (context, index) {
+        final project = projects[index];
+        return Container(
           margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
           child: ListTile(
-            title: const Text('New Project'),
+            title: Text(project.title),
             onTap: () async {
-              await showDialog(
-                context: context,
-                builder: (_) => const NewProjectDialog(),
+              await selectProject(ref, project).then(
+                (data) async => await const SheetRoute().push(context),
               );
             },
           ),
-        ),
-        _divider,
-      ],
+        );
+      },
+      separatorBuilder: (context, index) => _divider,
     );
   }
 
